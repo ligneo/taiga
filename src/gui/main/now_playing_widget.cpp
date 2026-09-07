@@ -228,7 +228,8 @@ void NowPlayingWidget::refresh() {
 
   const auto title =
       m_anime ? anime::preferredTitle(*m_anime) : m_episode->element(anitomy::ElementKind::Title);
-  const auto episodeNumber = m_episode->element(anitomy::ElementKind::Episode, "1");
+  const auto episodeNumber =
+      formatEpisodeNumbers(m_episode->elements(anitomy::ElementKind::Episode));
   const auto episodeCount = formatNumber(m_anime ? m_anime->episode_count : 0, "?");
 
   const bool isPlaying = track::media::detection()->getCurrentEpisode().has_value();
