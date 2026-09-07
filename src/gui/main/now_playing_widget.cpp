@@ -26,9 +26,11 @@
 #include "base/chrono.hpp"
 #include "base/string.hpp"
 #include "gui/media/media_dialog.hpp"
+#include "gui/media/media_menu.hpp"
 #include "gui/utils/format.hpp"
 #include "gui/utils/theme.hpp"
 #include "media/anime_db.hpp"
+#include "media/anime_list.hpp"
 #include "media/anime_utils.hpp"
 #include "track/episode.hpp"
 #include "track/media.hpp"
@@ -129,6 +131,16 @@ NowPlayingWidget::NowPlayingWidget(QWidget* parent) : QFrame(parent) {
       m_mainLabel->unsetCursor();
       MediaDialog::show(this, MediaDialogPage::Details, *m_anime);
     }
+  });
+  m_mainLabel->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(m_mainLabel, &QLabel::customContextMenuRequested, this, [this]() {
+    if (!m_anime) return;
+    QMap<int, ListEntry> entries;
+    if (const auto entry = anime::db.entry(m_anime->id)) {
+      entries[m_anime->id] = *entry;
+    }
+    auto* menu = new MediaMenu(this, {*m_anime}, entries, nullptr, AnimeListContext::List);
+    menu->popup();
   });
 
   // Timer
