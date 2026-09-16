@@ -21,6 +21,7 @@
 #include <QMainWindow>
 #include <optional>
 
+#include "gui/main/navigation_controller.hpp"
 #include "track/episode.hpp"
 
 class QLineEdit;
@@ -52,20 +53,11 @@ enum class ExportFormat {
   MyAnimeListXml,
 };
 
-enum class MainWindowPage {
-  Home,
-  Search,
-  List,
-  History,
-  Library,
-  Seasons,
-  Torrents,
-  Profile,
-};
-
 class MainWindow final : public QMainWindow {
   Q_OBJECT
   Q_DISABLE_COPY_MOVE(MainWindow)
+
+  friend class NavigationController;
 
 public:
   MainWindow();
@@ -90,7 +82,6 @@ private slots:
   void about();
   void notifyEpisodeDetected(std::optional<track::Episode> episode);
   void donate() const;
-  void setPage(MainWindowPage page);
   void support() const;
   void synchronize();
   void profile();
@@ -119,6 +110,7 @@ private:
   HistoryWidget* m_historyWidget = nullptr;
   LibraryWidget* m_libraryWidget = nullptr;
   ListWidget* m_listWidget = nullptr;
+  NavigationController* m_navigationController = nullptr;
   NavigationWidget* m_navigationWidget = nullptr;
   NowPlayingWidget* m_nowPlayingWidget = nullptr;
   ProfileWidget* m_profileWidget = nullptr;

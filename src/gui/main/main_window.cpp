@@ -33,6 +33,7 @@
 #include "gui/library/library_widget.hpp"
 #include "gui/list/list_widget.hpp"
 #include "gui/main/about_dialog.hpp"
+#include "gui/main/navigation_controller.hpp"
 #include "gui/main/navigation_widget.hpp"
 #include "gui/main/now_playing_widget.hpp"
 #include "gui/main/status_bar.hpp"
@@ -237,8 +238,8 @@ void MainWindow::initIcons() {
 void MainWindow::initNavigation() {
   m_navigationWidget = new NavigationWidget(this);
   m_navigationWidget->setVisible(taiga::settings.sidebarVisible());
-
-  connect(m_navigationWidget, &NavigationWidget::currentPageChanged, this, &MainWindow::setPage);
+  // Connects to m_navigationWidget's signals on construction, so it must come after.
+  m_navigationController = new NavigationController(this);
 
   const bool hasWatching = std::ranges::any_of(anime::db.entries(), [](const auto& entry) {
     return entry.status == anime::list::Status::Watching;
@@ -609,9 +610,12 @@ void MainWindow::initViewMenu() {
   };
 
   for (const auto& [text, page] : pages) {
-    ui_->menuView->addAction(text, this, [this, page]() { setPage(page); });
+    ui_->menuView->addAction(text, this, [this, page]() { navigateTo(page); });
   }
 
+  ui_->menuView->addSeparator();
+  ui_->menuView->addAction(ui_->actionBack);
+  ui_->menuView->addAction(ui_->actionForward);
   ui_->menuView->addSeparator();
 
   const auto action = ui_->menuView->addAction(tr("Show sidebar"), this, [this](bool checked) {
@@ -749,21 +753,11 @@ void MainWindow::addNewFolder() {
 }
 
 void MainWindow::navigateTo(MainWindowPage page) {
-  if (const auto item = m_navigationWidget->findItemByPage(page)) {
-    m_navigationWidget->setCurrentItem(item);
-  }
+  m_navigationController->navigateTo(page);
 }
 
 void MainWindow::navigateToListStatus(anime::list::Status status) {
-  if (const auto item = m_navigationWidget->findListStatusItem(status)) {
-    m_navigationWidget->setCurrentItem(item);
-  }
-}
-
-void MainWindow::setPage(MainWindowPage page) {
-  initPage(page);
-  m_statusBarController->clearMessage(StatusBarController::Source::Selection);
-  ui_->stackedWidget->setCurrentIndex(static_cast<int>(page));
+  m_navigationController->navigateToListStatus(status);
 }
 
 void MainWindow::updateTitle() {
@@ -832,8 +826,7 @@ void MainWindow::synchronize() {
 }
 
 void MainWindow::profile() {
-  setPage(MainWindowPage::Profile);
-  m_navigationWidget->setCurrentIndex({});
+  navigateTo(MainWindowPage::Profile);
 }
 
 }  // namespace gui
