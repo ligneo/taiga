@@ -306,7 +306,7 @@ void NowPlayingWidget::refresh() {
 
   QStringList lines;
   if (const auto player = track::media::detection()->getCurrentPlayer()) {
-    lines += u"<b>Media player:</b> %1"_s.arg(QString::fromStdString(player->name));
+    lines += u"<b>Media player:</b> %1"_s.arg(player->name);
   }
   if (m_episode->contains(anitomy::ElementKind::EpisodeTitle)) {
     const auto episodeTitle = m_episode->element(anitomy::ElementKind::EpisodeTitle);
