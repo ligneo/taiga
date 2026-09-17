@@ -19,6 +19,7 @@
 #include "media.hpp"
 
 #include <algorithm>
+#include <iterator>
 #include <optional>
 #include <string>
 
@@ -27,6 +28,9 @@
 #include "taiga/settings.hpp"
 #include "track/episode.hpp"
 #include "track/media_player.hpp"
+#ifdef Q_OS_LINUX
+#include "track/media_mpris.hpp"
+#endif
 #include "track/recognition.hpp"
 
 namespace track::media {
@@ -148,7 +152,13 @@ void Detection::poll() {
   };
 
   std::vector<platform::Result> results;
-  if (!platform::GetResults(players, media_proc, results) || results.empty()) {
+  if (!platform::GetResults(players, media_proc, results)) {
+    results.clear();
+  }
+#ifdef Q_OS_LINUX
+  std::ranges::move(getMprisResults(players), std::back_inserter(results));
+#endif
+  if (results.empty()) {
     reset();
     return;
   }

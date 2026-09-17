@@ -150,6 +150,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set_target_properties(taiga PROPERTIES WIN32_EXECUTABLE ON)
 endif()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	find_package(Qt6 REQUIRED COMPONENTS DBus)
+	target_sources(taiga PRIVATE
+		track/media_mpris.cpp
+		track/media_mpris.hpp
+	)
+	target_link_libraries(taiga PRIVATE Qt6::DBus)
+endif()
+
 add_subdirectory(gui)
 add_subdirectory(resources)
 
