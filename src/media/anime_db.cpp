@@ -350,6 +350,7 @@ void Database::bindEntryToQuery(const ListEntry& entry, QSqlQuery& q) const {
 void Database::bindSettingsToQuery(const Settings& settings, QSqlQuery& q) const {
   q.bindValue(":id", settings.id);
   q.bindValue(":display_title", QString::fromStdString(settings.display_title));
+  q.bindValue(":folder", QString::fromStdString(settings.folder));
   q.bindValue(":synonyms", joinStrings(settings.synonyms, ""));
 }
 
@@ -407,6 +408,7 @@ Settings Database::settingsFromQuery(const QSqlQuery& q) const {
   return {
       .id = q.value("id").toInt(),
       .display_title = q.value("display_title").toString().toStdString(),
+      .folder = q.value("folder").toString().toStdString(),
       .synonyms = splitToVector(q.value("synonyms")),
   };
 }
