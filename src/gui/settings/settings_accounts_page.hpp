@@ -1,6 +1,6 @@
 /**
  * Taiga
- * Copyright (C) 2010-2024, Eren Okka
+ * Copyright (C) 2010-2026, Eren Okka
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,37 +18,38 @@
 
 #pragma once
 
-#include <QDialog>
-#include <vector>
+#include "gui/settings/settings_page.hpp"
 
-class QTreeWidgetItem;
-
-namespace Ui {
-class SettingsDialog;
-}
+class QComboBox;
+class QLabel;
+class QLineEdit;
+class QPushButton;
 
 namespace gui {
 
-class SettingsPage;
-
-class SettingsDialog final : public QDialog {
+class AccountsPage final : public SettingsPage {
   Q_OBJECT
-  Q_DISABLE_COPY_MOVE(SettingsDialog)
+  Q_DISABLE_COPY_MOVE(AccountsPage)
 
 public:
-  SettingsDialog(QWidget* parent);
-  ~SettingsDialog() = default;
+  AccountsPage(QWidget* parent);
+  ~AccountsPage() override = default;
 
-  static void show(QWidget* parent);
-
-public slots:
-  void accept() override;
+  void load() override;
+  void save() override;
 
 private:
-  void addPage(QTreeWidgetItem* item, SettingsPage* page);
+  void authorizeAnilist();
+  void authorizeMyanimelist();
+  void updateStatus();
 
-  Ui::SettingsDialog* ui_ = nullptr;
-  std::vector<SettingsPage*> pages_;
+  QComboBox* m_comboService = nullptr;
+  QLabel* m_anilistStatus = nullptr;
+  QPushButton* m_anilistButton = nullptr;
+  QLabel* m_myanimelistStatus = nullptr;
+  QPushButton* m_myanimelistButton = nullptr;
+  QLineEdit* m_kitsuEmail = nullptr;
+  QLineEdit* m_kitsuPassword = nullptr;
 };
 
 }  // namespace gui

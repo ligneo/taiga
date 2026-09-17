@@ -19,6 +19,7 @@
 #include "settings_dialog.hpp"
 
 #include "base/string.hpp"
+#include "gui/settings/settings_accounts_page.hpp"
 #include "gui/utils/theme.hpp"
 #include "ui_settings_dialog.h"
 
@@ -48,7 +49,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
     new QTreeWidgetItem(parent, QStringList(text));
   };
 
-  add_item("account_circle", "Accounts");
+  const auto accountsItem = add_item("account_circle", "Accounts");
   add_item("web_asset", "Application");
   add_item("list_alt", "Anime List");
   add_item("folder", "Library");
@@ -75,6 +76,8 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
 
   ui_->treeWidget->expandAll();
 
+  addPage(accountsItem, new AccountsPage(this));
+
   connect(ui_->treeWidget, &QTreeWidget::currentItemChanged, this,
           [this](QTreeWidgetItem* current, QTreeWidgetItem*) {
             if (current) {
@@ -83,8 +86,28 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
                 text = u"%1 / %2"_s.arg(current->parent()->text(0), text);
               }
               ui_->titleLabel->setText(text);
+
+              // Pages that are not implemented yet share the placeholder at index 0
+              ui_->stackedWidget->setCurrentIndex(current->data(0, Qt::UserRole).toInt());
             }
           });
+
+  ui_->treeWidget->setCurrentItem(accountsItem);
+}
+
+void SettingsDialog::accept() {
+  for (const auto page : pages_) {
+    page->save();
+  }
+
+  QDialog::accept();
+}
+
+void SettingsDialog::addPage(QTreeWidgetItem* item, SettingsPage* page) {
+  const auto index = ui_->stackedWidget->addWidget(page);
+  item->setData(0, Qt::UserRole, index);
+  page->load();
+  pages_.push_back(page);
 }
 
 void SettingsDialog::show(QWidget* parent) {

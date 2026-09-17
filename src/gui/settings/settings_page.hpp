@@ -1,6 +1,6 @@
 /**
  * Taiga
- * Copyright (C) 2010-2024, Eren Okka
+ * Copyright (C) 2010-2026, Eren Okka
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,37 +18,20 @@
 
 #pragma once
 
-#include <QDialog>
-#include <vector>
-
-class QTreeWidgetItem;
-
-namespace Ui {
-class SettingsDialog;
-}
+#include <QWidget>
 
 namespace gui {
 
-class SettingsPage;
-
-class SettingsDialog final : public QDialog {
+class SettingsPage : public QWidget {
   Q_OBJECT
-  Q_DISABLE_COPY_MOVE(SettingsDialog)
+  Q_DISABLE_COPY_MOVE(SettingsPage)
 
 public:
-  SettingsDialog(QWidget* parent);
-  ~SettingsDialog() = default;
+  SettingsPage(QWidget* parent) : QWidget(parent) {}
+  ~SettingsPage() override = default;
 
-  static void show(QWidget* parent);
-
-public slots:
-  void accept() override;
-
-private:
-  void addPage(QTreeWidgetItem* item, SettingsPage* page);
-
-  Ui::SettingsDialog* ui_ = nullptr;
-  std::vector<SettingsPage*> pages_;
+  virtual void load() = 0;
+  virtual void save() = 0;
 };
 
 }  // namespace gui

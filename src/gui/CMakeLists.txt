@@ -71,8 +71,11 @@ target_sources(taiga-gui PRIVATE
 	search/search_widget.cpp
 	search/search_widget.hpp
 
+	settings/settings_accounts_page.cpp
+	settings/settings_accounts_page.hpp
 	settings/settings_dialog.cpp
 	settings/settings_dialog.hpp
+	settings/settings_page.hpp
 
 	utils/format.cpp
 	utils/format.hpp
