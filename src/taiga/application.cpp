@@ -21,6 +21,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QLocalSocket>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QTranslator>
 #include <chrono>
@@ -43,7 +44,10 @@
 namespace taiga {
 
 Application::Application(int argc, char* argv[])
-    : QApplication(argc, argv), shared_memory_(TAIGA_APP_NAME) {
+    : QApplication(argc, argv),
+      lock_file_(
+          u"%1/%2.lock"_s.arg(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation))
+              .arg(TAIGA_APP_NAME)) {
   setApplicationName("taiga");
   setApplicationDisplayName("Taiga");
   setApplicationVersion(QString::fromStdString(taiga::version().to_string()));
@@ -76,6 +80,8 @@ int Application::run() {
     return 0;
   }
 
+  // Remove the socket file left behind by an instance that did not exit cleanly
+  QLocalServer::removeServer(TAIGA_APP_NAME);
   connect(&local_server_, &QLocalServer::newConnection, this, &Application::onNewConnection);
   local_server_.listen(TAIGA_APP_NAME);
 
@@ -126,7 +132,10 @@ gui::MainWindow* Application::mainWindow() const {
 }
 
 bool Application::hasPreviousInstance() {
-  return !shared_memory_.create(1);
+  // The lock is held for the lifetime of the application, so it must not become stale over time.
+  // A lock file left behind by a process that is no longer running is removed by `tryLock`.
+  lock_file_.setStaleLockTime(std::chrono::milliseconds::zero());
+  return !lock_file_.tryLock();
 }
 
 void Application::activatePreviousInstance() {
