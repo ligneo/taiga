@@ -19,6 +19,7 @@
 #include "theme.hpp"
 
 #include <QApplication>
+#include <QPalette>
 #include <QStyleHints>
 
 #include "base/file.hpp"
@@ -57,7 +58,16 @@ void Theme::initStyle() {
 }
 
 bool Theme::isDark() const {
-  return qApp->styleHints()->colorScheme() == Qt::ColorScheme::Dark;
+  const auto colorScheme = qApp->styleHints()->colorScheme();
+
+  // Some platform themes (e.g. qt6ct) provide a palette without reporting a color scheme
+  if (colorScheme == Qt::ColorScheme::Unknown) {
+    const auto palette = qApp->palette();
+    return palette.color(QPalette::WindowText).lightness() >
+           palette.color(QPalette::Window).lightness();
+  }
+
+  return colorScheme == Qt::ColorScheme::Dark;
 }
 
 QString Theme::readStylesheet(const QString& name) const {
