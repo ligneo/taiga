@@ -20,6 +20,11 @@
 
 #include "base/string.hpp"
 #include "gui/settings/settings_accounts_page.hpp"
+#include "gui/settings/settings_anime_list_page.hpp"
+#include "gui/settings/settings_application_page.hpp"
+#include "gui/settings/settings_library_page.hpp"
+#include "gui/settings/settings_media_players_page.hpp"
+#include "gui/settings/settings_streaming_page.hpp"
 #include "gui/utils/theme.hpp"
 #include "ui_settings_dialog.h"
 
@@ -46,17 +51,19 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   };
 
   const auto add_child = [this](QTreeWidgetItem* parent, QString text) {
-    new QTreeWidgetItem(parent, QStringList(text));
+    return new QTreeWidgetItem(parent, QStringList(text));
   };
 
   const auto accountsItem = add_item("account_circle", "Accounts");
-  add_item("web_asset", "Application");
-  add_item("list_alt", "Anime List");
-  add_item("folder", "Library");
+  const auto applicationItem = add_item("web_asset", "Application");
+  const auto animeListItem = add_item("list_alt", "Anime List");
+  const auto libraryItem = add_item("folder", "Library");
+  QTreeWidgetItem* mediaPlayersItem = nullptr;
+  QTreeWidgetItem* streamingItem = nullptr;
   {
     auto item = add_item("check_circle", "Recognition");
-    add_child(item, "Media players");
-    add_child(item, "Streaming");
+    mediaPlayersItem = add_child(item, "Media players");
+    streamingItem = add_child(item, "Streaming");
   }
   {
     auto item = add_item("share", "Sharing");
@@ -77,6 +84,11 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   ui_->treeWidget->expandAll();
 
   addPage(accountsItem, new AccountsPage(this));
+  addPage(applicationItem, new ApplicationPage(this));
+  addPage(animeListItem, new AnimeListPage(this));
+  addPage(libraryItem, new LibraryPage(this));
+  addPage(mediaPlayersItem, new MediaPlayersPage(this));
+  addPage(streamingItem, new StreamingPage(this));
 
   connect(ui_->treeWidget, &QTreeWidget::currentItemChanged, this,
           [this](QTreeWidgetItem* current, QTreeWidgetItem*) {

@@ -73,9 +73,21 @@ target_sources(taiga-gui PRIVATE
 
 	settings/settings_accounts_page.cpp
 	settings/settings_accounts_page.hpp
+	settings/settings_anime_list_page.cpp
+	settings/settings_anime_list_page.hpp
+	settings/settings_application_page.cpp
+	settings/settings_application_page.hpp
 	settings/settings_dialog.cpp
 	settings/settings_dialog.hpp
+	settings/settings_library_page.cpp
+	settings/settings_library_page.hpp
+	settings/settings_media_players_page.cpp
+	settings/settings_media_players_page.hpp
 	settings/settings_page.hpp
+	settings/settings_player_list.cpp
+	settings/settings_player_list.hpp
+	settings/settings_streaming_page.cpp
+	settings/settings_streaming_page.hpp
 
 	utils/format.cpp
 	utils/format.hpp
