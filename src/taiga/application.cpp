@@ -50,6 +50,7 @@ Application::Application(int argc, char* argv[])
               .arg(TAIGA_APP_NAME)) {
   setApplicationName("taiga");
   setApplicationDisplayName("Taiga");
+  setDesktopFileName("moe.taiga.Taiga");
   setApplicationVersion(QString::fromStdString(taiga::version().to_string()));
   setOrganizationDomain("taiga.moe");
   setOrganizationName("erengy");

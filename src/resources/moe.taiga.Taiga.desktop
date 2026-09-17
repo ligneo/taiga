@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Taiga
+GenericName=Anime Tracker
+Comment=Track the anime you watch and synchronize your progress
+Exec=taiga
+Icon=moe.taiga.Taiga
+Terminal=false
+Categories=AudioVideo;Video;Qt;
+Keywords=anime;anilist;kitsu;myanimelist;
+StartupWMClass=moe.taiga.Taiga

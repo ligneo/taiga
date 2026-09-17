@@ -157,6 +157,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 		track/media_mpris.hpp
 	)
 	target_link_libraries(taiga PRIVATE Qt6::DBus)
+
+	include(GNUInstallDirs)
+	install(TARGETS taiga RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 add_subdirectory(gui)

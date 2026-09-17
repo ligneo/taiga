@@ -13,6 +13,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		taiga.manifest
 		taiga.rc
 	)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	include(GNUInstallDirs)
+	install(FILES moe.taiga.Taiga.desktop
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+	)
+	install(FILES icons/taiga.png
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps
+		RENAME moe.taiga.Taiga.png
+	)
 endif()
 
 target_link_libraries(taiga-resources
