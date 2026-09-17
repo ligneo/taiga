@@ -67,7 +67,8 @@ QVariant getProperty(const QDBusConnection& bus, const QString& service, const Q
   auto message = QDBusMessage::createMethodCall(service, kObjectPath, kPropertiesInterface, "Get");
   message << QString{kPlayerInterface} << name;
 
-  const auto reply = bus.call(message, QDBus::Block, 500);
+  // Detection runs on the GUI thread, so an unresponsive player must not block it for long
+  const auto reply = bus.call(message, QDBus::Block, 100);
   if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty()) return {};
 
   return reply.arguments().constFirst().value<QDBusVariant>().variant();
