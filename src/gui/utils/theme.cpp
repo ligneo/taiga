@@ -43,16 +43,20 @@ const QIcon& Theme::getIcon(const QString& key, const QString& extension, bool u
   return m_icons[key];
 }
 
-void Theme::initStyle() {
+void Theme::applyStyle() {
   qApp->styleHints()->setColorScheme(taiga::settings.appColorScheme());
-
-  connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this,
-          [](Qt::ColorScheme scheme) { qApp->styleHints()->setColorScheme(scheme); });
 
   qApp->setStyle("fusion");
   const QString mainStylesheet = readStylesheet("main");
   const QString themeStylesheet = readStylesheet(isDark() ? "dark" : "light");
   qApp->setStyleSheet(mainStylesheet + themeStylesheet);
+}
+
+void Theme::initStyle() {
+  applyStyle();
+
+  connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this,
+          [](Qt::ColorScheme scheme) { qApp->styleHints()->setColorScheme(scheme); });
 }
 
 bool Theme::isDark() const {
