@@ -27,6 +27,11 @@
 
 namespace sync::anilist {
 
+void Service::setAccessToken(const QString& token) {
+  taiga::accounts.setAnilistToken(token.toStdString());
+  api_.setBearerToken(token.toUtf8());
+}
+
 void Service::authenticateUser() {
   const QJsonDocument data{QJsonObject{
       {"query", gql("Viewer")},

@@ -29,6 +29,7 @@ public:
 
   static Service* instance();
 
+  void setAccessToken(const QString& token);
   void authenticateUser();
   void fetchAnime(const int id);
   void search(const SearchParams& params, const int page = 1);

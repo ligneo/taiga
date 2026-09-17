@@ -32,6 +32,7 @@
 
 #include "base/string.hpp"
 #include "gui/main/main_window.hpp"
+#include "sync/anilist/anilist.hpp"
 #include "sync/anilist/anilist_utils.hpp"
 #include "sync/myanimelist/myanimelist.hpp"
 #include "sync/myanimelist/myanimelist_utils.hpp"
@@ -205,7 +206,7 @@ void AccountsPage::authorizeAnilist() {
   const auto token = extractToken(pin, "access_token");
   if (token.isEmpty()) return;
 
-  taiga::accounts.setAnilistToken(token.toStdString());
+  sync::anilist::Service::instance()->setAccessToken(token);
   taiga::accounts.setAnilistAuthenticated(false);
 
   if (sync::currentServiceId() == sync::ServiceId::AniList) {
