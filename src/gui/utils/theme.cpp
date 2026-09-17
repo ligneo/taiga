@@ -49,12 +49,10 @@ void Theme::initStyle() {
   connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this,
           [](Qt::ColorScheme scheme) { qApp->styleHints()->setColorScheme(scheme); });
 
-#ifdef Q_OS_WINDOWS
   qApp->setStyle("fusion");
   const QString mainStylesheet = readStylesheet("main");
   const QString themeStylesheet = readStylesheet(isDark() ? "dark" : "light");
   qApp->setStyleSheet(mainStylesheet + themeStylesheet);
-#endif
 }
 
 bool Theme::isDark() const {
