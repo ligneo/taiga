@@ -16,7 +16,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-option(TAIGA_PORTABLE "Portable mode" ON)
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	option(TAIGA_PORTABLE "Portable mode" ON)
+else()
+	option(TAIGA_PORTABLE "Portable mode" OFF)
+endif()
 
 include(TaigaConfig)
 
