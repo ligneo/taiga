@@ -39,8 +39,14 @@ struct MediaFields {
   std::string url;
 };
 
-#ifdef Q_OS_WINDOWS
-anisthesia::Media flattenMedia(const anisthesia::win::Result& result) {
+#if defined(Q_OS_WINDOWS)
+namespace platform = anisthesia::win;
+#elif defined(Q_OS_LINUX)
+namespace platform = anisthesia::lin;
+#endif
+
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_LINUX)
+anisthesia::Media flattenMedia(const platform::Result& result) {
   anisthesia::Media media;
 
   for (const auto& item : result.media) {
@@ -48,6 +54,11 @@ anisthesia::Media flattenMedia(const anisthesia::win::Result& result) {
   }
 
   return media;
+}
+
+bool isVideoFile(const std::string& path) {
+  const auto fileName = QFileInfo{QString::fromStdString(path)}.fileName();
+  return track::recognition::isVideoFile(track::recognition::parse(fileName.toStdString()));
 }
 #endif
 
@@ -118,7 +129,7 @@ bool Detection::init() {
     return false;
   }
 
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_LINUX)
   const auto interval = taiga::settings.mediaDetectionInterval();
   pollTimer_->start(interval);
 #endif
@@ -127,27 +138,36 @@ bool Detection::init() {
 }
 
 void Detection::poll() {
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_LINUX)
   const auto players = getEnabledPlayers(players_);
 
-  static const auto media_proc = [](const anisthesia::MediaInfo&) {
-    return true;  // Accept all media
+  static const auto media_proc = [](const anisthesia::MediaInfo& info) {
+    // Players may keep other files open as well (e.g. caches, databases)
+    if (info.type == anisthesia::MediaInfoType::File) return isVideoFile(info.value);
+    return true;
   };
 
-  std::vector<anisthesia::win::Result> results;
-  if (!anisthesia::win::GetResults(players, media_proc, results)) {
+  std::vector<platform::Result> results;
+  if (!platform::GetResults(players, media_proc, results) || results.empty()) {
     reset();
     return;
   }
 
-  const auto resultIt = std::ranges::find_if(results, [this](const anisthesia::win::Result& r) {
-    return r.window.handle == currentWindowHandle_;
-  });
+  static const auto getPlayerId = [](const platform::Result& result) -> player_id_t {
+#ifdef Q_OS_WINDOWS
+    return result.window.handle;
+#else
+    return result.process.id;
+#endif
+  };
+
+  const auto resultIt = std::ranges::find_if(
+      results, [this](const platform::Result& r) { return getPlayerId(r) == currentPlayerId_; });
   const auto& result = resultIt != results.end() ? *resultIt : results.front();
 
   currentPlayer_ = result.player;
   currentMedia_ = flattenMedia(result);
-  currentWindowHandle_ = result.window.handle;
+  currentPlayerId_ = getPlayerId(result);
 
   auto episode = resolveEpisode(extractMediaFields(*currentMedia_));
   if (!episode) {
@@ -179,7 +199,7 @@ void Detection::setCurrentEpisodeAnimeId(int animeId) {
 void Detection::reset() {
   currentPlayer_.reset();
   currentMedia_.reset();
-  currentWindowHandle_ = nullptr;
+  currentPlayerId_ = {};
 
   if (currentEpisode_) {
     currentEpisode_.reset();

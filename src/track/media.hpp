@@ -36,6 +36,11 @@ class Detection final : public QObject {
 public:
   using media_t = anisthesia::Media;
   using player_t = anisthesia::Player;
+#ifdef Q_OS_WINDOWS
+  using player_id_t = void*;  // window handle
+#else
+  using player_id_t = int;  // process ID
+#endif
 
   Detection(QObject* parent);
 
@@ -60,7 +65,7 @@ private:
   std::optional<Episode> currentEpisode_;
   std::optional<media_t> currentMedia_;
   std::optional<player_t> currentPlayer_;
-  void* currentWindowHandle_ = nullptr;
+  player_id_t currentPlayerId_ = {};
   std::vector<player_t> players_;
 
   QTimer* pollTimer_;
