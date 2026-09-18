@@ -49,8 +49,12 @@
 #include "sync/service.hpp"
 #include "taiga/accounts.hpp"
 #include "taiga/application.hpp"
+#include "taiga/config.h"
 #include "taiga/session.hpp"
 #include "taiga/settings.hpp"
+#include "track/episode.hpp"
+#include "track/media.hpp"
+#include "track/update.hpp"
 #include "ui_main_window.h"
 
 #ifdef Q_OS_WINDOWS
@@ -176,6 +180,9 @@ void MainWindow::initNowPlaying() {
 
   ui_->centralWidget->layout()->addWidget(m_nowPlayingWidget);
   m_nowPlayingWidget->hide();
+
+  connect(track::media::detection(), &track::media::Detection::listEntryUpdateRequested, this,
+          &MainWindow::confirmListEntryUpdate);
 }
 
 void MainWindow::initPage(MainWindowPage page) {
@@ -444,6 +451,35 @@ void MainWindow::displayWindow() {
 
 void MainWindow::about() {
   displayAboutDialog(this);
+}
+
+void MainWindow::confirmListEntryUpdate(track::Episode episode) {
+  const auto item = anime::db.item(episode.animeId());
+  if (!item) return;
+
+  const auto range = episode.episodeNumberRange();
+
+  QMessageBox dialog{this};
+  dialog.setIcon(QMessageBox::Question);
+  dialog.setWindowTitle(TAIGA_APP_NAME);
+  dialog.setText(tr("Do you want to update your anime list?"));
+  dialog.setInformativeText(u"%1\n%2"_s.arg(QString::fromStdString(anime::preferredTitle(*item)),
+                                            tr("Episode %1").arg(range ? range->second : 1)));
+  dialog.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+  dialog.setDefaultButton(QMessageBox::Yes);
+
+  const auto checkBox = new QCheckBox(tr("Don't ask again, update automatically"), &dialog);
+  dialog.setCheckBox(checkBox);
+
+  const bool accepted = dialog.exec() == QMessageBox::Yes;
+
+  if (checkBox->isChecked()) {
+    taiga::settings.setSyncUpdateAskToConfirm(false);
+  }
+
+  if (accepted) {
+    track::updateListEntry(episode);
+  }
 }
 
 void MainWindow::donate() const {

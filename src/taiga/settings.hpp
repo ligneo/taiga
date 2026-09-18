@@ -45,6 +45,7 @@ public:
   std::string proxyPassword() const;
   bool streamingMediaEnabled() const;
   bool syncEnabled() const;
+  bool syncUpdateAskToConfirm() const;
   std::chrono::seconds syncUpdateDelay() const;
   anime::TitleLanguage titleLanguage() const;
 
@@ -60,6 +61,7 @@ public:
   void setProxyPassword(const std::string& password) const;
   void setStreamingMediaEnabled(const bool enabled) const;
   void setSyncEnabled(const bool enabled) const;
+  void setSyncUpdateAskToConfirm(const bool enabled) const;
   void setSyncUpdateDelay(const std::chrono::seconds delay) const;
   void setTitleLanguage(const anime::TitleLanguage language) const;
 

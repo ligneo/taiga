@@ -200,7 +200,13 @@ void Detection::poll() {
 
   if (!episodeProcessed_ && timeUntilUpdate() <= std::chrono::seconds{0}) {
     episodeProcessed_ = true;
-    updateListEntry(*currentEpisode_);
+    if (isUpdateAllowed(*currentEpisode_)) {
+      if (taiga::settings.syncUpdateAskToConfirm()) {
+        emit listEntryUpdateRequested(*currentEpisode_);
+      } else {
+        updateListEntry(*currentEpisode_);
+      }
+    }
   }
 #endif
 }

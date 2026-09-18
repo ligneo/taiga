@@ -110,6 +110,10 @@ bool Settings::syncEnabled() const {
   return value("sync.enabled", true).toBool();
 }
 
+bool Settings::syncUpdateAskToConfirm() const {
+  return value("sync.update.askToConfirm", true).toBool();
+}
+
 std::chrono::seconds Settings::syncUpdateDelay() const {
   const auto delay = value("sync.update.delay", 120).toInt();
   return std::chrono::seconds{delay};
@@ -186,6 +190,10 @@ void Settings::setStreamingMediaEnabled(const bool enabled) const {
 
 void Settings::setSyncEnabled(const bool enabled) const {
   setValue("sync.enabled", enabled);
+}
+
+void Settings::setSyncUpdateAskToConfirm(const bool enabled) const {
+  setValue("sync.update.askToConfirm", enabled);
 }
 
 void Settings::setSyncUpdateDelay(const std::chrono::seconds delay) const {

@@ -20,6 +20,8 @@
 
 #include <QMainWindow>
 
+#include "track/episode.hpp"
+
 class QLineEdit;
 
 namespace Ui {
@@ -76,6 +78,7 @@ public slots:
 
 private slots:
   void about();
+  void confirmListEntryUpdate(track::Episode episode);
   void donate() const;
   void setPage(MainWindowPage page);
   void support() const;

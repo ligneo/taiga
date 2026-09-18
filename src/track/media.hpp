@@ -58,6 +58,7 @@ public:
 
 signals:
   void currentEpisodeChanged(std::optional<Episode> media) const;
+  void listEntryUpdateRequested(Episode episode) const;
 
 private:
   void poll();
