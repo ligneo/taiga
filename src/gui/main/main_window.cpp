@@ -55,6 +55,7 @@
 #include "taiga/session.hpp"
 #include "taiga/settings.hpp"
 #include "track/episode.hpp"
+#include "track/feed_aggregator.hpp"
 #include "track/media.hpp"
 #include "track/update.hpp"
 #include "ui_main_window.h"
@@ -401,6 +402,11 @@ void MainWindow::initTrayIcon() {
   menu->addAction(ui_->actionExit);
 
   m_trayIcon = new TrayIcon(this, windowIcon(), menu);
+
+  connect(track::aggregator(), &track::Aggregator::newEpisodesFound, this,
+          [this](const QStringList& lines) {
+            m_trayIcon->showMessage(tr("New torrents available"), lines.join(u'\n'));
+          });
 
   connect(m_trayIcon, &TrayIcon::activated, this, &MainWindow::displayWindow);
   connect(m_trayIcon, &TrayIcon::messageClicked, this,

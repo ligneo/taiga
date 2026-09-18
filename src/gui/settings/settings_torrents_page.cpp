@@ -53,7 +53,8 @@ TorrentsPage::TorrentsPage(QWidget* parent)
       m_comboSource(new QComboBox(this)),
       m_comboSearch(new QComboBox(this)),
       m_checkAutoCheck(new QCheckBox(tr("Check new torrents automatically"), this)),
-      m_spinInterval(new QSpinBox(this)) {
+      m_spinInterval(new QSpinBox(this)),
+      m_checkNotify(new QCheckBox(tr("Notify me when there are new episodes"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Sources
@@ -90,6 +91,14 @@ TorrentsPage::TorrentsPage(QWidget* parent)
 
     groupLayout->addWidget(m_checkAutoCheck);
     groupLayout->addLayout(form);
+    groupLayout->addWidget(m_checkNotify);
+
+    const auto note = new QLabel(
+        tr("An episode counts as new when it belongs to an anime on your list and goes beyond what "
+           "you have watched."),
+        group);
+    note->setWordWrap(true);
+    groupLayout->addWidget(note);
 
     layout->addWidget(group);
   }
@@ -97,6 +106,7 @@ TorrentsPage::TorrentsPage(QWidget* parent)
   layout->addStretch();
 
   connect(m_checkAutoCheck, &QCheckBox::toggled, m_spinInterval, &QWidget::setEnabled);
+  connect(m_checkAutoCheck, &QCheckBox::toggled, m_checkNotify, &QWidget::setEnabled);
 }
 
 void TorrentsPage::load() {
@@ -104,7 +114,9 @@ void TorrentsPage::load() {
   m_comboSearch->setCurrentText(QString::fromStdString(taiga::settings.torrentSearchUrl()));
   m_checkAutoCheck->setChecked(taiga::settings.torrentAutoCheckEnabled());
   m_spinInterval->setValue(static_cast<int>(taiga::settings.torrentAutoCheckInterval().count()));
+  m_checkNotify->setChecked(taiga::settings.torrentNotifyNewEpisodes());
   m_spinInterval->setEnabled(m_checkAutoCheck->isChecked());
+  m_checkNotify->setEnabled(m_checkAutoCheck->isChecked());
 }
 
 void TorrentsPage::save() {
@@ -112,6 +124,7 @@ void TorrentsPage::save() {
   taiga::settings.setTorrentSearchUrl(m_comboSearch->currentText().trimmed().toStdString());
   taiga::settings.setTorrentAutoCheckEnabled(m_checkAutoCheck->isChecked());
   taiga::settings.setTorrentAutoCheckInterval(std::chrono::minutes{m_spinInterval->value()});
+  taiga::settings.setTorrentNotifyNewEpisodes(m_checkNotify->isChecked());
 
   track::aggregator()->applyAutoCheckSettings();
 }

@@ -183,6 +183,12 @@ std::chrono::minutes Settings::torrentAutoCheckInterval() const {
   return std::chrono::minutes{value("torrents.discovery.interval", 60).toInt()};
 }
 
+bool Settings::torrentNotifyNewEpisodes() const {
+  // v1 stores an action rather than a flag, with `download` as the other value. That one needs
+  // filters to be of any use, so only `notify` is offered for now.
+  return value("torrents.discovery.newAction", u"notify"_s).toString() == u"notify";
+}
+
 void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
   const auto list =
       players |
@@ -193,6 +199,10 @@ void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
 
 void Settings::setTorrentDiscoveryUrl(const std::string& url) const {
   setValue("torrents.discovery.url", url);
+}
+
+void Settings::setTorrentNotifyNewEpisodes(const bool enabled) const {
+  setValue("torrents.discovery.newAction", enabled ? u"notify"_s : u"none"_s);
 }
 
 void Settings::setTorrentSearchUrl(const std::string& url) const {

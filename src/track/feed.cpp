@@ -24,6 +24,7 @@
 #include <map>
 
 #include "base/string.hpp"
+#include "media/anime_db.hpp"
 #include "track/recognition.hpp"
 #include "track/recognition_validate.hpp"
 
@@ -172,6 +173,18 @@ bool isBatchRelease(const Episode& episode) {
   return false;
 }
 
+// An item is new when it belongs to an anime on the list and goes beyond what has been watched.
+// This is v1's `MarkNewEpisodes()`.
+bool isNewEpisode(const FeedItem& item) {
+  const auto entry = anime::db.entry(item.episode.animeId());
+
+  if (!entry) return false;
+
+  const auto range = item.episode.episodeNumberRange();
+
+  return range && range->second > entry->watched_episodes;
+}
+
 TorrentCategory torrentCategory(const FeedItem& item) {
   if (QString::fromStdString(item.category.value).contains(u"Batch"_s, Qt::CaseInsensitive)) {
     return TorrentCategory::Batch;
@@ -244,6 +257,7 @@ void examineFeed(Feed& feed) {
     item.episode = recognition::parse(item.title);
     item.episode.setAnimeId(recognition::identify(item.episode));
     item.torrent_category = torrentCategory(item);
+    item.new_episode = isNewEpisode(item);
   }
 }
 

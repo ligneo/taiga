@@ -42,6 +42,7 @@ private:
   QComboBox* m_comboSearch = nullptr;
   QCheckBox* m_checkAutoCheck = nullptr;
   QSpinBox* m_spinInterval = nullptr;
+  QCheckBox* m_checkNotify = nullptr;
 };
 
 }  // namespace gui

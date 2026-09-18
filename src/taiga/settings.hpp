@@ -40,6 +40,7 @@ public:
   std::string torrentSearchUrl() const;
   bool torrentAutoCheckEnabled() const;
   std::chrono::minutes torrentAutoCheckInterval() const;
+  bool torrentNotifyNewEpisodes() const;
   std::string service() const;
   std::vector<std::string> libraryFolders() const;
   std::chrono::milliseconds mediaDetectionInterval() const;
@@ -66,6 +67,7 @@ public:
   void setTorrentSearchUrl(const std::string& url) const;
   void setTorrentAutoCheckEnabled(const bool enabled) const;
   void setTorrentAutoCheckInterval(const std::chrono::minutes interval) const;
+  void setTorrentNotifyNewEpisodes(const bool enabled) const;
   void setService(const std::string& service) const;
   void setLibraryFolders(std::vector<std::string> folders) const;
   void setMediaDetectionInterval(const std::chrono::milliseconds interval) const;

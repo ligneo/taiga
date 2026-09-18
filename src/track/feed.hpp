@@ -64,6 +64,8 @@ struct FeedItem : rss::Item {
   Episode episode;
   TorrentCategory torrent_category = TorrentCategory::Anime;
   FeedItemState state = FeedItemState::Blank;
+  // True when the item is ahead of what has been watched, as in v1's `MarkNewEpisodes()`
+  bool new_episode = false;
 
   std::string info_link;
   std::string magnet_link;

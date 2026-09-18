@@ -21,6 +21,7 @@
 #include <QCoreApplication>
 #include <QObject>
 #include <QRestAccessManager>
+#include <QStringList>
 #include <QTimer>
 #include <chrono>
 
@@ -37,17 +38,20 @@ public:
   Aggregator(QObject* parent);
   ~Aggregator() override = default;
 
-  void fetch(const QString& url = {});
+  void fetch(const QString& url = {}, const bool automatic = false);
   void search(const QString& title);
 
   void applyAutoCheckSettings();
   std::chrono::milliseconds timeUntilNextCheck() const;
+
+  QStringList newEpisodeLines() const;
 
   bool fetching() const;
   const Feed& feed() const;
 
 signals:
   void feedChanged();
+  void newEpisodesFound(const QStringList& lines);
   void fetchingChanged(bool fetching);
   void errorOccurred(const QString& message);
 

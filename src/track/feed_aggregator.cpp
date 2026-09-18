@@ -21,16 +21,20 @@
 #include <QNetworkRequest>
 #include <QRestReply>
 #include <QUrl>
+#include <map>
+#include <set>
 
 #include "base/log.hpp"
 #include "base/string.hpp"
+#include "media/anime_db.hpp"
+#include "media/anime_utils.hpp"
 #include "taiga/settings.hpp"
 
 namespace track {
 
 Aggregator::Aggregator(QObject* parent) : QObject(parent) {
   timer_.setSingleShot(false);
-  connect(&timer_, &QTimer::timeout, this, [this]() { fetch(); });
+  connect(&timer_, &QTimer::timeout, this, [this]() { fetch({}, true); });
   applyAutoCheckSettings();
 }
 
@@ -59,7 +63,7 @@ void Aggregator::search(const QString& title) {
   fetch(url);
 }
 
-void Aggregator::fetch(const QString& requestedUrl) {
+void Aggregator::fetch(const QString& requestedUrl, const bool automatic) {
   if (fetching_) return;
 
   const auto url = !requestedUrl.isEmpty()
@@ -77,7 +81,7 @@ void Aggregator::fetch(const QString& requestedUrl) {
   QNetworkRequest request{QUrl{url}};
   request.setHeaders(taiga::NetworkAccessManager::commonHeaders());
 
-  manager_.get(request, this, [this](QRestReply& reply) {
+  manager_.get(request, this, [this, automatic](QRestReply& reply) {
     fetching_ = false;
     emit fetchingChanged(false);
 
@@ -96,7 +100,42 @@ void Aggregator::fetch(const QString& requestedUrl) {
     feed_ = *feed;
     examineFeed(feed_);
     emit feedChanged();
+
+    // Only an automatic check notifies, so that refreshing by hand stays quiet. As in v1.
+    if (automatic && taiga::settings.torrentNotifyNewEpisodes()) {
+      if (const auto lines = newEpisodeLines(); !lines.isEmpty()) {
+        emit newEpisodesFound(lines);
+      }
+    }
   });
+}
+
+// One line per anime, with the episode numbers that are new. v1 groups the same way.
+QStringList Aggregator::newEpisodeLines() const {
+  std::map<QString, std::set<int>> episodes;
+
+  for (const auto& item : feed_.items) {
+    if (!item.new_episode) continue;
+
+    const auto anime = anime::db.item(item.episode.animeId());
+    const auto title =
+        anime ? QString::fromStdString(anime::preferredTitle(*anime))
+              : QString::fromStdString(item.episode.element(anitomy::ElementKind::Title));
+
+    if (const auto range = item.episode.episodeNumberRange()) {
+      episodes[title].insert(range->second);
+    }
+  }
+
+  QStringList lines;
+
+  for (const auto& [title, numbers] : episodes) {
+    QStringList parts;
+    for (const auto number : numbers) parts << u"#%1"_s.arg(number);
+    lines << u"\u00BB %1 %2"_s.arg(title, parts.join(u' '));
+  }
+
+  return lines;
 }
 
 bool Aggregator::fetching() const {
