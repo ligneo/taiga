@@ -18,11 +18,14 @@
 
 #include "feed.hpp"
 
+#include <QCoreApplication>
 #include <QRegularExpression>
 #include <QUrl>
 #include <map>
 
 #include "base/string.hpp"
+#include "track/recognition.hpp"
+#include "track/recognition_validate.hpp"
 
 namespace track {
 
@@ -158,6 +161,40 @@ void parseItemFromSource(const FeedSource source, FeedItem& item) {
   }
 }
 
+// A volume, or a release marked as such, covers more than one episode.
+bool isBatchRelease(const Episode& episode) {
+  if (episode.contains(anitomy::ElementKind::Volume)) return true;
+
+  for (const auto& value : episode.elements(anitomy::ElementKind::ReleaseInformation)) {
+    if (compareStrings(value, "batch", Qt::CaseInsensitive) == 0) return true;
+  }
+
+  return false;
+}
+
+TorrentCategory torrentCategory(const FeedItem& item) {
+  if (QString::fromStdString(item.category.value).contains(u"Batch"_s, Qt::CaseInsensitive)) {
+    return TorrentCategory::Batch;
+  }
+
+  if (isBatchRelease(item.episode)) return TorrentCategory::Batch;
+
+  // v1 checks the anime type element against Anitomy's keywords here. v2 has no such check, so the
+  // closest equivalent is used: openings, endings and previews are not regular episodes.
+  if (!recognition::isValidEpisodeType(item.episode)) return TorrentCategory::Other;
+
+  if (const auto range = item.episode.episodeNumberRange();
+      range && range->first != range->second) {
+    return TorrentCategory::Batch;
+  }
+
+  if (item.episode.contains(anitomy::ElementKind::FileExtension)) {
+    if (!recognition::isVideoFile(item.episode)) return TorrentCategory::Other;
+  }
+
+  return TorrentCategory::Anime;
+}
+
 }  // namespace
 
 FeedSource feedSource(const std::string& channelLink) {
@@ -200,6 +237,25 @@ std::optional<Feed> parseFeed(const QString& data) {
   }
 
   return feed;
+}
+
+void examineFeed(Feed& feed) {
+  for (auto& item : feed.items) {
+    item.episode = recognition::parse(item.title);
+    item.episode.setAnimeId(recognition::identify(item.episode));
+    item.torrent_category = torrentCategory(item);
+  }
+}
+
+QString torrentCategoryName(const TorrentCategory category) {
+  switch (category) {
+    case TorrentCategory::Batch:
+      return QCoreApplication::translate("track", "Batch");
+    case TorrentCategory::Other:
+      return QCoreApplication::translate("track", "Other");
+    default:
+      return QCoreApplication::translate("track", "Anime");
+  }
 }
 
 }  // namespace track

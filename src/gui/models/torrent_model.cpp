@@ -23,20 +23,15 @@
 #include <map>
 
 #include "base/string.hpp"
+#include "media/anime_db.hpp"
+#include "media/anime_utils.hpp"
 #include "track/episode.hpp"
 #include "track/feed.hpp"
 #include "track/feed_aggregator.hpp"
-#include "track/recognition.hpp"
 
 namespace gui {
 
 namespace {
-
-// Feed items only carry the release name, so the title, episode and group are taken from it the
-// same way they are taken from a file name.
-track::Episode parseTitle(const track::FeedItem& item) {
-  return track::recognition::parse(item.title);
-}
 
 QDateTime parseDate(const track::FeedItem& item) {
   auto value = QString::fromStdString(item.pub_date).trimmed();
@@ -87,18 +82,21 @@ QVariant TorrentModel::data(const QModelIndex& index, int role) const {
     case Qt::DisplayRole: {
       switch (index.column()) {
         case COLUMN_TITLE: {
-          const auto episode = parseTitle(item);
-          const auto title = episode.element(anitomy::ElementKind::Title);
+          // The matched anime is shown when there is one, so that different release names of the
+          // same anime line up.
+          if (const auto anime = anime::db.item(item.episode.animeId())) {
+            return QString::fromStdString(anime::preferredTitle(*anime));
+          }
+          const auto title = item.episode.element(anitomy::ElementKind::Title);
           return QString::fromStdString(title.empty() ? item.title : title);
         }
-        case COLUMN_EPISODE: {
-          const auto episode = parseTitle(item);
-          return QString::fromStdString(episode.element(anitomy::ElementKind::Episode));
-        }
-        case COLUMN_GROUP: {
-          const auto episode = parseTitle(item);
-          return QString::fromStdString(episode.element(anitomy::ElementKind::ReleaseGroup));
-        }
+        case COLUMN_EPISODE:
+          return QString::fromStdString(item.episode.element(anitomy::ElementKind::Episode));
+        case COLUMN_GROUP:
+          return QString::fromStdString(item.episode.element(anitomy::ElementKind::ReleaseGroup));
+        case COLUMN_VIDEO:
+          return QString::fromStdString(
+              item.episode.element(anitomy::ElementKind::VideoResolution));
         case COLUMN_SIZE:
           if (!item.file_size) return {};
           return QLocale::system().formattedDataSize(item.file_size, 1);
@@ -113,6 +111,10 @@ QVariant TorrentModel::data(const QModelIndex& index, int role) const {
           return date.isValid() ? QLocale::system().toString(date, QLocale::ShortFormat)
                                 : QString{};
         }
+        case COLUMN_DESCRIPTION:
+          return QString::fromStdString(item.description);
+        case COLUMN_FILENAME:
+          return QString::fromStdString(item.title);
       }
       break;
     }
@@ -160,9 +162,12 @@ QVariant TorrentModel::headerData(int section, Qt::Orientation orientation, int 
         case COLUMN_EPISODE: return tr("Episode");
         case COLUMN_GROUP: return tr("Group");
         case COLUMN_SIZE: return tr("Size");
+        case COLUMN_VIDEO: return tr("Video");
         case COLUMN_SEEDERS: return tr("S");
         case COLUMN_LEECHERS: return tr("L");
         case COLUMN_DOWNLOADS: return tr("D");
+        case COLUMN_DESCRIPTION: return tr("Description");
+        case COLUMN_FILENAME: return tr("Filename");
         case COLUMN_DATE: return tr("Release date");
       }
       // clang-format on

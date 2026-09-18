@@ -25,8 +25,15 @@
 #include <vector>
 
 #include "base/rss.hpp"
+#include "track/episode.hpp"
 
 namespace track {
+
+enum class TorrentCategory {
+  Anime,
+  Batch,
+  Other,
+};
 
 enum class FeedSource {
   Unknown,
@@ -47,6 +54,10 @@ struct FeedItem : rss::Item {
   FeedItem() = default;
   explicit FeedItem(const rss::Item& item) : rss::Item{item} {}
 
+  // Filled in by `examineFeed()`, so that the title is only parsed once.
+  Episode episode;
+  TorrentCategory torrent_category = TorrentCategory::Anime;
+
   std::string info_link;
   std::string magnet_link;
   std::optional<int> seeders;
@@ -63,5 +74,10 @@ struct Feed {
 
 FeedSource feedSource(const std::string& channelLink);
 std::optional<Feed> parseFeed(const QString& data);
+
+// Parses and identifies every item, then categorizes it. Runs once per feed, as in v1.
+void examineFeed(Feed& feed);
+
+QString torrentCategoryName(const TorrentCategory category);
 
 }  // namespace track

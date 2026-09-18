@@ -63,6 +63,7 @@ void Aggregator::fetch() {
     }
 
     feed_ = *feed;
+    examineFeed(feed_);
     emit feedChanged();
   });
 }
