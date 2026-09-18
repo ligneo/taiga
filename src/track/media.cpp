@@ -28,6 +28,7 @@
 #include "taiga/settings.hpp"
 #include "track/episode.hpp"
 #include "track/media_player.hpp"
+#include "track/media_stream.hpp"
 #ifdef Q_OS_LINUX
 #include "track/media_mpris.hpp"
 #endif
@@ -106,6 +107,13 @@ std::optional<Episode> resolveEpisode(const MediaFields& fields) {
   auto value = fields.title;
 
   if (value.empty()) return std::nullopt;
+
+  if (!fields.url.empty()) {
+    const auto title = track::recognition::titleFromStreamingProvider(fields.url, value);
+    if (!title) return std::nullopt;
+
+    value = *title;
+  }
 
   return track::recognition::parse(value);
 }
