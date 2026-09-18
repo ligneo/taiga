@@ -12,6 +12,7 @@ target_sources(taiga PRIVATE
 	base/log.cpp
 	base/log.hpp
 	base/preprocessor.h
+	base/rss.cpp
 	base/rss.hpp
 	base/settings.cpp
 	base/settings.hpp

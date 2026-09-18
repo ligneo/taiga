@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <QString>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -73,5 +75,7 @@ struct Feed {
   Channel channel;
   std::vector<Item> items;
 };
+
+std::optional<Feed> parse(const QString& data);
 
 }  // namespace rss
