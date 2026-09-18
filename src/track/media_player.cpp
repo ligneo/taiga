@@ -22,6 +22,7 @@
 
 #include "base/file.hpp"
 #include "base/string.hpp"
+#include "taiga/path.hpp"
 #include "taiga/settings.hpp"
 
 namespace track::media {
@@ -41,6 +42,35 @@ bool isDisabled(const Player& player) {
   });
 }
 
+// The bundled data can be extended or corrected by a file in the data directory, as in v1. A player
+// with the same name replaces the bundled one, the rest are added.
+void mergeUserPlayersData(std::vector<Player>& players) {
+  const auto path = u"%1/players.anisthesia"_s.arg(QString::fromStdString(taiga::get_data_path()));
+  const auto file = base::readFile(path);
+
+  if (file.isEmpty()) {
+    return;
+  }
+
+  std::vector<Player> userPlayers;
+
+  if (!anisthesia::ParsePlayersData(file.toStdString(), userPlayers)) {
+    qCritical() << "Could not read" << path;
+    return;
+  }
+
+  for (const auto& player : userPlayers) {
+    const auto it = std::ranges::find(players, player.name, &Player::name);
+    if (it != players.end()) {
+      *it = player;
+    } else {
+      players.push_back(player);
+    }
+  }
+
+  qDebug() << "Merged" << userPlayers.size() << "media players from" << path;
+}
+
 }  // namespace
 
 bool parsePlayersData(std::vector<Player>& players) {
@@ -50,8 +80,13 @@ bool parsePlayersData(std::vector<Player>& players) {
     return false;
   }
 
-  // @TODO: Allow user to override via file in data directory
-  return anisthesia::ParsePlayersData(file.toStdString(), players);
+  if (!anisthesia::ParsePlayersData(file.toStdString(), players)) {
+    return false;
+  }
+
+  mergeUserPlayersData(players);
+
+  return true;
 }
 
 std::vector<Player> getEnabledPlayers(const std::vector<Player>& players) {
