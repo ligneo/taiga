@@ -36,6 +36,7 @@ public:
   Qt::ColorScheme appColorScheme() const;
   std::vector<std::string> disabledMediaPlayers() const;
   std::vector<std::string> disabledStreamingProviders() const;
+  std::string torrentDiscoveryUrl() const;
   std::string service() const;
   std::vector<std::string> libraryFolders() const;
   std::chrono::milliseconds mediaDetectionInterval() const;
@@ -58,6 +59,7 @@ public:
   void setAppColorScheme(const Qt::ColorScheme scheme) const;
   void setDisabledMediaPlayers(std::vector<std::string> players) const;
   void setDisabledStreamingProviders(std::vector<std::string> providers) const;
+  void setTorrentDiscoveryUrl(const std::string& url) const;
   void setService(const std::string& service) const;
   void setLibraryFolders(std::vector<std::string> folders) const;
   void setMediaDetectionInterval(const std::chrono::milliseconds interval) const;

@@ -1,0 +1,59 @@
+/**
+ * Taiga
+ * Copyright (C) 2010-2026, Eren Okka
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include <QCoreApplication>
+#include <QObject>
+#include <QRestAccessManager>
+
+#include "taiga/network.hpp"
+#include "track/feed.hpp"
+
+namespace track {
+
+class Aggregator final : public QObject {
+  Q_OBJECT
+  Q_DISABLE_COPY_MOVE(Aggregator)
+
+public:
+  Aggregator(QObject* parent);
+  ~Aggregator() override = default;
+
+  void fetch();
+
+  bool fetching() const;
+  const Feed& feed() const;
+
+signals:
+  void feedChanged();
+  void fetchingChanged(bool fetching);
+  void errorOccurred(const QString& message);
+
+private:
+  QRestAccessManager manager_{taiga::network()};
+  Feed feed_;
+  bool fetching_ = false;
+};
+
+inline Aggregator* aggregator() {
+  static auto instance = new Aggregator(qApp);
+  return instance;
+}
+
+}  // namespace track

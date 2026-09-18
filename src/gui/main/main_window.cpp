@@ -35,6 +35,7 @@
 #include "gui/main/status_bar_controller.hpp"
 #include "gui/profile/profile_widget.hpp"
 #include "gui/search/search_widget.hpp"
+#include "gui/torrents/torrents_widget.hpp"
 #include "gui/settings/settings_dialog.hpp"
 #include "gui/utils/format.hpp"
 #include "gui/utils/theme.hpp"
@@ -225,6 +226,8 @@ void MainWindow::initPage(MainWindowPage page) {
       break;
 
     case MainWindowPage::Torrents:
+      m_torrentsWidget = new TorrentsWidget(ui_->torrentsPage);
+      init_page(ui_->torrentsPage, m_torrentsWidget);
       break;
 
     case MainWindowPage::Profile:

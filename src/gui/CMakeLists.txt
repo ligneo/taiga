@@ -74,6 +74,10 @@ target_sources(taiga-gui PRIVATE
 	search/search_widget.cpp
 	search/search_widget.hpp
 
+	models/torrent_model.cpp
+	models/torrent_model.hpp
+	torrents/torrents_widget.cpp
+	torrents/torrents_widget.hpp
 	settings/settings_accounts_page.cpp
 	settings/settings_accounts_page.hpp
 	settings/settings_anime_list_page.cpp

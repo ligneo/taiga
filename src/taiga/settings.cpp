@@ -165,12 +165,21 @@ std::vector<std::string> Settings::disabledStreamingProviders() const {
          std::ranges::to<std::vector>();
 }
 
+std::string Settings::torrentDiscoveryUrl() const {
+  static const auto defaultUrl = u"https://www.tokyotosho.info/rss.php?filter=1,11&zwnj=0"_s;
+  return value("torrents.discovery.url", defaultUrl).toString().toStdString();
+}
+
 void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
   const auto list =
       players |
       std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
       std::ranges::to<QList>();
   setValue("recognition.mediaPlayers.disabled", QJsonArray::fromStringList(list));
+}
+
+void Settings::setTorrentDiscoveryUrl(const std::string& url) const {
+  setValue("torrents.discovery.url", url);
 }
 
 void Settings::setDisabledStreamingProviders(std::vector<std::string> providers) const {

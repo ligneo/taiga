@@ -43,6 +43,7 @@ class NavigationWidget;
 class NowPlayingWidget;
 class ProfileWidget;
 class SearchWidget;
+class TorrentsWidget;
 class StatusBarController;
 class TrayIcon;
 
@@ -112,6 +113,7 @@ private:
   ProfileWidget* m_profileWidget = nullptr;
   QLineEdit* m_searchBox = nullptr;
   SearchWidget* m_searchWidget = nullptr;
+  TorrentsWidget* m_torrentsWidget = nullptr;
   StatusBarController* m_statusBarController = nullptr;
   TrayIcon* m_trayIcon = nullptr;
 };
