@@ -107,6 +107,8 @@ target_sources(taiga PRIVATE
 	taiga/version.hpp
 
 	track/episode.cpp
+	track/feed.cpp
+	track/feed.hpp
 	track/episode.hpp
 	track/media.cpp
 	track/media.hpp
