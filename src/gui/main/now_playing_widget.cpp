@@ -20,6 +20,7 @@
 
 #include <QBoxLayout>
 #include <QLabel>
+#include <format>
 #include <optional>
 
 #include "base/string.hpp"
@@ -30,6 +31,7 @@
 #include "media/anime_utils.hpp"
 #include "track/episode.hpp"
 #include "track/media.hpp"
+#include "track/update.hpp"
 
 namespace gui {
 
@@ -63,6 +65,10 @@ NowPlayingWidget::NowPlayingWidget(QWidget* parent) : QFrame(parent) {
   m_timerLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
   layout->addWidget(m_timerLabel);
 
+  m_timer = new QTimer(this);
+  m_timer->setInterval(std::chrono::seconds{1});
+  connect(m_timer, &QTimer::timeout, this, &NowPlayingWidget::refreshTimer);
+
   refresh();
 
   connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
@@ -77,6 +83,7 @@ NowPlayingWidget::NowPlayingWidget(QWidget* parent) : QFrame(parent) {
 
 void NowPlayingWidget::reset() {
   hide();
+  m_timer->stop();
   m_anime.reset();
   m_episode.reset();
   refresh();
@@ -93,6 +100,7 @@ void NowPlayingWidget::setPlaying(track::Episode episode) {
 
   refresh();
   show();
+  m_timer->start();
 }
 
 void NowPlayingWidget::refresh() {
@@ -130,7 +138,19 @@ void NowPlayingWidget::refresh() {
                            .arg(u"%1/%2"_s.arg(episodeNumber).arg(episodeCount))
                            .arg("font-weight: 600; text-decoration: none;"));
 
-  m_timerLabel->setText("List update in <b style=\"font-weight: 600;\">00:00</b>");
+  refreshTimer();
+}
+
+void NowPlayingWidget::refreshTimer() {
+  if (!m_episode.has_value() || !track::isUpdateAllowed(*m_episode)) {
+    m_timerLabel->clear();
+    return;
+  }
+
+  const auto remaining = track::media::detection()->timeUntilUpdate();
+
+  m_timerLabel->setText(u"List update in <b style=\"font-weight: 600;\">%1</b>"_s.arg(
+      QString::fromStdString(std::format("{:%M:%S}", remaining))));
 }
 
 }  // namespace gui

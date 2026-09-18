@@ -22,6 +22,7 @@
 #include <QObject>
 #include <QTimer>
 #include <anisthesia.hpp>
+#include <chrono>
 #include <optional>
 #include <vector>
 
@@ -53,6 +54,8 @@ public:
   bool isMediaIdentified() const;
   void setCurrentEpisodeAnimeId(int animeId);
 
+  std::chrono::seconds timeUntilUpdate() const;
+
 signals:
   void currentEpisodeChanged(std::optional<Episode> media) const;
 
@@ -61,6 +64,9 @@ private:
   void reset();
 
   bool hasEpisodeChanged(const Episode& episode) const;
+
+  std::chrono::milliseconds episodeElapsed_{0};
+  bool episodeProcessed_ = false;
 
   std::optional<Episode> currentEpisode_;
   std::optional<media_t> currentMedia_;

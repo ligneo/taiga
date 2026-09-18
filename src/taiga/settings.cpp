@@ -110,6 +110,11 @@ bool Settings::syncEnabled() const {
   return value("sync.enabled", true).toBool();
 }
 
+std::chrono::seconds Settings::syncUpdateDelay() const {
+  const auto delay = value("sync.update.delay", 120).toInt();
+  return std::chrono::seconds{delay};
+}
+
 anime::TitleLanguage Settings::titleLanguage() const {
   if (!titleLanguageCache_) {
     const auto language = value("library.titleLanguage", u"romaji"_s).toString();
@@ -181,6 +186,10 @@ void Settings::setStreamingMediaEnabled(const bool enabled) const {
 
 void Settings::setSyncEnabled(const bool enabled) const {
   setValue("sync.enabled", enabled);
+}
+
+void Settings::setSyncUpdateDelay(const std::chrono::seconds delay) const {
+  setValue("sync.update.delay", static_cast<int>(delay.count()));
 }
 
 void Settings::setTitleLanguage(const anime::TitleLanguage language) const {

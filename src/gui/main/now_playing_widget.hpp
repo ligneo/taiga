@@ -20,6 +20,7 @@
 
 #include <QFrame>
 #include <QLabel>
+#include <QTimer>
 #include <optional>
 
 #include "media/anime.hpp"
@@ -40,10 +41,12 @@ public:
 
 private:
   void refresh();
+  void refreshTimer();
 
   QLabel* m_iconLabel = nullptr;
   QLabel* m_mainLabel = nullptr;
   QLabel* m_timerLabel = nullptr;
+  QTimer* m_timer = nullptr;
 
   std::optional<Anime> m_anime;
   std::optional<track::Episode> m_episode;

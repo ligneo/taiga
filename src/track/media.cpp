@@ -32,6 +32,7 @@
 #include "track/media_mpris.hpp"
 #endif
 #include "track/recognition.hpp"
+#include "track/update.hpp"
 
 namespace track::media {
 
@@ -190,9 +191,24 @@ void Detection::poll() {
 
   if (hasEpisodeChanged(*episode)) {
     currentEpisode_ = episode;
+    episodeElapsed_ = {};
+    episodeProcessed_ = false;
     emit currentEpisodeChanged(episode);
+  } else {
+    episodeElapsed_ += taiga::settings.mediaDetectionInterval();
+  }
+
+  if (!episodeProcessed_ && timeUntilUpdate() <= std::chrono::seconds{0}) {
+    episodeProcessed_ = true;
+    updateListEntry(*currentEpisode_);
   }
 #endif
+}
+
+std::chrono::seconds Detection::timeUntilUpdate() const {
+  const auto delay = taiga::settings.syncUpdateDelay();
+  const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(episodeElapsed_);
+  return elapsed < delay ? delay - elapsed : std::chrono::seconds{0};
 }
 
 bool Detection::isMediaIdentified() const {
@@ -210,6 +226,8 @@ void Detection::reset() {
   currentPlayer_.reset();
   currentMedia_.reset();
   currentPlayerId_ = {};
+  episodeElapsed_ = {};
+  episodeProcessed_ = false;
 
   if (currentEpisode_) {
     currentEpisode_.reset();
