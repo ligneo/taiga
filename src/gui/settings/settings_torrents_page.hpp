@@ -18,36 +18,30 @@
 
 #pragma once
 
-#include <QSortFilterProxyModel>
-#include <QTreeView>
+#include "gui/settings/settings_page.hpp"
 
-#include "gui/common/page_widget.hpp"
+class QCheckBox;
+class QComboBox;
+class QSpinBox;
 
 namespace gui {
 
-class TorrentModel;
-
-class TorrentsWidget final : public PageWidget {
+class TorrentsPage final : public SettingsPage {
   Q_OBJECT
-  Q_DISABLE_COPY_MOVE(TorrentsWidget)
+  Q_DISABLE_COPY_MOVE(TorrentsPage)
 
 public:
-  TorrentsWidget(QWidget* parent);
-  ~TorrentsWidget() override = default;
+  TorrentsPage(QWidget* parent);
+  ~TorrentsPage() override = default;
 
-public slots:
-  void setFilterText(const QString& text);
-  void search(const QString& title);
+  void load() override;
+  void save() override;
 
 private:
-  void initToolbar();
-  void openItemLink(const QModelIndex& index) const;
-  void showContextMenu();
-
-  QAction* m_actionRefresh = nullptr;
-  TorrentModel* m_model = nullptr;
-  QSortFilterProxyModel* m_proxyModel = nullptr;
-  QTreeView* m_view = nullptr;
+  QComboBox* m_comboSource = nullptr;
+  QComboBox* m_comboSearch = nullptr;
+  QCheckBox* m_checkAutoCheck = nullptr;
+  QSpinBox* m_spinInterval = nullptr;
 };
 
 }  // namespace gui

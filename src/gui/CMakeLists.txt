@@ -101,6 +101,8 @@ target_sources(taiga-gui PRIVATE
 	settings/settings_recognition_page.hpp
 	settings/settings_stream_list.cpp
 	settings/settings_stream_list.hpp
+	settings/settings_torrents_page.cpp
+	settings/settings_torrents_page.hpp
 	settings/settings_streaming_page.cpp
 	settings/settings_streaming_page.hpp
 

@@ -28,12 +28,43 @@
 
 namespace track {
 
-Aggregator::Aggregator(QObject* parent) : QObject(parent) {}
+Aggregator::Aggregator(QObject* parent) : QObject(parent) {
+  timer_.setSingleShot(false);
+  connect(&timer_, &QTimer::timeout, this, [this]() { fetch(); });
+  applyAutoCheckSettings();
+}
 
-void Aggregator::fetch() {
+void Aggregator::applyAutoCheckSettings() {
+  const auto interval = taiga::settings.torrentAutoCheckInterval();
+
+  if (!taiga::settings.torrentAutoCheckEnabled() || interval.count() < 1) {
+    timer_.stop();
+    return;
+  }
+
+  timer_.start(interval);
+}
+
+std::chrono::milliseconds Aggregator::timeUntilNextCheck() const {
+  if (!timer_.isActive()) return std::chrono::milliseconds::zero();
+  return std::chrono::milliseconds{timer_.remainingTime()};
+}
+
+void Aggregator::search(const QString& title) {
+  auto url = QString::fromStdString(taiga::settings.torrentSearchUrl());
+
+  // v1 substitutes the encoded title, so that a title with spaces or symbols stays a valid URL.
+  url.replace(u"%title%"_s, QString::fromUtf8(QUrl::toPercentEncoding(title)));
+
+  fetch(url);
+}
+
+void Aggregator::fetch(const QString& requestedUrl) {
   if (fetching_) return;
 
-  const auto url = QString::fromStdString(taiga::settings.torrentDiscoveryUrl());
+  const auto url = !requestedUrl.isEmpty()
+                       ? requestedUrl
+                       : QString::fromStdString(taiga::settings.torrentDiscoveryUrl());
 
   if (url.isEmpty()) {
     emit errorOccurred(tr("No feed address is set."));

@@ -110,6 +110,10 @@ void TorrentsWidget::setFilterText(const QString& text) {
   m_proxyModel->setFilterFixedString(text);
 }
 
+void TorrentsWidget::search(const QString& title) {
+  track::aggregator()->search(title);
+}
+
 void TorrentsWidget::openItemLink(const QModelIndex& index) const {
   const auto item = m_model->itemAt(m_proxyModel->mapToSource(index));
 
@@ -134,6 +138,11 @@ void TorrentsWidget::showContextMenu() {
   menu->setAttribute(Qt::WA_DeleteOnClose);
 
   menu->addAction(tr("Open in browser"), this, [this, index]() { openItemLink(index); });
+
+  if (const auto title = item->episode.element(anitomy::ElementKind::Title); !title.empty()) {
+    const auto text = QString::fromStdString(title);
+    menu->addAction(tr("Search for more torrents"), this, [this, text]() { search(text); });
+  }
 
   if (!item->magnet_link.empty()) {
     const auto link = QString::fromStdString(item->magnet_link);

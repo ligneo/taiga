@@ -170,6 +170,19 @@ std::string Settings::torrentDiscoveryUrl() const {
   return value("torrents.discovery.url", defaultUrl).toString().toStdString();
 }
 
+std::string Settings::torrentSearchUrl() const {
+  static const auto defaultUrl = u"https://nyaa.si/?page=rss&c=1_2&f=0&q=%title%"_s;
+  return value("torrents.discovery.searchUrl", defaultUrl).toString().toStdString();
+}
+
+bool Settings::torrentAutoCheckEnabled() const {
+  return value("torrents.discovery.autoCheck", true).toBool();
+}
+
+std::chrono::minutes Settings::torrentAutoCheckInterval() const {
+  return std::chrono::minutes{value("torrents.discovery.interval", 60).toInt()};
+}
+
 void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
   const auto list =
       players |
@@ -180,6 +193,18 @@ void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
 
 void Settings::setTorrentDiscoveryUrl(const std::string& url) const {
   setValue("torrents.discovery.url", url);
+}
+
+void Settings::setTorrentSearchUrl(const std::string& url) const {
+  setValue("torrents.discovery.searchUrl", url);
+}
+
+void Settings::setTorrentAutoCheckEnabled(const bool enabled) const {
+  setValue("torrents.discovery.autoCheck", enabled);
+}
+
+void Settings::setTorrentAutoCheckInterval(const std::chrono::minutes interval) const {
+  setValue("torrents.discovery.interval", static_cast<int>(interval.count()));
 }
 
 void Settings::setDisabledStreamingProviders(std::vector<std::string> providers) const {

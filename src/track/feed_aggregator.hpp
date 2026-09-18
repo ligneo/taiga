@@ -21,6 +21,8 @@
 #include <QCoreApplication>
 #include <QObject>
 #include <QRestAccessManager>
+#include <QTimer>
+#include <chrono>
 
 #include "taiga/network.hpp"
 #include "track/feed.hpp"
@@ -35,7 +37,11 @@ public:
   Aggregator(QObject* parent);
   ~Aggregator() override = default;
 
-  void fetch();
+  void fetch(const QString& url = {});
+  void search(const QString& title);
+
+  void applyAutoCheckSettings();
+  std::chrono::milliseconds timeUntilNextCheck() const;
 
   bool fetching() const;
   const Feed& feed() const;
@@ -47,6 +53,7 @@ signals:
 
 private:
   QRestAccessManager manager_{taiga::network()};
+  QTimer timer_{this};
   Feed feed_;
   bool fetching_ = false;
 };

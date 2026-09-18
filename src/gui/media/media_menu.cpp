@@ -47,6 +47,7 @@
 #include "media/anime_utils.hpp"
 #include "sync/service.hpp"
 #include "taiga/settings.hpp"
+#include "track/feed_aggregator.hpp"
 #include "track/media.hpp"
 #include "track/play.hpp"
 #include "track/scanner.hpp"
@@ -428,8 +429,11 @@ void MediaMenu::startNewRewatch() const {
 
 void MediaMenu::torrents() const {
   const auto& item = m_items.front();
+  const auto title = QString::fromStdString(anime::preferredTitle(item));
+
   mainWindow()->navigateTo(MainWindowPage::Torrents);
-  mainWindow()->searchBox()->setText(QString::fromStdString(anime::preferredTitle(item)));
+  mainWindow()->searchBox()->setText(title);
+  track::aggregator()->search(title);
 }
 
 void MediaMenu::viewDetails() const {

@@ -37,6 +37,9 @@ public:
   std::vector<std::string> disabledMediaPlayers() const;
   std::vector<std::string> disabledStreamingProviders() const;
   std::string torrentDiscoveryUrl() const;
+  std::string torrentSearchUrl() const;
+  bool torrentAutoCheckEnabled() const;
+  std::chrono::minutes torrentAutoCheckInterval() const;
   std::string service() const;
   std::vector<std::string> libraryFolders() const;
   std::chrono::milliseconds mediaDetectionInterval() const;
@@ -60,6 +63,9 @@ public:
   void setDisabledMediaPlayers(std::vector<std::string> players) const;
   void setDisabledStreamingProviders(std::vector<std::string> providers) const;
   void setTorrentDiscoveryUrl(const std::string& url) const;
+  void setTorrentSearchUrl(const std::string& url) const;
+  void setTorrentAutoCheckEnabled(const bool enabled) const;
+  void setTorrentAutoCheckInterval(const std::chrono::minutes interval) const;
   void setService(const std::string& service) const;
   void setLibraryFolders(std::vector<std::string> folders) const;
   void setMediaDetectionInterval(const std::chrono::milliseconds interval) const;
