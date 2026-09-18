@@ -32,11 +32,17 @@ namespace track::recognition {
 namespace {
 
 QString readRelationsFile() {
+  // The data directory holds a newer copy once one is fetched, so it comes first. Until then the
+  // bundled copy is used, the same way media player data is.
   const auto path = u"%1/anime-relations.txt"_s.arg(taiga::get_data_path());
 
-  const auto contents = base::readFile(path);
+  if (const auto contents = base::readFile(path); !contents.isEmpty()) {
+    return contents;
+  }
+
+  const auto contents = base::readFile(":/anime-relations.txt");
   if (contents.isEmpty()) {
-    qWarning() << "Could not read anime relations data:" << path;
+    qWarning() << "Could not read anime relations data";
   }
 
   return contents;
