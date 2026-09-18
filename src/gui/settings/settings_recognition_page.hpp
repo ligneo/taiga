@@ -1,6 +1,6 @@
 /**
  * Taiga
- * Copyright (C) 2010-2024, Eren Okka
+ * Copyright (C) 2010-2026, Eren Okka
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,31 +18,33 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
+#include "gui/settings/settings_page.hpp"
 
-class QIcon;
-class QMenu;
-class QSystemTrayIcon;
+class QCheckBox;
+class QSpinBox;
 
 namespace gui {
 
-class TrayIcon final : public QObject {
+class RecognitionPage final : public SettingsPage {
   Q_OBJECT
-  Q_DISABLE_COPY_MOVE(TrayIcon)
+  Q_DISABLE_COPY_MOVE(RecognitionPage)
 
 public:
-  TrayIcon(QObject* parent, const QIcon& icon, QMenu* menu);
+  RecognitionPage(QWidget* parent);
+  ~RecognitionPage() override = default;
 
-  void showMessage(const QString& title, const QString& text) const;
-
-signals:
-  void activated();
-  void messageClicked();
+  void load() override;
+  void save() override;
 
 private:
-  QMenu* m_contextMenu;
-  QSystemTrayIcon* m_icon;
+  QCheckBox* m_checkOutOfRoot = nullptr;
+  QCheckBox* m_checkOutOfRange = nullptr;
+  QCheckBox* m_checkNotifyRecognized = nullptr;
+  QCheckBox* m_checkNotifyNotRecognized = nullptr;
+  QSpinBox* m_spinDelay = nullptr;
+  QCheckBox* m_checkWaitPlayer = nullptr;
+  QCheckBox* m_checkAskToConfirm = nullptr;
+  QSpinBox* m_spinDetectionInterval = nullptr;
 };
 
 }  // namespace gui

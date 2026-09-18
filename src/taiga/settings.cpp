@@ -110,6 +110,14 @@ bool Settings::syncEnabled() const {
   return value("sync.enabled", true).toBool();
 }
 
+bool Settings::syncNotifyNotRecognized() const {
+  return value("sync.notify.notRecognized", true).toBool();
+}
+
+bool Settings::syncNotifyRecognized() const {
+  return value("sync.notify.recognized", true).toBool();
+}
+
 bool Settings::syncUpdateAskToConfirm() const {
   return value("sync.update.askToConfirm", true).toBool();
 }
@@ -117,6 +125,18 @@ bool Settings::syncUpdateAskToConfirm() const {
 std::chrono::seconds Settings::syncUpdateDelay() const {
   const auto delay = value("sync.update.delay", 120).toInt();
   return std::chrono::seconds{delay};
+}
+
+bool Settings::syncUpdateOutOfRange() const {
+  return value("sync.update.outOfRange", false).toBool();
+}
+
+bool Settings::syncUpdateOutOfRoot() const {
+  return value("sync.update.outOfRoot", false).toBool();
+}
+
+bool Settings::syncUpdateWaitPlayer() const {
+  return value("sync.update.waitPlayer", false).toBool();
 }
 
 anime::TitleLanguage Settings::titleLanguage() const {
@@ -192,12 +212,32 @@ void Settings::setSyncEnabled(const bool enabled) const {
   setValue("sync.enabled", enabled);
 }
 
+void Settings::setSyncNotifyNotRecognized(const bool enabled) const {
+  setValue("sync.notify.notRecognized", enabled);
+}
+
+void Settings::setSyncNotifyRecognized(const bool enabled) const {
+  setValue("sync.notify.recognized", enabled);
+}
+
 void Settings::setSyncUpdateAskToConfirm(const bool enabled) const {
   setValue("sync.update.askToConfirm", enabled);
 }
 
 void Settings::setSyncUpdateDelay(const std::chrono::seconds delay) const {
   setValue("sync.update.delay", static_cast<int>(delay.count()));
+}
+
+void Settings::setSyncUpdateOutOfRange(const bool enabled) const {
+  setValue("sync.update.outOfRange", enabled);
+}
+
+void Settings::setSyncUpdateOutOfRoot(const bool enabled) const {
+  setValue("sync.update.outOfRoot", enabled);
+}
+
+void Settings::setSyncUpdateWaitPlayer(const bool enabled) const {
+  setValue("sync.update.waitPlayer", enabled);
 }
 
 void Settings::setTitleLanguage(const anime::TitleLanguage language) const {

@@ -45,7 +45,12 @@ public:
   std::string proxyPassword() const;
   bool streamingMediaEnabled() const;
   bool syncEnabled() const;
+  bool syncNotifyNotRecognized() const;
+  bool syncNotifyRecognized() const;
   bool syncUpdateAskToConfirm() const;
+  bool syncUpdateOutOfRange() const;
+  bool syncUpdateOutOfRoot() const;
+  bool syncUpdateWaitPlayer() const;
   std::chrono::seconds syncUpdateDelay() const;
   anime::TitleLanguage titleLanguage() const;
 
@@ -61,7 +66,12 @@ public:
   void setProxyPassword(const std::string& password) const;
   void setStreamingMediaEnabled(const bool enabled) const;
   void setSyncEnabled(const bool enabled) const;
+  void setSyncNotifyNotRecognized(const bool enabled) const;
+  void setSyncNotifyRecognized(const bool enabled) const;
   void setSyncUpdateAskToConfirm(const bool enabled) const;
+  void setSyncUpdateOutOfRange(const bool enabled) const;
+  void setSyncUpdateOutOfRoot(const bool enabled) const;
+  void setSyncUpdateWaitPlayer(const bool enabled) const;
   void setSyncUpdateDelay(const std::chrono::seconds delay) const;
   void setTitleLanguage(const anime::TitleLanguage language) const;
 

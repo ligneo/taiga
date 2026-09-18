@@ -198,17 +198,22 @@ void Detection::poll() {
     episodeElapsed_ += taiga::settings.mediaDetectionInterval();
   }
 
-  if (!episodeProcessed_ && timeUntilUpdate() <= std::chrono::seconds{0}) {
+  if (!episodeProcessed_ && timeUntilUpdate() <= std::chrono::seconds{0} &&
+      !taiga::settings.syncUpdateWaitPlayer()) {
     episodeProcessed_ = true;
-    if (isUpdateAllowed(*currentEpisode_)) {
-      if (taiga::settings.syncUpdateAskToConfirm()) {
-        emit listEntryUpdateRequested(*currentEpisode_);
-      } else {
-        updateListEntry(*currentEpisode_);
-      }
-    }
+    requestListEntryUpdate(*currentEpisode_);
   }
 #endif
+}
+
+void Detection::requestListEntryUpdate(const Episode& episode) {
+  if (!isUpdateAllowed(episode)) return;
+
+  if (taiga::settings.syncUpdateAskToConfirm()) {
+    emit listEntryUpdateRequested(episode);
+  } else {
+    updateListEntry(episode);
+  }
 }
 
 std::chrono::seconds Detection::timeUntilUpdate() const {
@@ -229,6 +234,12 @@ void Detection::setCurrentEpisodeAnimeId(int animeId) {
 }
 
 void Detection::reset() {
+  if (currentEpisode_ && !episodeProcessed_ && timeUntilUpdate() <= std::chrono::seconds{0} &&
+      taiga::settings.syncUpdateWaitPlayer()) {
+    episodeProcessed_ = true;
+    requestListEntryUpdate(*currentEpisode_);
+  }
+
   currentPlayer_.reset();
   currentMedia_.reset();
   currentPlayerId_ = {};

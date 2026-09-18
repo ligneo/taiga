@@ -24,7 +24,7 @@
 
 namespace gui {
 
-TrayIcon::TrayIcon(QObject* parent, const QIcon& icon, QMenu* menu) {
+TrayIcon::TrayIcon(QObject* parent, const QIcon& icon, QMenu* menu) : m_icon(nullptr) {
   if (!QSystemTrayIcon::isSystemTrayAvailable()) {
     return;
   }
@@ -49,6 +49,12 @@ TrayIcon::TrayIcon(QObject* parent, const QIcon& icon, QMenu* menu) {
           });
 
   connect(m_icon, &QSystemTrayIcon::messageClicked, this, &TrayIcon::messageClicked);
+}
+
+void TrayIcon::showMessage(const QString& title, const QString& text) const {
+  if (!m_icon) return;
+
+  m_icon->showMessage(title, text, QSystemTrayIcon::Information);
 }
 
 }  // namespace gui

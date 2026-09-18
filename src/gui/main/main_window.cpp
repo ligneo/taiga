@@ -184,6 +184,9 @@ void MainWindow::initNowPlaying() {
 
   connect(track::media::detection(), &track::media::Detection::listEntryUpdateRequested, this,
           &MainWindow::confirmListEntryUpdate);
+
+  connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
+          &MainWindow::notifyEpisodeDetected);
 }
 
 void MainWindow::initPage(MainWindowPage page) {
@@ -454,6 +457,26 @@ void MainWindow::displayWindow() {
 
 void MainWindow::about() {
   displayAboutDialog(this);
+}
+
+void MainWindow::notifyEpisodeDetected(std::optional<track::Episode> episode) {
+  if (!episode || !m_trayIcon) return;
+
+  const auto item = anime::db.item(episode->animeId());
+
+  if (item) {
+    if (!taiga::settings.syncNotifyRecognized()) return;
+
+    const auto number = episode->element(anitomy::ElementKind::Episode, "1");
+    m_trayIcon->showMessage(tr("Episode recognized"),
+                            u"%1\n%2"_s.arg(QString::fromStdString(anime::preferredTitle(*item)),
+                                            tr("Episode %1").arg(QString::fromStdString(number))));
+  } else {
+    if (!taiga::settings.syncNotifyNotRecognized()) return;
+
+    m_trayIcon->showMessage(tr("Episode not recognized"),
+                            QString::fromStdString(episode->element(anitomy::ElementKind::Title)));
+  }
 }
 
 void MainWindow::confirmListEntryUpdate(track::Episode episode) {

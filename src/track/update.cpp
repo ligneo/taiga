@@ -18,6 +18,7 @@
 
 #include "update.hpp"
 
+#include <algorithm>
 #include <chrono>
 
 #include "media/anime_db.hpp"
@@ -26,6 +27,7 @@
 #include "sync/queue.hpp"
 #include "taiga/settings.hpp"
 #include "track/episode.hpp"
+#include "track/media.hpp"
 #include "track/recognition_validate.hpp"
 
 namespace track {
@@ -42,10 +44,32 @@ int episodeNumber(const Episode& episode) {
   return range ? range->second : 0;
 }
 
+bool isInsideLibraryFolders() {
+  const auto folders = taiga::settings.libraryFolders();
+  if (folders.empty()) return true;
+
+  const auto media = media::detection()->getCurrentMedia();
+  if (!media) return true;
+
+  for (const auto& information : media->information) {
+    if (information.type != anisthesia::MediaInfoType::File) continue;
+
+    for (const auto& folder : folders) {
+      if (information.value.starts_with(folder)) return true;
+    }
+
+    return false;  // the file is outside of every library folder
+  }
+
+  return true;  // the media is not a file
+}
+
 }  // namespace
 
 bool isUpdateAllowed(const Episode& episode) {
   if (!taiga::settings.syncEnabled()) return false;
+
+  if (taiga::settings.syncUpdateOutOfRoot() && !isInsideLibraryFolders()) return false;
 
   const auto item = anime::db.item(episode.animeId());
   if (!item) return false;
@@ -61,7 +85,11 @@ bool isUpdateAllowed(const Episode& episode) {
   if (entry->status == anime::list::Status::Completed && !entry->rewatching) return false;
 
   // Progress only moves forward, so that seeking back to an earlier episode does not undo it.
-  return number > entry->watched_episodes;
+  if (number <= entry->watched_episodes) return false;
+
+  if (taiga::settings.syncUpdateOutOfRange() && number > entry->watched_episodes + 1) return false;
+
+  return true;
 }
 
 void updateListEntry(const Episode& episode) {

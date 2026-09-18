@@ -62,6 +62,7 @@ signals:
 
 private:
   void poll();
+  void requestListEntryUpdate(const Episode& episode);
   void reset();
 
   bool hasEpisodeChanged(const Episode& episode) const;

@@ -89,6 +89,8 @@ target_sources(taiga-gui PRIVATE
 	settings/settings_page.hpp
 	settings/settings_player_list.cpp
 	settings/settings_player_list.hpp
+	settings/settings_recognition_page.cpp
+	settings/settings_recognition_page.hpp
 	settings/settings_streaming_page.cpp
 	settings/settings_streaming_page.hpp
 

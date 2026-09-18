@@ -24,6 +24,7 @@
 #include "gui/settings/settings_application_page.hpp"
 #include "gui/settings/settings_library_page.hpp"
 #include "gui/settings/settings_media_players_page.hpp"
+#include "gui/settings/settings_recognition_page.hpp"
 #include "gui/settings/settings_streaming_page.hpp"
 #include "gui/utils/theme.hpp"
 #include "ui_settings_dialog.h"
@@ -58,12 +59,13 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   const auto applicationItem = add_item("web_asset", "Application");
   const auto animeListItem = add_item("list_alt", "Anime List");
   const auto libraryItem = add_item("folder", "Library");
+  QTreeWidgetItem* recognitionItem = nullptr;
   QTreeWidgetItem* mediaPlayersItem = nullptr;
   QTreeWidgetItem* streamingItem = nullptr;
   {
-    auto item = add_item("check_circle", "Recognition");
-    mediaPlayersItem = add_child(item, "Media players");
-    streamingItem = add_child(item, "Streaming");
+    recognitionItem = add_item("check_circle", "Recognition");
+    mediaPlayersItem = add_child(recognitionItem, "Media players");
+    streamingItem = add_child(recognitionItem, "Streaming");
   }
   {
     auto item = add_item("share", "Sharing");
@@ -87,6 +89,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   addPage(applicationItem, new ApplicationPage(this));
   addPage(animeListItem, new AnimeListPage(this));
   addPage(libraryItem, new LibraryPage(this));
+  addPage(recognitionItem, new RecognitionPage(this));
   addPage(mediaPlayersItem, new MediaPlayersPage(this));
   addPage(streamingItem, new StreamingPage(this));
 
