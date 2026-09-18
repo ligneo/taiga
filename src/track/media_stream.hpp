@@ -54,6 +54,8 @@ struct StreamData {
 
 const std::vector<StreamData>& streamData();
 
+bool isStreamEnabled(const StreamData& stream);
+
 // Returns the anime title if the page is a known streaming provider. Titles of unknown pages are
 // discarded, because any video would be detected otherwise.
 std::optional<std::string> titleFromStreamingProvider(const std::string& url,

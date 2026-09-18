@@ -159,12 +159,26 @@ void Settings::setAppColorScheme(const Qt::ColorScheme scheme) const {
   setValue("app.colorScheme", static_cast<int>(scheme));
 }
 
+std::vector<std::string> Settings::disabledStreamingProviders() const {
+  return value("recognition.streaming.disabledProviders").toJsonArray().toVariantList() |
+         std::views::transform([](const QVariant& v) { return v.toString().toStdString(); }) |
+         std::ranges::to<std::vector>();
+}
+
 void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
   const auto list =
       players |
       std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
       std::ranges::to<QList>();
   setValue("recognition.mediaPlayers.disabled", QJsonArray::fromStringList(list));
+}
+
+void Settings::setDisabledStreamingProviders(std::vector<std::string> providers) const {
+  const auto list =
+      providers |
+      std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
+      std::ranges::to<QList>();
+  setValue("recognition.streaming.disabledProviders", QJsonArray::fromStringList(list));
 }
 
 void Settings::setService(const std::string& service) const {

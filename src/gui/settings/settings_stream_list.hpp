@@ -18,30 +18,21 @@
 
 #pragma once
 
-#include "gui/settings/settings_page.hpp"
-
-class QCheckBox;
+#include <QListWidget>
 
 namespace gui {
 
-class PlayerListWidget;
-class StreamListWidget;
-
-class StreamingPage final : public SettingsPage {
+// Lists streaming providers, where unchecked items are disabled in settings
+class StreamListWidget final : public QListWidget {
   Q_OBJECT
-  Q_DISABLE_COPY_MOVE(StreamingPage)
+  Q_DISABLE_COPY_MOVE(StreamListWidget)
 
 public:
-  StreamingPage(QWidget* parent);
-  ~StreamingPage() override = default;
+  StreamListWidget(QWidget* parent);
+  ~StreamListWidget() override = default;
 
-  void load() override;
-  void save() override;
-
-private:
-  QCheckBox* m_checkEnabled = nullptr;
-  PlayerListWidget* m_listPlayers = nullptr;
-  StreamListWidget* m_listProviders = nullptr;
+  void load();
+  void save() const;
 };
 
 }  // namespace gui

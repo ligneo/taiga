@@ -21,6 +21,7 @@
 #include <algorithm>
 
 #include "base/string.hpp"
+#include "taiga/settings.hpp"
 
 namespace track::recognition {
 
@@ -202,6 +203,11 @@ const std::vector<StreamData>& streamData() {
   return data;
 }
 
+bool isStreamEnabled(const StreamData& stream) {
+  const auto disabled = taiga::settings.disabledStreamingProviders();
+  return !std::ranges::contains(disabled, stream.name.toStdString());
+}
+
 std::optional<std::string> titleFromStreamingProvider(const std::string& url,
                                                       const std::string& title) {
   const auto value = QString::fromStdString(url);
@@ -211,6 +217,8 @@ std::optional<std::string> titleFromStreamingProvider(const std::string& url,
   });
 
   if (it == streamData().end()) return std::nullopt;
+
+  if (!isStreamEnabled(*it)) return std::nullopt;
 
   const auto cleaned = cleanStreamTitle(*it, applyTitlePattern(*it, QString::fromStdString(title)));
 

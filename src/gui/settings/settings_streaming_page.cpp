@@ -23,6 +23,7 @@
 #include <QVBoxLayout>
 
 #include "gui/settings/settings_player_list.hpp"
+#include "gui/settings/settings_stream_list.hpp"
 #include "taiga/settings.hpp"
 
 namespace gui {
@@ -30,7 +31,8 @@ namespace gui {
 StreamingPage::StreamingPage(QWidget* parent)
     : SettingsPage(parent),
       m_checkEnabled(new QCheckBox(tr("Enable streaming media detection"), this)),
-      m_listPlayers(new PlayerListWidget(true, this)) {
+      m_listPlayers(new PlayerListWidget(true, this)),
+      m_listProviders(new StreamListWidget(this)) {
   const auto layout = new QVBoxLayout(this);
 
   layout->addWidget(m_checkEnabled);
@@ -42,18 +44,28 @@ StreamingPage::StreamingPage(QWidget* parent)
 
   layout->addWidget(m_listPlayers);
 
+  const auto providersLabel = new QLabel(tr("Supported media providers:"), this);
+  layout->addWidget(providersLabel);
+
+  layout->addWidget(m_listProviders);
+
   connect(m_checkEnabled, &QCheckBox::toggled, m_listPlayers, &QWidget::setEnabled);
+  connect(m_checkEnabled, &QCheckBox::toggled, providersLabel, &QWidget::setEnabled);
+  connect(m_checkEnabled, &QCheckBox::toggled, m_listProviders, &QWidget::setEnabled);
 }
 
 void StreamingPage::load() {
   m_checkEnabled->setChecked(taiga::settings.streamingMediaEnabled());
   m_listPlayers->setEnabled(m_checkEnabled->isChecked());
   m_listPlayers->load();
+  m_listProviders->setEnabled(m_checkEnabled->isChecked());
+  m_listProviders->load();
 }
 
 void StreamingPage::save() {
   taiga::settings.setStreamingMediaEnabled(m_checkEnabled->isChecked());
   m_listPlayers->save();
+  m_listProviders->save();
 }
 
 }  // namespace gui
