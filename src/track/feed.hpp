@@ -29,6 +29,12 @@
 
 namespace track {
 
+enum class FeedItemState {
+  Blank,
+  Discarded,
+  Selected,
+};
+
 enum class TorrentCategory {
   Anime,
   Batch,
@@ -57,6 +63,7 @@ struct FeedItem : rss::Item {
   // Filled in by `examineFeed()`, so that the title is only parsed once.
   Episode episode;
   TorrentCategory torrent_category = TorrentCategory::Anime;
+  FeedItemState state = FeedItemState::Blank;
 
   std::string info_link;
   std::string magnet_link;

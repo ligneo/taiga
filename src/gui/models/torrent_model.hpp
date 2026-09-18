@@ -18,7 +18,9 @@
 
 #pragma once
 
-#include <QAbstractListModel>
+#include <QAbstractItemModel>
+#include <QList>
+#include <array>
 
 namespace track {
 struct FeedItem;
@@ -31,7 +33,8 @@ enum class TorrentItemDataRole {
   SortValue,
 };
 
-class TorrentModel final : public QAbstractListModel {
+// Items are grouped under a row per torrent category, as in v1.
+class TorrentModel final : public QAbstractItemModel {
   Q_OBJECT
   Q_DISABLE_COPY_MOVE(TorrentModel)
 
@@ -54,12 +57,27 @@ public:
   TorrentModel(QObject* parent);
   ~TorrentModel() override = default;
 
+  QModelIndex index(int row, int column, const QModelIndex& parent = {}) const override;
+  QModelIndex parent(const QModelIndex& index) const override;
   int rowCount(const QModelIndex& parent = {}) const override;
   int columnCount(const QModelIndex& parent = {}) const override;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+  bool setData(const QModelIndex& index, const QVariant& value, int role) override;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
   const track::FeedItem* itemAt(const QModelIndex& index) const;
+  QList<const track::FeedItem*> checkedItems() const;
+
+private:
+  static constexpr int kCategoryCount = 3;
+
+  void refreshCategories();
+  bool isCategory(const QModelIndex& index) const;
+  track::FeedItem* mutableItemAt(const QModelIndex& index) const;
+
+  // Indices into the feed's item list, one bucket per category
+  std::array<QList<int>, kCategoryCount> m_categories;
 };
 
 }  // namespace gui

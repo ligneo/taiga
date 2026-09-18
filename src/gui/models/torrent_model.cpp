@@ -58,25 +58,112 @@ QDateTime parseDate(const track::FeedItem& item) {
 
 }  // namespace
 
-TorrentModel::TorrentModel(QObject* parent) : QAbstractListModel(parent) {
+TorrentModel::TorrentModel(QObject* parent) : QAbstractItemModel(parent) {
   connect(track::aggregator(), &track::Aggregator::feedChanged, this, [this]() {
     beginResetModel();
+    refreshCategories();
     endResetModel();
   });
 }
 
-int TorrentModel::rowCount(const QModelIndex&) const {
-  return track::aggregator()->feed().items.size();
+QModelIndex TorrentModel::index(int row, int column, const QModelIndex& parent) const {
+  if (!parent.isValid()) return createIndex(row, column, kCategoryCount);
+  return createIndex(row, column, parent.row());
+}
+
+QModelIndex TorrentModel::parent(const QModelIndex& index) const {
+  if (!index.isValid() || isCategory(index)) return {};
+  return createIndex(static_cast<int>(index.internalId()), 0, kCategoryCount);
+}
+
+int TorrentModel::rowCount(const QModelIndex& parent) const {
+  if (!parent.isValid()) return kCategoryCount;
+  if (!isCategory(parent)) return 0;
+  return m_categories.at(parent.row()).size();
 }
 
 int TorrentModel::columnCount(const QModelIndex&) const {
   return NUM_COLUMNS;
 }
 
+Qt::ItemFlags TorrentModel::flags(const QModelIndex& index) const {
+  auto flags = QAbstractItemModel::flags(index);
+  if (!isCategory(index) && index.column() == COLUMN_TITLE) {
+    flags |= Qt::ItemIsUserCheckable;
+  }
+  return flags;
+}
+
+bool TorrentModel::isCategory(const QModelIndex& index) const {
+  return index.isValid() && index.internalId() == kCategoryCount;
+}
+
+track::FeedItem* TorrentModel::mutableItemAt(const QModelIndex& index) const {
+  if (!index.isValid() || isCategory(index)) return nullptr;
+
+  const auto& bucket = m_categories.at(static_cast<int>(index.internalId()));
+
+  if (index.row() >= bucket.size()) return nullptr;
+
+  auto& items = const_cast<track::Feed&>(track::aggregator()->feed()).items;
+
+  return &items.at(bucket.at(index.row()));
+}
+
+void TorrentModel::refreshCategories() {
+  for (auto& bucket : m_categories) bucket.clear();
+
+  const auto& items = track::aggregator()->feed().items;
+
+  for (int i = 0; i < static_cast<int>(items.size()); ++i) {
+    m_categories.at(static_cast<int>(items.at(i).torrent_category)).append(i);
+  }
+}
+
+QList<const track::FeedItem*> TorrentModel::checkedItems() const {
+  QList<const track::FeedItem*> items;
+
+  for (const auto& item : track::aggregator()->feed().items) {
+    if (item.state == track::FeedItemState::Selected) items.append(&item);
+  }
+
+  return items;
+}
+
+bool TorrentModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+  if (role != Qt::CheckStateRole) return false;
+
+  const auto item = mutableItemAt(index);
+
+  if (!item) return false;
+
+  item->state =
+      value.toInt() == Qt::Checked ? track::FeedItemState::Selected : track::FeedItemState::Blank;
+  emit dataChanged(index, index, {Qt::CheckStateRole});
+
+  return true;
+}
+
 QVariant TorrentModel::data(const QModelIndex& index, int role) const {
   if (!index.isValid()) return {};
 
-  const auto& item = track::aggregator()->feed().items.at(index.row());
+  if (isCategory(index)) {
+    if (role != Qt::DisplayRole || index.column() != COLUMN_TITLE) return {};
+    const auto category = static_cast<track::TorrentCategory>(index.row());
+    return u"%1 (%2)"_s.arg(track::torrentCategoryName(category))
+        .arg(m_categories.at(index.row()).size());
+  }
+
+  const auto itemPtr = mutableItemAt(index);
+
+  if (!itemPtr) return {};
+
+  const auto& item = *itemPtr;
+
+  if (role == Qt::CheckStateRole) {
+    if (index.column() != COLUMN_TITLE) return {};
+    return item.state == track::FeedItemState::Selected ? Qt::Checked : Qt::Unchecked;
+  }
 
   switch (role) {
     case Qt::DisplayRole: {
@@ -112,7 +199,8 @@ QVariant TorrentModel::data(const QModelIndex& index, int role) const {
                                 : QString{};
         }
         case COLUMN_DESCRIPTION:
-          return QString::fromStdString(item.description);
+          // Descriptions may hold a whole HTML block, so they are cut short as v1 does.
+          return QString::fromStdString(item.description).left(255);
         case COLUMN_FILENAME:
           return QString::fromStdString(item.title);
       }
@@ -188,12 +276,11 @@ QVariant TorrentModel::headerData(int section, Qt::Orientation orientation, int 
     }
   }
 
-  return QAbstractListModel::headerData(section, orientation, role);
+  return QAbstractItemModel::headerData(section, orientation, role);
 }
 
 const track::FeedItem* TorrentModel::itemAt(const QModelIndex& index) const {
-  if (!index.isValid()) return nullptr;
-  return &track::aggregator()->feed().items.at(index.row());
+  return mutableItemAt(index);
 }
 
 }  // namespace gui

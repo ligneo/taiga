@@ -27,6 +27,7 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QUrl>
+#include <map>
 
 #include "base/log.hpp"
 #include "base/string.hpp"
@@ -47,6 +48,8 @@ TorrentsWidget::TorrentsWidget(QWidget* parent)
   m_proxyModel->setSortRole(static_cast<int>(TorrentItemDataRole::SortValue));
   m_proxyModel->setFilterKeyColumn(TorrentModel::COLUMN_TITLE);
   m_proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+  // Category rows are kept as long as one of their items matches
+  m_proxyModel->setRecursiveFilteringEnabled(true);
 
   m_view->setObjectName("torrentsView");
   m_view->setFrameShape(QFrame::Shape::NoFrame);
@@ -54,18 +57,32 @@ TorrentsWidget::TorrentsWidget(QWidget* parent)
   m_view->setAlternatingRowColors(true);
   m_view->setAllColumnsShowFocus(true);
   m_view->setContextMenuPolicy(Qt::CustomContextMenu);
-  m_view->setRootIsDecorated(false);
   m_view->setSortingEnabled(true);
   m_view->setUniformRowHeights(true);
   m_view->sortByColumn(TorrentModel::COLUMN_DATE, Qt::SortOrder::DescendingOrder);
 
   m_view->header()->setSectionsMovable(false);
-  m_view->header()->setStretchLastSection(false);
+  m_view->header()->setStretchLastSection(true);
   m_view->header()->setTextElideMode(Qt::ElideRight);
-  m_view->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-  m_view->header()->setSectionResizeMode(TorrentModel::COLUMN_TITLE, QHeaderView::Stretch);
+  m_view->header()->setSectionResizeMode(QHeaderView::Interactive);
+
+  // Default widths, as in v1. Stretching a column instead would let the description squeeze the
+  // title out of view.
+  static const std::map<int, int> widths{
+      {TorrentModel::COLUMN_TITLE, 260},       {TorrentModel::COLUMN_EPISODE, 60},
+      {TorrentModel::COLUMN_GROUP, 100},       {TorrentModel::COLUMN_SIZE, 95},
+      {TorrentModel::COLUMN_VIDEO, 80},        {TorrentModel::COLUMN_SEEDERS, 40},
+      {TorrentModel::COLUMN_LEECHERS, 40},     {TorrentModel::COLUMN_DOWNLOADS, 50},
+      {TorrentModel::COLUMN_DESCRIPTION, 200}, {TorrentModel::COLUMN_FILENAME, 200},
+      {TorrentModel::COLUMN_DATE, 140},
+  };
+  for (const auto& [column, width] : widths) {
+    m_view->header()->resizeSection(column, width);
+  }
 
   layout()->addWidget(m_view);
+
+  connect(m_model, &QAbstractItemModel::modelReset, m_view, &QTreeView::expandAll);
 
   initToolbar();
 
