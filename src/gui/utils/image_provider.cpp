@@ -135,10 +135,18 @@ void ImageProvider::reloadPoster(const int id) {
   loadPoster(id);
 }
 
-QString ImageProvider::fileName(const int id) const {
+QString ImageProvider::cachePath() const {
   const auto path = QString::fromStdString(taiga::get_data_path());
   const auto service = sync::serviceSlug(sync::currentServiceId());
+  return u"%1/cache/%2/media"_s.arg(path).arg(service);
+}
 
+void ImageProvider::clearCache() {
+  QDir(cachePath()).removeRecursively();
+  QPixmapCache::clear();
+}
+
+QString ImageProvider::fileName(const int id) const {
   auto extension = u"jpg"_s;
   if (const auto item = anime::db.item(id); item && !item->image_url.empty()) {
     const QUrl url{QString::fromStdString(item->image_url)};
@@ -147,7 +155,7 @@ QString ImageProvider::fileName(const int id) const {
     }
   }
 
-  return u"%1/cache/%2/media/%3.%4"_s.arg(path).arg(service).arg(id).arg(extension);
+  return u"%1/%2.%3"_s.arg(cachePath()).arg(id).arg(extension);
 }
 
 bool ImageProvider::isStale(const int id) const {

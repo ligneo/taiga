@@ -22,6 +22,7 @@
 #include "gui/settings/settings_accounts_page.hpp"
 #include "gui/settings/settings_advanced_page.hpp"
 #include "gui/settings/settings_anime_list_page.hpp"
+#include "gui/settings/settings_cache_page.hpp"
 #include "gui/settings/settings_application_page.hpp"
 #include "gui/settings/settings_library_page.hpp"
 #include "gui/settings/settings_media_players_page.hpp"
@@ -80,9 +81,10 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
     add_child(item, "Filters");
   }
   QTreeWidgetItem* advancedItem = nullptr;
+  QTreeWidgetItem* cacheItem = nullptr;
   {
     advancedItem = add_item("warning", "Advanced");
-    add_child(advancedItem, "Cache");
+    cacheItem = add_child(advancedItem, "Cache");
   }
 
   ui_->treeWidget->expandAll();
@@ -95,6 +97,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   addPage(mediaPlayersItem, new MediaPlayersPage(this));
   addPage(streamingItem, new StreamingPage(this));
   addPage(advancedItem, new AdvancedPage(this));
+  addPage(cacheItem, new CachePage(this));
 
   connect(ui_->treeWidget, &QTreeWidget::currentItemChanged, this,
           [this](QTreeWidgetItem* current, QTreeWidgetItem*) {

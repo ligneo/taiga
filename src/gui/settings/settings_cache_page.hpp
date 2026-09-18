@@ -18,46 +18,37 @@
 
 #pragma once
 
-#include <QDateTime>
-#include <QMap>
-#include <QObject>
-#include <QPixmap>
-#include <QRestAccessManager>
-#include <QSet>
-#include <QString>
+#include "gui/settings/settings_page.hpp"
+
+class QCheckBox;
+class QLabel;
+class QPushButton;
 
 namespace gui {
 
-class ImageProvider final : public QObject {
+class CachePage final : public SettingsPage {
   Q_OBJECT
-  Q_DISABLE_COPY_MOVE(ImageProvider)
+  Q_DISABLE_COPY_MOVE(CachePage)
 
 public:
-  ImageProvider();
+  CachePage(QWidget* parent);
+  ~CachePage() override = default;
 
-  void init();
+  void load() override;
+  void save() override;
 
-  void fetchPoster(const int id, const bool revalidate = false);
-  QPixmap loadPoster(const int id);
-  void reloadPoster(const int id);
-
-  QString cachePath() const;
-  void clearCache();
-
-signals:
-  void posterChanged(const int id);
+protected:
+  void showEvent(QShowEvent* event) override;
 
 private:
-  QString fileName(const int id) const;
-  bool isStale(const int id) const;
-  bool canRetry(const int id) const;
-  void retryAfter(const int id);
+  void clear();
+  void refresh();
 
-  QRestAccessManager* m_manager = nullptr;
-  QSet<int> m_loading;
-  QMap<int, QDateTime> m_retryAfter;
+  QCheckBox* m_checkHistory = nullptr;
+  QLabel* m_labelHistory = nullptr;
+  QCheckBox* m_checkImages = nullptr;
+  QLabel* m_labelImages = nullptr;
+  QPushButton* m_buttonClear = nullptr;
 };
-
-inline ImageProvider imageProvider;
 
 }  // namespace gui
