@@ -18,6 +18,7 @@
 
 #include "episode.hpp"
 
+#include <QRegularExpression>
 #include <algorithm>
 #include <ranges>
 
@@ -25,6 +26,19 @@
 #include "media/anime.hpp"
 
 namespace track {
+
+namespace {
+
+// Anitomy may return an episode number with a suffix (e.g. `4a`) or a fraction (e.g. `7.5`). Only
+// the leading digits are taken, as v1 did. Fractional numbers are moved into the anime title before
+// identification, so they never reach this point.
+int leadingNumber(const std::string& value) {
+  static const QRegularExpression pattern{u"^\\d+"_s};
+  const auto match = pattern.match(QString::fromStdString(value));
+  return match.hasMatch() ? match.captured().toInt() : 0;
+}
+
+}  // namespace
 
 Episode::Episode() : anime_id_{anime::kUnknownId} {}
 
@@ -44,10 +58,7 @@ void Episode::setAnimeId(int id) {
 std::optional<std::pair<int, int>> Episode::episodeNumberRange() const {
   const auto numbers = elements(anitomy::ElementKind::Episode);
   if (numbers.empty()) return std::nullopt;
-  // @TODO: `toInt` returns 0 for non-numeric values (e.g. `4a`, `7.5`).
-  // v1 used to truncate (e.g. `4`, `7`) and special-case fractional episodes
-  // to avoid colliding with integer episode numbers.
-  return std::pair{toInt(numbers.front()), toInt(numbers.back())};
+  return std::pair{leadingNumber(numbers.front()), leadingNumber(numbers.back())};
 }
 
 void Episode::setEpisodeNumberRange(const std::pair<int, int>& range) {

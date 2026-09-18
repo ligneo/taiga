@@ -96,6 +96,20 @@ std::vector<std::string> titleCandidates(const Episode& episode) {
   return {normalize(title)};
 }
 
+// A fractional episode number (e.g. `7.5`) almost always belongs to a recap or special that is
+// listed as a separate entry. Taking it as episode 7 would update the wrong entry, so the number is
+// moved into the title instead, as v1 did.
+void moveFractionalNumberToTitle(Episode& episode) {
+  const auto number = episode.element(anitomy::ElementKind::Episode);
+
+  if (!number.contains('.')) return;
+
+  const auto title = episode.element(anitomy::ElementKind::Title);
+  episode.removeElements(anitomy::ElementKind::Title);
+  episode.addElement(anitomy::ElementKind::Title, std::format("{} Episode {}", title, number));
+  episode.removeElements(anitomy::ElementKind::Episode);
+}
+
 }  // namespace
 
 Episode parse(std::string_view input, const anitomy::Options options) {
@@ -127,6 +141,8 @@ Episode parseFileInfo(const QFileInfo& info, const anitomy::Options options) {
 
 int identify(Episode& episode) {
   cache()->init();
+
+  moveFractionalNumberToTitle(episode);
 
   for (const auto& title : titleCandidates(episode)) {
     if (const auto id = identifyByTitle(episode, title); id != anime::kUnknownId) return id;
