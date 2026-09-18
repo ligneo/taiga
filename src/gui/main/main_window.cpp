@@ -33,6 +33,7 @@
 #include "gui/main/now_playing_widget.hpp"
 #include "gui/main/status_bar.hpp"
 #include "gui/main/status_bar_controller.hpp"
+#include "gui/profile/profile_widget.hpp"
 #include "gui/search/search_widget.hpp"
 #include "gui/settings/settings_dialog.hpp"
 #include "gui/utils/format.hpp"
@@ -224,6 +225,8 @@ void MainWindow::initPage(MainWindowPage page) {
       break;
 
     case MainWindowPage::Profile:
+      m_profileWidget = new ProfileWidget(ui_->profilePage);
+      init_page(ui_->profilePage, m_profileWidget);
       break;
   }
 

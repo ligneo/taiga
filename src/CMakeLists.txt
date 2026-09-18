@@ -43,6 +43,8 @@ target_sources(taiga PRIVATE
 	media/anime_season.cpp
 	media/anime_season.hpp
 	media/anime_settings.hpp
+	media/anime_stats.cpp
+	media/anime_stats.hpp
 	media/anime_utils.cpp
 	media/anime_utils.hpp
 	media/anime.hpp

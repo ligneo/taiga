@@ -61,6 +61,7 @@ QString formatFuzzyDateRange(const base::FuzzyDate& from, const base::FuzzyDate&
                              QString placeholder = "?");
 QString formatAsRelativeTime(const qint64 time, QString placeholder = "Unknown");
 QString formatDuration(base::Duration duration);
+QString formatTimeSpan(base::Duration duration);
 QString formatTimestamp(const qint64 time);
 QString formatTransferProgress(const qint64 current, const qint64 total);
 

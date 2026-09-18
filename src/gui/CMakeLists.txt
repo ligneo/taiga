@@ -68,6 +68,9 @@ target_sources(taiga-gui PRIVATE
 	models/library_model.cpp
 	models/library_model.hpp
 
+	profile/profile_widget.cpp
+	profile/profile_widget.hpp
+
 	search/search_widget.cpp
 	search/search_widget.hpp
 

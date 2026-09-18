@@ -83,20 +83,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="profilePage">
-        <layout class="QVBoxLayout" name="verticalLayout_8">
-         <item>
-          <widget class="QLabel" name="label_8">
-           <property name="text">
-            <string>TODO: Profile</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+       <widget class="QWidget" name="profilePage"/>
       </widget>
      </widget>
     </item>

@@ -39,6 +39,7 @@ class LibraryWidget;
 class ListWidget;
 class NavigationWidget;
 class NowPlayingWidget;
+class ProfileWidget;
 class SearchWidget;
 class StatusBarController;
 class TrayIcon;
@@ -105,6 +106,7 @@ private:
   ListWidget* m_listWidget = nullptr;
   NavigationWidget* m_navigationWidget = nullptr;
   NowPlayingWidget* m_nowPlayingWidget = nullptr;
+  ProfileWidget* m_profileWidget = nullptr;
   QLineEdit* m_searchBox = nullptr;
   SearchWidget* m_searchWidget = nullptr;
   StatusBarController* m_statusBarController = nullptr;

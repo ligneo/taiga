@@ -120,6 +120,24 @@ QString formatDuration(Duration duration) {
   }
 }
 
+QString formatTimeSpan(Duration duration) {
+  const auto days = static_cast<int>(duration.days());
+  const auto hours = static_cast<int>(duration.hours()) % 24;
+  const auto minutes = static_cast<int>(duration.minutes()) % 60;
+
+  QStringList parts;
+  if (days > 0)
+    parts.append(QCoreApplication::translate("gui/utils/format", "%n day(s)", nullptr, days));
+  if (hours > 0)
+    parts.append(QCoreApplication::translate("gui/utils/format", "%n hour(s)", nullptr, hours));
+  if (minutes > 0)
+    parts.append(QCoreApplication::translate("gui/utils/format", "%n minute(s)", nullptr, minutes));
+
+  if (parts.isEmpty()) return QCoreApplication::translate("gui/utils/format", "None");
+
+  return parts.join(' ');
+}
+
 QString formatTimestamp(const qint64 time) {
   const QDateTime datetime = QDateTime::fromSecsSinceEpoch(time);
   return formatDate(datetime.date());
