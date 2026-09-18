@@ -34,6 +34,8 @@ public:
   NetworkAccessManager(QObject* parent);
   ~NetworkAccessManager() = default;
 
+  void applyProxySettings();
+
   static QHttpHeaders commonHeaders();
 };
 

@@ -59,9 +59,7 @@ NetworkAccessManager::NetworkAccessManager(QObject* parent) : QNetworkAccessMana
   setAutoDeleteReplies(true);
   setTransferTimeout(std::chrono::seconds{10});
 
-  if (const auto proxy = buildProxy(); proxy.type() != QNetworkProxy::DefaultProxy) {
-    setProxy(proxy);
-  }
+  applyProxySettings();
 
   connect(this, &QNetworkAccessManager::finished, this, [](QNetworkReply* reply) {
     if (!app()->isDebug()) return;
@@ -72,6 +70,10 @@ NetworkAccessManager::NetworkAccessManager(QObject* parent) : QNetworkAccessMana
       qDebug() << u"%1: %2"_s.arg(name).arg(value);
     }
   });
+}
+
+void NetworkAccessManager::applyProxySettings() {
+  setProxy(buildProxy());
 }
 
 QHttpHeaders NetworkAccessManager::commonHeaders() {
