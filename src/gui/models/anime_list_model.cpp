@@ -19,6 +19,7 @@
 #include "anime_list_model.hpp"
 
 #include <QApplication>
+#include <QBuffer>
 #include <QColor>
 #include <QDateTime>
 #include <QFont>
@@ -34,6 +35,69 @@
 #include "media/anime_utils.hpp"
 
 namespace gui {
+
+namespace {
+
+using namespace Qt::StringLiterals;
+
+// Tooltips are rich text, so the poster travels inside the HTML. Anything bigger than this is a
+// waste: the image is only there to recognize the title at a glance.
+constexpr int kTooltipPosterWidth = 128;
+
+QString posterHtml(const int id) {
+  const auto poster = imageProvider.loadPoster(id);
+
+  // The first load is asynchronous, so an anime whose poster has not been read yet simply gets a
+  // tooltip without one. The next hover has it.
+  if (poster.isNull()) return {};
+
+  const auto scaled =
+      poster.scaledToWidth(kTooltipPosterWidth, Qt::TransformationMode::SmoothTransformation);
+
+  QByteArray data;
+  QBuffer buffer(&data);
+  buffer.open(QIODevice::WriteOnly);
+
+  if (!scaled.save(&buffer, "PNG")) return {};
+
+  return u"<img src=\"data:image/png;base64,%1\" width=\"%2\">"_s
+      .arg(QString::fromLatin1(data.toBase64()))
+      .arg(kTooltipPosterWidth);
+}
+
+// The title column is narrow and elides most names, so the tooltip carries the whole title plus
+// the few things worth knowing before clicking.
+QString titleTooltip(const Anime& item) {
+  QStringList lines;
+
+  lines.append(
+      u"<b>%1</b>"_s.arg(QString::fromStdString(anime::preferredTitle(item)).toHtmlEscaped()));
+
+  // The same summary line the cards view draws, so the two read alike.
+  QStringList facts{formatType(item.type)};
+  if (item.episode_count != 1) {
+    facts.append(QCoreApplication::translate("gui", "%1 episodes")
+                     .arg(formatNumber(item.episode_count, "?")));
+  }
+  facts.append(formatSeason(anime::Season{item.date_started}, {}));
+  facts.removeAll({});
+  if (!facts.isEmpty()) lines.append(facts.join(u" · "_s).toHtmlEscaped());
+
+  if (!item.titles.english.empty() && item.titles.english != item.titles.romaji) {
+    lines.append(QString::fromStdString(item.titles.english).toHtmlEscaped());
+  }
+
+  const auto text = u"<div style='margin-left:6px'>%1</div>"_s.arg(lines.join(u"<br>"_s));
+  const auto poster = posterHtml(item.id);
+
+  if (poster.isEmpty()) return text;
+
+  // A table keeps the poster and the text side by side without relying on flexbox, which Qt's
+  // rich text engine does not have.
+  return u"<table><tr><td>%1</td><td valign='top'>%2</td></tr></table>"_s.arg(poster).arg(text);
+}
+
+}  // namespace
 
 AnimeListModel::AnimeListModel(QObject* parent) : QAbstractListModel(parent) {
   beginInsertRows({}, 0, anime::db.items().size());
@@ -134,7 +198,7 @@ QVariant AnimeListModel::data(const QModelIndex& index, int role) const {
     case Qt::ToolTipRole:
       switch (index.column()) {
         case COLUMN_TITLE:
-          return QString::fromStdString(anime::preferredTitle(*anime));
+          return titleTooltip(*anime);
         case COLUMN_SEASON:
           return formatFuzzyDate(anime->date_started);
         case COLUMN_LAST_UPDATED:
