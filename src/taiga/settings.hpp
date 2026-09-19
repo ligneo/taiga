@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <QJsonArray>
 #include <QNetworkProxy>
 #include <chrono>
 #include <optional>
@@ -41,6 +42,8 @@ public:
   bool torrentAutoCheckEnabled() const;
   std::chrono::minutes torrentAutoCheckInterval() const;
   bool torrentNotifyNewEpisodes() const;
+  bool torrentFilterEnabled() const;
+  std::optional<QJsonArray> torrentFilters() const;
   std::string service() const;
   std::vector<std::string> libraryFolders() const;
   std::chrono::milliseconds mediaDetectionInterval() const;
@@ -68,6 +71,8 @@ public:
   void setTorrentAutoCheckEnabled(const bool enabled) const;
   void setTorrentAutoCheckInterval(const std::chrono::minutes interval) const;
   void setTorrentNotifyNewEpisodes(const bool enabled) const;
+  void setTorrentFilterEnabled(const bool enabled) const;
+  void setTorrentFilters(const QJsonArray& filters) const;
   void setService(const std::string& service) const;
   void setLibraryFolders(std::vector<std::string> folders) const;
   void setMediaDetectionInterval(const std::chrono::milliseconds interval) const;

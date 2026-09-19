@@ -29,6 +29,7 @@
 #include "media/anime_db.hpp"
 #include "media/anime_utils.hpp"
 #include "taiga/settings.hpp"
+#include "track/feed_filter_manager.hpp"
 
 namespace track {
 
@@ -99,6 +100,7 @@ void Aggregator::fetch(const QString& requestedUrl, const bool automatic) {
 
     feed_ = *feed;
     examineFeed(feed_);
+    filterManager.filter(feed_);
     emit feedChanged();
 
     // Only an automatic check notifies, so that refreshing by hand stays quiet. As in v1.

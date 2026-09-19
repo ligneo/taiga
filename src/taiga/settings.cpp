@@ -189,6 +189,18 @@ bool Settings::torrentNotifyNewEpisodes() const {
   return value("torrents.discovery.newAction", u"notify"_s).toString() == u"notify";
 }
 
+bool Settings::torrentFilterEnabled() const {
+  return value("torrents.filters.enabled", true).toBool();
+}
+
+// An absent key means the filters have never been set up, which is when the default presets are
+// used. An empty array means the user removed every filter, and is left alone.
+std::optional<QJsonArray> Settings::torrentFilters() const {
+  const auto filters = value("torrents.filters");
+  if (!filters.isValid()) return std::nullopt;
+  return filters.toJsonArray();
+}
+
 void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
   const auto list =
       players |
@@ -223,6 +235,14 @@ void Settings::setDisabledStreamingProviders(std::vector<std::string> providers)
       std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
       std::ranges::to<QList>();
   setValue("recognition.streaming.disabledProviders", QJsonArray::fromStringList(list));
+}
+
+void Settings::setTorrentFilterEnabled(const bool enabled) const {
+  setValue("torrents.filters.enabled", enabled);
+}
+
+void Settings::setTorrentFilters(const QJsonArray& filters) const {
+  setValue("torrents.filters", filters);
 }
 
 void Settings::setService(const std::string& service) const {
