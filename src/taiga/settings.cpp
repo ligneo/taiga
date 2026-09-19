@@ -106,6 +106,11 @@ std::string Settings::proxyPassword() const {
   return value("network.proxy.password").toString().toStdString();
 }
 
+// v1's `program/general/hidesidebar`, the other way round.
+bool Settings::sidebarVisible() const {
+  return value("app.sidebarVisible", true).toBool();
+}
+
 bool Settings::streamingMediaEnabled() const {
   return value("recognition.streaming.enabled", false).toBool();
 }
@@ -163,6 +168,32 @@ void Settings::setAppColorScheme(const Qt::ColorScheme scheme) const {
   setValue("app.colorScheme", static_cast<int>(scheme));
 }
 
+// Each entry is v1's `Name|URL`, and a lone "-" is a separator. Keeping v1's shape means a list
+// copied out of its settings works here as it is.
+std::vector<std::string> Settings::externalLinks() const {
+  static const QStringList defaults{
+      u"MALgraph|https://anime.plus/"_s,
+      u"-"_s,
+      u"AniChart|https://anichart.net/airing"_s,
+      u"Monthly.moe|https://www.monthly.moe/weekly"_s,
+      u"Senpai Anime Charts|https://www.senpai.moe/?mode=calendar"_s,
+      u"-"_s,
+      u"Anime Scene Search Engine|https://trace.moe/"_s,
+      u"Anime Streaming Search Engine|https://because.moe/"_s,
+  };
+
+  const auto stored = value("app.externalLinks");
+
+  const auto list = stored.isValid()
+                        ? stored.toJsonArray() | std::views::transform([](const QJsonValue& v) {
+                            return v.toString();
+                          }) | std::ranges::to<QStringList>()
+                        : defaults;
+
+  return list | std::views::transform([](const QString& s) { return s.toStdString(); }) |
+         std::ranges::to<std::vector>();
+}
+
 std::vector<std::string> Settings::disabledStreamingProviders() const {
   return value("recognition.streaming.disabledProviders").toJsonArray().toVariantList() |
          std::views::transform([](const QVariant& v) { return v.toString().toStdString(); }) |
@@ -203,6 +234,14 @@ std::optional<QJsonArray> Settings::torrentFilters() const {
   const auto filters = value("torrents.filters");
   if (!filters.isValid()) return std::nullopt;
   return filters.toJsonArray();
+}
+
+void Settings::setExternalLinks(std::vector<std::string> links) const {
+  const auto list =
+      links |
+      std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
+      std::ranges::to<QList>();
+  setValue("app.externalLinks", QJsonArray::fromStringList(list));
 }
 
 void Settings::setDisabledMediaPlayers(std::vector<std::string> players) const {
@@ -288,6 +327,10 @@ void Settings::setProxyUsername(const std::string& username) const {
 
 void Settings::setProxyPassword(const std::string& password) const {
   setValue("network.proxy.password", password);
+}
+
+void Settings::setSidebarVisible(const bool visible) const {
+  setValue("app.sidebarVisible", visible);
 }
 
 void Settings::setStreamingMediaEnabled(const bool enabled) const {

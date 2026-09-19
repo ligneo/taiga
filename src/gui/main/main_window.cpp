@@ -156,6 +156,9 @@ void MainWindow::initActions() {
           [this]() { exportList(ExportFormat::Markdown); });
   connect(ui_->actionExportListAsMyAnimeListXML, &QAction::triggered, this,
           [this]() { exportList(ExportFormat::MyAnimeListXml); });
+  connect(ui_->menuExternalLinks, &QMenu::aboutToShow, this, &MainWindow::initExternalLinksMenu);
+  connect(ui_->menuServices, &QMenu::aboutToShow, this, &MainWindow::initServicesMenu);
+  connect(ui_->menuView, &QMenu::aboutToShow, this, &MainWindow::initViewMenu);
   connect(ui_->actionAbout, &QAction::triggered, this, &MainWindow::about);
   connect(ui_->actionDonate, &QAction::triggered, this, &MainWindow::donate);
   connect(ui_->actionSupport, &QAction::triggered, this, &MainWindow::support);
@@ -219,6 +222,7 @@ void MainWindow::initIcons() {
 
 void MainWindow::initNavigation() {
   m_navigationWidget = new NavigationWidget(this);
+  m_navigationWidget->setVisible(taiga::settings.sidebarVisible());
 
   connect(m_navigationWidget, &NavigationWidget::currentPageChanged, this, &MainWindow::setPage);
 
@@ -447,6 +451,92 @@ void MainWindow::exportList(const ExportFormat format) {
   });
 }
 
+// v1 builds this menu from a setting, one `Name|URL` per line, with "-" for a separator.
+void MainWindow::initExternalLinksMenu() {
+  ui_->menuExternalLinks->clear();
+
+  for (const auto& link : taiga::settings.externalLinks()) {
+    const auto text = QString::fromStdString(link);
+
+    if (text.trimmed() == u"-"_s) {
+      ui_->menuExternalLinks->addSeparator();
+      continue;
+    }
+
+    const auto parts = text.split(u'|');
+    if (parts.size() < 2) continue;
+
+    const auto url = parts.at(1);
+    ui_->menuExternalLinks->addAction(parts.at(0), this,
+                                      [url]() { QDesktopServices::openUrl(QUrl{url}); });
+  }
+}
+
+// v1 lists the user pages of all three services. Only the one being used is of any help here.
+void MainWindow::initServicesMenu() {
+  // Synchronize already lives in the List menu, so this one only carries the user pages.
+  ui_->menuServices->clear();
+
+  const auto addLink = [this](const QString& text, const QString& url) {
+    ui_->menuServices->addAction(text, this, [url]() { QDesktopServices::openUrl(QUrl{url}); });
+  };
+
+  const auto service = sync::currentServiceId();
+
+  switch (service) {
+    case sync::ServiceId::AniList: {
+      const auto user = QString::fromStdString(taiga::accounts.anilistUsername());
+      if (user.isEmpty()) break;
+      addLink(tr("Go to my profile"), u"https://anilist.co/user/%1"_s.arg(user));
+      addLink(tr("Go to my stats"), u"https://anilist.co/user/%1/stats"_s.arg(user));
+      break;
+    }
+    case sync::ServiceId::Kitsu: {
+      const auto user = QString::fromStdString(taiga::accounts.kitsuUsername());
+      if (user.isEmpty()) break;
+      addLink(tr("Go to my feed"), u"https://kitsu.app"_s);
+      addLink(tr("Go to my library"), u"https://kitsu.app/users/%1/library"_s.arg(user));
+      addLink(tr("Go to my profile"), u"https://kitsu.app/users/%1"_s.arg(user));
+      break;
+    }
+    case sync::ServiceId::MyAnimeList: {
+      const auto user = QString::fromStdString(taiga::accounts.myanimelistUsername());
+      if (user.isEmpty()) break;
+      addLink(tr("Go to my panel"), u"https://myanimelist.net/panel.php"_s);
+      addLink(tr("Go to my profile"), u"https://myanimelist.net/profile/%1"_s.arg(user));
+      addLink(tr("Go to my history"), u"https://myanimelist.net/history/%1"_s.arg(user));
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+// v1's View menu. The sidebar does the same job, but the menu is where the keyboard reaches it.
+void MainWindow::initViewMenu() {
+  ui_->menuView->clear();
+
+  static const QList<QPair<QString, MainWindowPage>> pages{
+      {tr("Home"), MainWindowPage::Home},       {tr("Anime List"), MainWindowPage::List},
+      {tr("History"), MainWindowPage::History}, {tr("Profile"), MainWindowPage::Profile},
+      {tr("Search"), MainWindowPage::Search},   {tr("Library"), MainWindowPage::Library},
+      {tr("Seasons"), MainWindowPage::Seasons}, {tr("Torrents"), MainWindowPage::Torrents},
+  };
+
+  for (const auto& [text, page] : pages) {
+    ui_->menuView->addAction(text, this, [this, page]() { setPage(page); });
+  }
+
+  ui_->menuView->addSeparator();
+
+  const auto action = ui_->menuView->addAction(tr("Show sidebar"), this, [this](bool checked) {
+    m_navigationWidget->setVisible(checked);
+    taiga::settings.setSidebarVisible(checked);
+  });
+  action->setCheckable(true);
+  action->setChecked(m_navigationWidget->isVisible());
+}
+
 void MainWindow::initToolbar() {
   ui_->toolbar->setIconSize(QSize{24, 24});
 
@@ -460,6 +550,8 @@ void MainWindow::initToolbar() {
       auto menu = new QMenu(this);
       menu->addMenu(ui_->menuList);
       menu->addMenu(ui_->menuLibrary);
+      menu->addMenu(ui_->menuServices);
+      menu->addMenu(ui_->menuView);
       menu->addMenu(ui_->menuTools);
       menu->addSeparator();
       menu->addMenu(ui_->menuHelp);

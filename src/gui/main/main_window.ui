@@ -107,10 +107,27 @@
     <addaction name="separator"/>
     <addaction name="menuExport"/>
    </widget>
+   <widget class="QMenu" name="menuServices">
+    <property name="title">
+     <string>Ser&amp;vices</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+   </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>&amp;Tools</string>
     </property>
+    <widget class="QMenu" name="menuExternalLinks">
+     <property name="title">
+      <string>External links</string>
+     </property>
+    </widget>
+    <addaction name="menuExternalLinks"/>
+    <addaction name="separator"/>
     <addaction name="actionToggleDetection"/>
     <addaction name="actionToggleSharing"/>
     <addaction name="actionToggleSynchronization"/>
@@ -150,6 +167,8 @@
    <addaction name="menuFile"/>
    <addaction name="menuList"/>
    <addaction name="menuLibrary"/>
+   <addaction name="menuServices"/>
+   <addaction name="menuView"/>
    <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -261,6 +280,9 @@
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::PreferencesRole</enum>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+,</string>
    </property>
   </action>
   <action name="actionLibraryFolders">

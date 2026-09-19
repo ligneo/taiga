@@ -35,6 +35,7 @@ public:
   void init() const;
 
   Qt::ColorScheme appColorScheme() const;
+  std::vector<std::string> externalLinks() const;
   std::vector<std::string> disabledMediaPlayers() const;
   std::vector<std::string> disabledStreamingProviders() const;
   std::string torrentDiscoveryUrl() const;
@@ -53,6 +54,7 @@ public:
   int proxyPort() const;
   std::string proxyUsername() const;
   std::string proxyPassword() const;
+  bool sidebarVisible() const;
   bool streamingMediaEnabled() const;
   bool syncEnabled() const;
   bool syncNotifyNotRecognized() const;
@@ -65,6 +67,7 @@ public:
   anime::TitleLanguage titleLanguage() const;
 
   void setAppColorScheme(const Qt::ColorScheme scheme) const;
+  void setExternalLinks(std::vector<std::string> links) const;
   void setDisabledMediaPlayers(std::vector<std::string> players) const;
   void setDisabledStreamingProviders(std::vector<std::string> providers) const;
   void setTorrentDiscoveryUrl(const std::string& url) const;
@@ -83,6 +86,7 @@ public:
   void setProxyPort(const int port) const;
   void setProxyUsername(const std::string& username) const;
   void setProxyPassword(const std::string& password) const;
+  void setSidebarVisible(const bool visible) const;
   void setStreamingMediaEnabled(const bool enabled) const;
   void setSyncEnabled(const bool enabled) const;
   void setSyncNotifyNotRecognized(const bool enabled) const;
