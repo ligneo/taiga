@@ -21,9 +21,12 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QHeaderView>
+#include <QLabel>
 #include <QLineEdit>
 #include <QNetworkProxy>
 #include <QSpinBox>
+#include <QTreeWidget>
 #include <QVBoxLayout>
 
 #include "taiga/network.hpp"
@@ -37,7 +40,8 @@ AdvancedPage::AdvancedPage(QWidget* parent)
       m_editProxyHost(new QLineEdit(this)),
       m_spinProxyPort(new QSpinBox(this)),
       m_editProxyUsername(new QLineEdit(this)),
-      m_editProxyPassword(new QLineEdit(this)) {
+      m_editProxyPassword(new QLineEdit(this)),
+      m_treeSettings(new QTreeWidget(this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Proxy
@@ -63,7 +67,47 @@ AdvancedPage::AdvancedPage(QWidget* parent)
     layout->addWidget(group);
   }
 
-  layout->addStretch();
+  // Settings
+  {
+    const auto group = new QGroupBox(tr("Settings"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+
+    const auto warning = new QLabel(
+        tr("Warning: Do not change these settings unless you are sure of what you are doing."),
+        group);
+    warning->setWordWrap(true);
+    groupLayout->addWidget(warning);
+
+    m_treeSettings->setRootIsDecorated(false);
+    m_treeSettings->setAllColumnsShowFocus(true);
+    m_treeSettings->setAlternatingRowColors(true);
+    m_treeSettings->setColumnCount(2);
+    m_treeSettings->setHeaderLabels({tr("Name"), tr("Value")});
+    m_treeSettings->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    groupLayout->addWidget(m_treeSettings);
+
+    layout->addWidget(group);
+  }
+}
+
+// v1's Advanced tab is a raw Name/Value table rather than a themed page: it is where settings
+// that work but have no box of their own live. These three have no control in v1 either.
+void AdvancedPage::initSettingsTable() {
+  m_treeSettings->clear();
+
+  const auto addRow = [this](const QString& name, const QVariant& value) {
+    const auto item = new QTreeWidgetItem(m_treeSettings);
+    item->setText(0, name);
+    item->setData(1, Qt::DisplayRole, value);
+    item->setFlags(item->flags() | Qt::ItemIsEditable);
+    return item;
+  };
+
+  addRow(tr("Torrents / Archive limit"), taiga::settings.torrentArchiveMaxCount());
+  addRow(tr("Torrents / Download path for .torrent files"),
+         QString::fromStdString(taiga::settings.torrentDownloadFileLocation()));
+  addRow(tr("Torrents / Use magnet links if available"),
+         taiga::settings.torrentDownloadUseMagnet());
 }
 
 void AdvancedPage::load() {
@@ -74,9 +118,20 @@ void AdvancedPage::load() {
   m_spinProxyPort->setValue(std::max(taiga::settings.proxyPort(), 0));
   m_editProxyUsername->setText(QString::fromStdString(taiga::settings.proxyUsername()));
   m_editProxyPassword->setText(QString::fromStdString(taiga::settings.proxyPassword()));
+
+  initSettingsTable();
 }
 
 void AdvancedPage::save() {
+  if (m_treeSettings->topLevelItemCount() == 3) {
+    taiga::settings.setTorrentArchiveMaxCount(
+        m_treeSettings->topLevelItem(0)->data(1, Qt::DisplayRole).toInt());
+    taiga::settings.setTorrentDownloadFileLocation(
+        m_treeSettings->topLevelItem(1)->data(1, Qt::DisplayRole).toString().toStdString());
+    taiga::settings.setTorrentDownloadUseMagnet(
+        m_treeSettings->topLevelItem(2)->data(1, Qt::DisplayRole).toBool());
+  }
+
   taiga::settings.setProxyType(
       static_cast<QNetworkProxy::ProxyType>(m_comboProxyType->currentData().toInt()));
   taiga::settings.setProxyHost(m_editProxyHost->text().trimmed().toStdString());

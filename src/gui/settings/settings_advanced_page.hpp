@@ -23,6 +23,7 @@
 class QComboBox;
 class QLineEdit;
 class QSpinBox;
+class QTreeWidget;
 
 namespace gui {
 
@@ -38,7 +39,10 @@ public:
   void save() override;
 
 private:
+  void initSettingsTable();
+
   QComboBox* m_comboProxyType = nullptr;
+  QTreeWidget* m_treeSettings = nullptr;
   QLineEdit* m_editProxyHost = nullptr;
   QSpinBox* m_spinProxyPort = nullptr;
   QLineEdit* m_editProxyUsername = nullptr;
