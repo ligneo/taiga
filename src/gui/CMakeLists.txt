@@ -76,6 +76,10 @@ target_sources(taiga-gui PRIVATE
 
 	models/torrent_model.cpp
 	models/torrent_model.hpp
+	torrents/filter_condition_dialog.cpp
+	torrents/filter_condition_dialog.hpp
+	torrents/filter_dialog.cpp
+	torrents/filter_dialog.hpp
 	torrents/torrents_widget.cpp
 	torrents/torrents_widget.hpp
 	settings/settings_accounts_page.cpp
@@ -101,6 +105,8 @@ target_sources(taiga-gui PRIVATE
 	settings/settings_recognition_page.hpp
 	settings/settings_stream_list.cpp
 	settings/settings_stream_list.hpp
+	settings/settings_torrent_filters_page.cpp
+	settings/settings_torrent_filters_page.hpp
 	settings/settings_torrents_page.cpp
 	settings/settings_torrents_page.hpp
 	settings/settings_streaming_page.cpp

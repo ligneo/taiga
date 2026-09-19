@@ -46,6 +46,19 @@ enum class Status;
 
 }  // namespace anime
 
+namespace track {
+
+enum class FilterAction;
+enum class FilterElement;
+enum class FilterMatch;
+enum class FilterOperator;
+enum class FilterOption;
+
+struct Filter;
+struct FilterCondition;
+
+}  // namespace track
+
 namespace gui {
 
 QString formatNumber(const int value, QString placeholder = "-");
@@ -71,5 +84,13 @@ QString formatStatus(const anime::Status value);
 QString formatType(const anime::Type value);
 
 QString formatListStatus(const anime::list::Status value);
+
+QString formatFilterAction(const track::FilterAction value);
+QString formatFilterElement(const track::FilterElement value);
+QString formatFilterMatch(const track::FilterMatch value);
+QString formatFilterOperator(const track::FilterOperator value);
+QString formatFilterOption(const track::FilterOption value);
+QString formatFilterValue(const track::FilterCondition& condition);
+QString formatFilterCondition(const track::FilterCondition& condition);
 
 }  // namespace gui

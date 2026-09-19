@@ -28,8 +28,11 @@
 #include "base/chrono.hpp"
 #include "base/string.hpp"
 #include "media/anime.hpp"
+#include "media/anime_db.hpp"
 #include "media/anime_list.hpp"
 #include "media/anime_season.hpp"
+#include "media/anime_utils.hpp"
+#include "track/feed_filter.hpp"
 
 namespace gui {
 
@@ -219,6 +222,122 @@ QString formatListStatus(const anime::list::Status value) {
     default: return "";
   }
   // clang-format on
+}
+
+QString formatFilterAction(const track::FilterAction value) {
+  using enum track::FilterAction;
+
+  // clang-format off
+  switch (value) {
+    case Discard: return "Discard matched items";
+    case Select: return "Select matched items";
+    case Prefer: return "Prefer matched items to similar ones";
+    default: return "";
+  }
+  // clang-format on
+}
+
+QString formatFilterElement(const track::FilterElement value) {
+  using enum track::FilterElement;
+
+  // clang-format off
+  switch (value) {
+    case FileTitle: return "File name";
+    case FileCategory: return "File category";
+    case FileDescription: return "File description";
+    case FileLink: return "File link";
+    case FileSize: return "File size";
+    case MetaId: return "Anime ID";
+    case EpisodeTitle: return "Episode title";
+    case MetaDateStart: return "Anime date started";
+    case MetaDateEnd: return "Anime date ended";
+    case MetaEpisodes: return "Anime episode count";
+    case MetaStatus: return "Anime airing status";
+    case MetaType: return "Anime type";
+    case UserNotes: return "Anime notes";
+    case UserStatus: return "Anime watching status";
+    case EpisodeNumber: return "Episode number";
+    case EpisodeVersion: return "Episode version";
+    case LocalEpisodeAvailable: return "Episode availability";
+    case EpisodeGroup: return "Episode fansub group";
+    case EpisodeVideoResolution: return "Episode video resolution";
+    case EpisodeVideoType: return "Episode video type";
+    default: return "";
+  }
+  // clang-format on
+}
+
+QString formatFilterMatch(const track::FilterMatch value) {
+  using enum track::FilterMatch;
+
+  // clang-format off
+  switch (value) {
+    case All: return "All conditions";
+    case Any: return "Any condition";
+    default: return "";
+  }
+  // clang-format on
+}
+
+QString formatFilterOperator(const track::FilterOperator value) {
+  using enum track::FilterOperator;
+
+  // clang-format off
+  switch (value) {
+    case Equals: return "is";
+    case NotEquals: return "is not";
+    case IsGreaterThan: return "is greater than";
+    case IsGreaterThanOrEqualTo: return "is greater than or equal to";
+    case IsLessThan: return "is less than";
+    case IsLessThanOrEqualTo: return "is less than or equal to";
+    case BeginsWith: return "begins with";
+    case EndsWith: return "ends with";
+    case Contains: return "contains";
+    case NotContains: return "does not contain";
+    default: return "";
+  }
+  // clang-format on
+}
+
+QString formatFilterOption(const track::FilterOption value) {
+  using enum track::FilterOption;
+
+  // clang-format off
+  switch (value) {
+    case Default: return "Default";
+    case Deactivate: return "Deactivate discarded items";
+    case Hide: return "Hide discarded items";
+    default: return "";
+  }
+  // clang-format on
+}
+
+// Values that are stored as a number are shown by name instead, as in v1.
+QString formatFilterValue(const track::FilterCondition& condition) {
+  const auto value = QString::fromStdString(condition.value);
+
+  switch (condition.element) {
+    case track::FilterElement::MetaId: {
+      if (value.isEmpty()) return "(?)";
+      const auto item = anime::db.item(value.toInt());
+      return u"%1 (%2)"_s.arg(value).arg(item ? QString::fromStdString(anime::preferredTitle(*item))
+                                              : u"?"_s);
+    }
+    case track::FilterElement::UserStatus:
+      return formatListStatus(static_cast<anime::list::Status>(value.toInt()));
+    case track::FilterElement::MetaStatus:
+      return formatStatus(static_cast<anime::Status>(value.toInt()));
+    case track::FilterElement::MetaType:
+      return formatType(static_cast<anime::Type>(value.toInt()));
+    default:
+      return !value.isEmpty() ? value : u"(empty)"_s;
+  }
+}
+
+QString formatFilterCondition(const track::FilterCondition& condition) {
+  return u"%1 %2 \"%3\""_s.arg(formatFilterElement(condition.element))
+      .arg(formatFilterOperator(condition.op))
+      .arg(formatFilterValue(condition));
 }
 
 }  // namespace gui
