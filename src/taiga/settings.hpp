@@ -62,6 +62,8 @@ public:
   qint64 libraryMinimumFileSize() const;
   bool mediaDetectionEnabled() const;
   std::chrono::milliseconds mediaDetectionInterval() const;
+  std::vector<std::string> recognitionIgnoredStrings() const;
+  bool recognitionLookupParentDirectories() const;
   QNetworkProxy::ProxyType proxyType() const;
   std::string proxyHost() const;
   int proxyPort() const;
@@ -113,6 +115,8 @@ public:
   void setLibraryMinimumFileSize(const qint64 bytes) const;
   void setMediaDetectionEnabled(const bool enabled) const;
   void setMediaDetectionInterval(const std::chrono::milliseconds interval) const;
+  void setRecognitionIgnoredStrings(std::vector<std::string> strings) const;
+  void setRecognitionLookupParentDirectories(const bool lookup) const;
   void setProxyType(const QNetworkProxy::ProxyType type) const;
   void setProxyHost(const std::string& host) const;
   void setProxyPort(const int port) const;

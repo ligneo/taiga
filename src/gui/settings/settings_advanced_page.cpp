@@ -29,6 +29,7 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
+#include "base/string.hpp"
 #include "taiga/network.hpp"
 #include "taiga/settings.hpp"
 
@@ -108,6 +109,14 @@ void AdvancedPage::initSettingsTable() {
          QString::fromStdString(taiga::settings.torrentDownloadFileLocation()));
   addRow(tr("Torrents / Use magnet links if available"),
          taiga::settings.torrentDownloadUseMagnet());
+
+  // These have no control in v1 either, and the same is true here.
+  addRow(tr("Library / File size threshold"),
+         QString::number(taiga::settings.libraryMinimumFileSize()));
+  addRow(tr("Recognition / Ignored strings"),
+         joinStrings(taiga::settings.recognitionIgnoredStrings(), {}));
+  addRow(tr("Recognition / Look up parent directories"),
+         taiga::settings.recognitionLookupParentDirectories());
 }
 
 void AdvancedPage::load() {
@@ -123,13 +132,23 @@ void AdvancedPage::load() {
 }
 
 void AdvancedPage::save() {
-  if (m_treeSettings->topLevelItemCount() == 3) {
+  if (m_treeSettings->topLevelItemCount() == 6) {
     taiga::settings.setTorrentArchiveMaxCount(
         m_treeSettings->topLevelItem(0)->data(1, Qt::DisplayRole).toInt());
     taiga::settings.setTorrentDownloadFileLocation(
         m_treeSettings->topLevelItem(1)->data(1, Qt::DisplayRole).toString().toStdString());
     taiga::settings.setTorrentDownloadUseMagnet(
         m_treeSettings->topLevelItem(2)->data(1, Qt::DisplayRole).toBool());
+
+    taiga::settings.setLibraryMinimumFileSize(
+        m_treeSettings->topLevelItem(3)->data(1, Qt::DisplayRole).toLongLong());
+
+    const auto ignored = m_treeSettings->topLevelItem(4)->data(1, Qt::DisplayRole).toString();
+    taiga::settings.setRecognitionIgnoredStrings(
+        toVector(ignored.split(u", "_s, Qt::SkipEmptyParts)));
+
+    taiga::settings.setRecognitionLookupParentDirectories(
+        m_treeSettings->topLevelItem(5)->data(1, Qt::DisplayRole).toBool());
   }
 
   taiga::settings.setProxyType(

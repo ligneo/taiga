@@ -75,6 +75,19 @@ std::vector<std::string> Settings::libraryFolders() const {
          std::ranges::to<std::vector>();
 }
 
+// v1's `recognition/anitomy/ignored_strings`. The bundled Anitomy has no option for these, so
+// they are taken out of the file name before it is parsed, which has the same effect.
+std::vector<std::string> Settings::recognitionIgnoredStrings() const {
+  return value("recognition.ignoredStrings").toJsonArray() |
+         std::views::transform([](const QJsonValue& v) { return v.toString().toStdString(); }) |
+         std::ranges::to<std::vector>();
+}
+
+// v1's `recognition/general/lookup_parent_directories`, on by default there as well.
+bool Settings::recognitionLookupParentDirectories() const {
+  return value("recognition.lookupParentDirectories", true).toBool();
+}
+
 bool Settings::mediaDetectionEnabled() const {
   return value("track.detection.enabled", true).toBool();
 }
@@ -428,6 +441,18 @@ void Settings::setLibraryFolders(std::vector<std::string> folders) const {
       std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
       std::ranges::to<QList>();
   setValue("library.folders", QJsonArray::fromStringList(list));
+}
+
+void Settings::setRecognitionIgnoredStrings(std::vector<std::string> strings) const {
+  const auto list =
+      strings |
+      std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
+      std::ranges::to<QList>();
+  setValue("recognition.ignoredStrings", QJsonArray::fromStringList(list));
+}
+
+void Settings::setRecognitionLookupParentDirectories(const bool lookup) const {
+  setValue("recognition.lookupParentDirectories", lookup);
 }
 
 void Settings::setMediaDetectionEnabled(const bool enabled) const {
