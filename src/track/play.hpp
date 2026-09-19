@@ -24,6 +24,10 @@ namespace track {
 
 bool playEpisode(int animeId, int number);
 
+// The two toolbar actions, which pick the anime themselves.
+bool playNextEpisodeOfLastWatchedAnime();
+bool playRandomAnime();
+
 std::optional<int> nextEpisodeNumber(int animeId);
 std::optional<int> randomEpisodeNumber(int animeId);
 

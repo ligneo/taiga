@@ -21,10 +21,15 @@
 #include <QDesktopServices>
 #include <QRandomGenerator>
 #include <QUrl>
+#include <algorithm>
+#include <vector>
 
 #include "base/log.hpp"
 #include "media/anime_db.hpp"
+#include "media/anime_history.hpp"
+#include "media/anime_list.hpp"
 #include "taiga/settings.hpp"
+#include "track/library.hpp"
 #include "track/scanner.hpp"
 
 namespace track {
@@ -44,6 +49,26 @@ bool playEpisode(int animeId, int number) {
 
   return false;
 }
+
+namespace {
+
+// Anime the user has moved on from are not what "play next" means, as in v1.
+bool isWorthPlaying(const int animeId) {
+  const auto entry = anime::db.entry(animeId);
+
+  if (!entry) return false;
+
+  switch (entry->status) {
+    case anime::list::Status::NotInList:
+    case anime::list::Status::Completed:
+    case anime::list::Status::Dropped:
+      return false;
+    default:
+      return true;
+  }
+}
+
+}  // namespace
 
 std::optional<int> nextEpisodeNumber(int animeId) {
   const auto item = anime::db.item(animeId);
@@ -86,6 +111,62 @@ std::optional<int> randomEpisodeNumber(int animeId) {
   if (max_episode < 1) return std::nullopt;
 
   return QRandomGenerator::global()->bounded(1, max_episode + 1);
+}
+
+// v1 walks the queue and then the history, because an episode it has just seen may still be
+// waiting to be sent. In v2 both are written at the same moment (`anime::list::update()`), so the
+// history alone is enough.
+bool playNextEpisodeOfLastWatchedAnime() {
+  const anime::HistoryItem* latest = nullptr;
+
+  for (const auto& item : anime::history.items()) {
+    if (item.episode <= 0) continue;
+    if (!isWorthPlaying(item.anime_id)) continue;
+    if (!latest || item.time > latest->time) latest = &item;
+  }
+
+  if (!latest) {
+    qDebug() << "No recently watched anime to continue.";
+    return false;
+  }
+
+  const auto number = nextEpisodeNumber(latest->anime_id);
+
+  return number && playEpisode(latest->anime_id, *number);
+}
+
+bool playRandomAnime() {
+  // v1 rescans if its data is more than two minutes old. Scanning the user's folders was measured
+  // at 51 ms, so it is simply done every time.
+  library()->scan();
+
+  std::vector<int> candidates;
+
+  for (const auto id : anime::db.items().keys()) {
+    if (!isWorthPlaying(id)) continue;
+
+    const auto number = nextEpisodeNumber(id);
+    if (!number) continue;
+
+    // Without this, the action would keep landing on anime whose next episode is not on disk.
+    if (!library()->isEpisodeAvailable(id, *number)) continue;
+
+    candidates.push_back(id);
+  }
+
+  if (candidates.empty()) {
+    qDebug() << "No anime with an available next episode.";
+    return false;
+  }
+
+  std::ranges::shuffle(candidates, *QRandomGenerator::global());
+
+  for (const auto id : candidates) {
+    const auto number = nextEpisodeNumber(id);
+    if (number && playEpisode(id, *number)) return true;
+  }
+
+  return false;
 }
 
 }  // namespace track

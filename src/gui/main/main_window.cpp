@@ -35,8 +35,8 @@
 #include "gui/main/status_bar_controller.hpp"
 #include "gui/profile/profile_widget.hpp"
 #include "gui/search/search_widget.hpp"
-#include "gui/torrents/torrents_widget.hpp"
 #include "gui/settings/settings_dialog.hpp"
+#include "gui/torrents/torrents_widget.hpp"
 #include "gui/utils/format.hpp"
 #include "gui/utils/theme.hpp"
 #include "gui/utils/tray_icon.hpp"
@@ -58,6 +58,7 @@
 #include "track/feed_aggregator.hpp"
 #include "track/library.hpp"
 #include "track/media.hpp"
+#include "track/play.hpp"
 #include "track/update.hpp"
 #include "ui_main_window.h"
 
@@ -128,6 +129,25 @@ void MainWindow::initActions() {
   connect(ui_->actionAddNewFolder, &QAction::triggered, this, &MainWindow::addNewFolder);
   connect(ui_->actionExit, &QAction::triggered, this, &QApplication::quit, Qt::QueuedConnection);
   connect(ui_->actionSettings, &QAction::triggered, this, [this]() { SettingsDialog::show(this); });
+  // Both actions pick the anime themselves, so a failure has to be said out loud. v1 shows a
+  // message box; v2 already reports playback this way.
+  const auto playbackFailed = [this](const QString& text) {
+    m_statusBarController->showMessage({
+        .source = StatusBarController::Source::Playback,
+        .text = text,
+        .spin = false,
+    });
+  };
+  connect(ui_->actionPlayNextEpisode, &QAction::triggered, this, [playbackFailed]() {
+    if (!track::playNextEpisodeOfLastWatchedAnime()) {
+      playbackFailed(tr("Could not find the next episode of the last anime you watched."));
+    }
+  });
+  connect(ui_->actionPlayRandomAnime, &QAction::triggered, this, [playbackFailed]() {
+    if (!track::playRandomAnime()) {
+      playbackFailed(tr("Could not find an available episode to play."));
+    }
+  });
   connect(ui_->actionAbout, &QAction::triggered, this, &MainWindow::about);
   connect(ui_->actionDonate, &QAction::triggered, this, &MainWindow::donate);
   connect(ui_->actionSupport, &QAction::triggered, this, &MainWindow::support);
