@@ -19,8 +19,10 @@
 #pragma once
 
 #include <QCoreApplication>
+#include <QFileSystemWatcher>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 #include <map>
 #include <unordered_map>
 
@@ -37,6 +39,7 @@ public:
   ~Library() override = default;
 
   void scan();
+  void applyWatchSettings();
 
   int availableEpisodeCount(const int animeId) const;
   bool isEpisodeAvailable(const int animeId, const int number) const;
@@ -47,8 +50,12 @@ signals:
   void scanCompleted(const int animeCount, const int episodeCount);
 
 private:
+  void onDirectoryChanged(const QString& path);
+
   // Anime ID to episode number to file path
   std::unordered_map<int, std::map<int, QString>> episodes_;
+  QFileSystemWatcher* watcher_ = nullptr;
+  QTimer* rescanTimer_ = nullptr;
 };
 
 inline Library* library() {

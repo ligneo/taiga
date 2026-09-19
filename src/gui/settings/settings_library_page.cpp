@@ -18,23 +18,31 @@
 
 #include "settings_library_page.hpp"
 
+#include <QCheckBox>
 #include <QDir>
+#include <QDragMoveEvent>
+#include <QDropEvent>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QMimeData>
 #include <QPushButton>
 #include <QVBoxLayout>
 
 #include "taiga/settings.hpp"
+#include "track/library.hpp"
 
 namespace gui {
 
 LibraryPage::LibraryPage(QWidget* parent)
     : SettingsPage(parent),
       m_listFolders(new QListWidget(this)),
-      m_buttonRemove(new QPushButton(tr("Remove"), this)) {
+      m_buttonRemove(new QPushButton(tr("Remove"), this)),
+      m_checkWatch(new QCheckBox(tr("Watch library folders for changes"), this)),
+      m_checkScanOnStartup(new QCheckBox(tr("Scan available episodes on startup"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Library folders
@@ -42,10 +50,14 @@ LibraryPage::LibraryPage(QWidget* parent)
     const auto group = new QGroupBox(tr("Library folders"), this);
     const auto groupLayout = new QVBoxLayout(group);
 
-    groupLayout->addWidget(
-        new QLabel(tr("These folders will be scanned for available episodes."), group));
+    groupLayout->addWidget(new QLabel(
+        tr("These folders will be scanned for available episodes. You can drag and drop folders "
+           "here."),
+        group));
 
     m_listFolders->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_listFolders->setAcceptDrops(true);
+    m_listFolders->installEventFilter(this);
     groupLayout->addWidget(m_listFolders);
 
     const auto buttonLayout = new QHBoxLayout();
@@ -62,6 +74,57 @@ LibraryPage::LibraryPage(QWidget* parent)
 
     layout->addWidget(group);
   }
+
+  // Behavior
+  {
+    const auto group = new QGroupBox(tr("Behavior"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+
+    groupLayout->addWidget(m_checkScanOnStartup);
+    groupLayout->addWidget(m_checkWatch);
+
+    const auto note = new QLabel(
+        tr("Taiga is told which folder changed, not which file, so it scans the library again "
+           "after a change."),
+        group);
+    note->setWordWrap(true);
+    groupLayout->addWidget(note);
+
+    layout->addWidget(group);
+  }
+
+  layout->addStretch();
+}
+
+// Qt's list widget does not take folders on its own, so the drops are handled here. v1 offers the
+// same shortcut ("Tip: You can drag and drop folders here").
+bool LibraryPage::eventFilter(QObject* watched, QEvent* event) {
+  if (watched != m_listFolders) return SettingsPage::eventFilter(watched, event);
+
+  switch (event->type()) {
+    case QEvent::DragEnter:
+    case QEvent::DragMove: {
+      const auto dragEvent = static_cast<QDragMoveEvent*>(event);
+      if (dragEvent->mimeData()->hasUrls()) dragEvent->acceptProposedAction();
+      return true;
+    }
+
+    case QEvent::Drop: {
+      const auto dropEvent = static_cast<QDropEvent*>(event);
+      for (const auto& url : dropEvent->mimeData()->urls()) {
+        if (!url.isLocalFile()) continue;
+        const auto path = QDir::toNativeSeparators(QDir::cleanPath(url.toLocalFile()));
+        if (!QFileInfo{path}.isDir()) continue;
+        if (!m_listFolders->findItems(path, Qt::MatchExactly).isEmpty()) continue;
+        m_listFolders->addItem(path);
+      }
+      dropEvent->acceptProposedAction();
+      return true;
+    }
+
+    default:
+      return SettingsPage::eventFilter(watched, event);
+  }
 }
 
 void LibraryPage::load() {
@@ -70,6 +133,8 @@ void LibraryPage::load() {
     m_listFolders->addItem(QString::fromStdString(folder));
   }
   m_buttonRemove->setEnabled(false);
+  m_checkWatch->setChecked(taiga::settings.libraryWatchFolders());
+  m_checkScanOnStartup->setChecked(taiga::settings.libraryScanOnStartup());
 }
 
 void LibraryPage::save() {
@@ -78,6 +143,10 @@ void LibraryPage::save() {
     folders.push_back(m_listFolders->item(i)->text().toStdString());
   }
   taiga::settings.setLibraryFolders(folders);
+  taiga::settings.setLibraryWatchFolders(m_checkWatch->isChecked());
+  taiga::settings.setLibraryScanOnStartup(m_checkScanOnStartup->isChecked());
+
+  track::library()->applyWatchSettings();
 }
 
 void LibraryPage::addFolder() {

@@ -20,6 +20,7 @@
 
 #include "gui/settings/settings_page.hpp"
 
+class QCheckBox;
 class QListWidget;
 class QPushButton;
 
@@ -36,11 +37,16 @@ public:
   void load() override;
   void save() override;
 
+protected:
+  bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
   void addFolder();
   void removeFolder();
 
   QListWidget* m_listFolders = nullptr;
+  QCheckBox* m_checkWatch = nullptr;
+  QCheckBox* m_checkScanOnStartup = nullptr;
   QPushButton* m_buttonRemove = nullptr;
 };
 

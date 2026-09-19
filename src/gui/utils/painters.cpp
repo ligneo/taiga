@@ -29,6 +29,9 @@
 #include "media/anime.hpp"
 #include "media/anime_list.hpp"
 #include "media/anime_list_utils.hpp"
+#include "media/anime_utils.hpp"
+#include "taiga/settings.hpp"
+#include "track/library.hpp"
 
 namespace gui {
 
@@ -72,6 +75,29 @@ void paintProgressBar(QPainter* painter, const QStyleOption& option, const Anime
 
   static const auto proxyStyle{new QProxyStyle{"fusion"}};
   proxyStyle->drawControl(QStyle::CE_ProgressBar, &styleOption, painter);
+
+  // v1 draws two more bands over the bar: the episodes that have aired and the ones already on
+  // disk. Both are faint, so the watched part and the text stay readable.
+  if (episodes <= 0) return;
+
+  const auto band = [&](const int from, const int to, const QColor& color) {
+    if (to <= from) return;
+    const auto width = static_cast<double>(option.rect.width()) / episodes;
+    QRectF rect{option.rect};
+    rect.setLeft(option.rect.left() + width * from);
+    rect.setWidth(width * (to - from));
+    painter->fillRect(rect, color);
+  };
+
+  if (taiga::settings.listShowAvailableEpisodes()) {
+    const auto available = std::min(track::library()->availableEpisodeCount(anime->id), episodes);
+    band(watched, available, QColor{12, 164, 12, 64});
+  }
+
+  if (taiga::settings.listShowAiredEpisodes()) {
+    const auto aired = std::min(anime::estimateLastAiredEpisodeNumber(*anime), episodes);
+    band(watched, aired, QColor{190, 190, 190, 40});
+  }
 }
 
 void paintSpinner(QPainter* painter, const QPixmap& pixmap, const QPointF& center, qreal angle) {

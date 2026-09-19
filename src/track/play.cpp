@@ -35,9 +35,14 @@
 namespace track {
 
 bool playEpisode(int animeId, int number) {
-  const auto libraryFolders = taiga::settings.libraryFolders();
+  // The library already knows where the episodes are, so the folders only have to be walked when
+  // it has nothing for this one.
+  if (const auto path = library()->episodePath(animeId, number); !path.isEmpty()) {
+    qDebug() << "Found file:" << path;
+    return QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+  }
 
-  for (const auto& folder : libraryFolders) {
+  for (const auto& folder : taiga::settings.libraryFolders()) {
     const auto episodePath = findEpisode(QString::fromStdString(folder), animeId, number);
     if (episodePath) {
       qDebug() << "Found file:" << *episodePath;

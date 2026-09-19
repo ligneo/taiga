@@ -19,6 +19,7 @@
 #include "library.hpp"
 
 #include <QDirIterator>
+#include <chrono>
 
 #include "base/log.hpp"
 #include "media/anime.hpp"
@@ -44,6 +45,12 @@ void Library::scan() {
       auto episode = recognition::parseFileInfo(info);
 
       if (!recognition::isVideoFile(episode)) continue;
+
+      // v1 skips anything smaller than the threshold, which keeps samples and stubs out.
+      if (const auto minimum = taiga::settings.libraryMinimumFileSize();
+          minimum > 0 && info.size() < minimum) {
+        continue;
+      }
 
       const auto animeId = recognition::identify(episode);
 
@@ -89,6 +96,40 @@ QString Library::episodePath(const int animeId, const int number) const {
   const auto episode = it->second.find(number);
 
   return episode != it->second.end() ? episode->second : QString{};
+}
+
+// v1 reacts to each file event; Qt only says which directory changed, so the whole library is
+// scanned again. A short delay keeps a burst of writes from starting several scans.
+void Library::applyWatchSettings() {
+  if (!watcher_) {
+    watcher_ = new QFileSystemWatcher(this);
+    rescanTimer_ = new QTimer(this);
+    rescanTimer_->setSingleShot(true);
+    rescanTimer_->setInterval(std::chrono::seconds{3});
+    connect(rescanTimer_, &QTimer::timeout, this, &Library::scan);
+    connect(watcher_, &QFileSystemWatcher::directoryChanged, this, &Library::onDirectoryChanged);
+  }
+
+  if (!watcher_->directories().isEmpty()) watcher_->removePaths(watcher_->directories());
+
+  if (!taiga::settings.libraryWatchFolders()) return;
+
+  QStringList paths;
+
+  for (const auto& folder : taiga::settings.libraryFolders()) {
+    const auto root = QString::fromStdString(folder);
+    if (!QDir{root}.exists()) continue;
+    paths.append(root);
+    // Subfolders have to be watched one by one; a watch does not reach into them.
+    QDirIterator it{root, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories};
+    while (it.hasNext()) paths.append(it.next());
+  }
+
+  if (!paths.isEmpty()) watcher_->addPaths(paths);
+}
+
+void Library::onDirectoryChanged(const QString&) {
+  rescanTimer_->start();
 }
 
 }  // namespace track

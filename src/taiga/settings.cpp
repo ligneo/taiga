@@ -111,6 +111,30 @@ bool Settings::sidebarVisible() const {
   return value("app.sidebarVisible", true).toBool();
 }
 
+// v1's `program/list/progress/showaired` and `showavailable`, both on by default there.
+// v1's `anime/folders/watch/enabled`, on by default there as well.
+bool Settings::libraryWatchFolders() const {
+  return value("library.folders.watch", true).toBool();
+}
+
+// v1's `program/startup/checkeps`.
+bool Settings::libraryScanOnStartup() const {
+  return value("library.scanOnStartup", false).toBool();
+}
+
+// v1's `anime/folders/scan/minfilesize`, which it stores in bytes.
+qint64 Settings::libraryMinimumFileSize() const {
+  return value("library.minimumFileSize", 0).toLongLong();
+}
+
+bool Settings::listShowAiredEpisodes() const {
+  return value("animeList.progress.showAired", true).toBool();
+}
+
+bool Settings::listShowAvailableEpisodes() const {
+  return value("animeList.progress.showAvailable", true).toBool();
+}
+
 bool Settings::streamingMediaEnabled() const {
   return value("recognition.streaming.enabled", false).toBool();
 }
@@ -420,6 +444,26 @@ void Settings::setProxyPassword(const std::string& password) const {
 
 void Settings::setSidebarVisible(const bool visible) const {
   setValue("app.sidebarVisible", visible);
+}
+
+void Settings::setLibraryWatchFolders(const bool watch) const {
+  setValue("library.folders.watch", watch);
+}
+
+void Settings::setLibraryScanOnStartup(const bool scan) const {
+  setValue("library.scanOnStartup", scan);
+}
+
+void Settings::setLibraryMinimumFileSize(const qint64 bytes) const {
+  setValue("library.minimumFileSize", bytes);
+}
+
+void Settings::setListShowAiredEpisodes(const bool show) const {
+  setValue("animeList.progress.showAired", show);
+}
+
+void Settings::setListShowAvailableEpisodes(const bool show) const {
+  setValue("animeList.progress.showAvailable", show);
 }
 
 void Settings::setStreamingMediaEnabled(const bool enabled) const {

@@ -57,6 +57,9 @@ public:
   std::optional<QJsonArray> torrentFilters() const;
   std::string service() const;
   std::vector<std::string> libraryFolders() const;
+  bool libraryWatchFolders() const;
+  bool libraryScanOnStartup() const;
+  qint64 libraryMinimumFileSize() const;
   bool mediaDetectionEnabled() const;
   std::chrono::milliseconds mediaDetectionInterval() const;
   QNetworkProxy::ProxyType proxyType() const;
@@ -65,6 +68,8 @@ public:
   std::string proxyUsername() const;
   std::string proxyPassword() const;
   bool sidebarVisible() const;
+  bool listShowAiredEpisodes() const;
+  bool listShowAvailableEpisodes() const;
   bool streamingMediaEnabled() const;
   bool syncEnabled() const;
   bool syncNotifyNotRecognized() const;
@@ -99,6 +104,9 @@ public:
   void setTorrentFilters(const QJsonArray& filters) const;
   void setService(const std::string& service) const;
   void setLibraryFolders(std::vector<std::string> folders) const;
+  void setLibraryWatchFolders(const bool watch) const;
+  void setLibraryScanOnStartup(const bool scan) const;
+  void setLibraryMinimumFileSize(const qint64 bytes) const;
   void setMediaDetectionEnabled(const bool enabled) const;
   void setMediaDetectionInterval(const std::chrono::milliseconds interval) const;
   void setProxyType(const QNetworkProxy::ProxyType type) const;
@@ -107,6 +115,8 @@ public:
   void setProxyUsername(const std::string& username) const;
   void setProxyPassword(const std::string& password) const;
   void setSidebarVisible(const bool visible) const;
+  void setListShowAiredEpisodes(const bool show) const;
+  void setListShowAvailableEpisodes(const bool show) const;
   void setStreamingMediaEnabled(const bool enabled) const;
   void setSyncEnabled(const bool enabled) const;
   void setSyncNotifyNotRecognized(const bool enabled) const;

@@ -40,6 +40,7 @@
 #include "taiga/settings.hpp"
 #include "taiga/version.hpp"
 #include "track/feed_archive.hpp"
+#include "track/library.hpp"
 #include "track/media.hpp"
 
 namespace taiga {
@@ -93,6 +94,9 @@ int Application::run() {
   sync::queue.init();
   track::archive.init();
   track::archive.init();
+  track::archive.init();
+  track::library()->applyWatchSettings();
+  if (taiga::settings.libraryScanOnStartup()) track::library()->scan();
   track::media::detection()->init();
   gui::imageProvider.init();
 
