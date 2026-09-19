@@ -35,6 +35,7 @@
 #include "gui/main/status_bar_controller.hpp"
 #include "gui/profile/profile_widget.hpp"
 #include "gui/search/search_widget.hpp"
+#include "gui/seasons/seasons_widget.hpp"
 #include "gui/settings/settings_dialog.hpp"
 #include "gui/torrents/torrents_widget.hpp"
 #include "gui/utils/format.hpp"
@@ -281,6 +282,11 @@ void MainWindow::initPage(MainWindowPage page) {
       init_page(ui_->libraryPage, m_libraryWidget);
       break;
 
+    case MainWindowPage::Seasons:
+      m_seasonsWidget = new SeasonsWidget(ui_->seasonsPage);
+      init_page(ui_->seasonsPage, m_seasonsWidget);
+      break;
+
     case MainWindowPage::Torrents:
       m_torrentsWidget = new TorrentsWidget(ui_->torrentsPage);
       init_page(ui_->torrentsPage, m_torrentsWidget);
@@ -510,6 +516,7 @@ void MainWindow::closeEvent(QCloseEvent* event) {
   taiga::session.setMainWindowGeometry(saveGeometry());
   if (m_listWidget) m_listWidget->saveState();
   if (m_searchWidget) m_searchWidget->saveState();
+  if (m_seasonsWidget) m_seasonsWidget->saveState();
   event->accept();
 }
 

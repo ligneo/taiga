@@ -23,10 +23,14 @@
 
 #include "base/settings.hpp"
 
+namespace anime {
+class Season;
+}
+
 namespace gui {
 enum class ListViewMode;
 struct AnimeListProxyModelFilter;
-}
+}  // namespace gui
 
 namespace taiga {
 
@@ -38,6 +42,10 @@ public:
   QByteArray mainWindowGeometry() const;
   QByteArray mediaDialogGeometry() const;
   QByteArray mediaDialogSplitterState() const;
+  anime::Season season() const;
+  int seasonsSortColumn() const;
+  Qt::SortOrder seasonsSortOrder() const;
+  gui::ListViewMode seasonsViewMode() const;
   gui::AnimeListProxyModelFilter searchListFilters() const;
   int searchListSortColumn() const;
   Qt::SortOrder searchListSortOrder() const;
@@ -49,6 +57,10 @@ public:
   void setMainWindowGeometry(const QByteArray& geometry) const;
   void setMediaDialogGeometry(const QByteArray& geometry) const;
   void setMediaDialogSplitterState(const QByteArray& state) const;
+  void setSeason(const anime::Season season) const;
+  void setSeasonsSortColumn(const int column) const;
+  void setSeasonsSortOrder(const Qt::SortOrder order) const;
+  void setSeasonsViewMode(const gui::ListViewMode mode) const;
   void setSearchListFilters(const gui::AnimeListProxyModelFilter& filters) const;
   void setSearchListSortColumn(const int column) const;
   void setSearchListSortOrder(const Qt::SortOrder order) const;

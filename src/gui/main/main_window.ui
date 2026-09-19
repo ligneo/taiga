@@ -69,6 +69,7 @@
        <widget class="QWidget" name="listPage"/>
        <widget class="QWidget" name="historyPage"/>
        <widget class="QWidget" name="libraryPage"/>
+       <widget class="QWidget" name="seasonsPage"/>
        <widget class="QWidget" name="torrentsPage"/>
        <widget class="QWidget" name="profilePage"/>
       </widget>

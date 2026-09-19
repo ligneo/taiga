@@ -105,6 +105,7 @@ void NavigationWidget::refresh() {
 
   addSeparator();
   addItem("Library", "folder", MainWindowPage::Library);
+  addItem("Seasons", "calendar_month", MainWindowPage::Seasons);
   addItem("Torrents", "rss_feed", MainWindowPage::Torrents);
 
   setUpdatesEnabled(true);

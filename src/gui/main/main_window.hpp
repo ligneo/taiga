@@ -42,6 +42,7 @@ class NavigationWidget;
 class NowPlayingWidget;
 class ProfileWidget;
 class SearchWidget;
+class SeasonsWidget;
 class TorrentsWidget;
 class StatusBarController;
 class TrayIcon;
@@ -57,6 +58,7 @@ enum class MainWindowPage {
   List,
   History,
   Library,
+  Seasons,
   Torrents,
   Profile,
 };
@@ -118,6 +120,7 @@ private:
   ProfileWidget* m_profileWidget = nullptr;
   QLineEdit* m_searchBox = nullptr;
   SearchWidget* m_searchWidget = nullptr;
+  SeasonsWidget* m_seasonsWidget = nullptr;
   TorrentsWidget* m_torrentsWidget = nullptr;
   StatusBarController* m_statusBarController = nullptr;
   TrayIcon* m_trayIcon = nullptr;

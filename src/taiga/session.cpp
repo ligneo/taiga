@@ -62,6 +62,30 @@ QByteArray Session::mediaDialogSplitterState() const {
   return QByteArray::fromBase64(value("mediaDialog.splitterState", QByteArray{}).toByteArray());
 }
 
+// The season being browsed is the subject of the page, not a hidden filter, so it is remembered
+// across runs. v1 does the same (`program/seasons/lastseason`).
+anime::Season Session::season() const {
+  const auto name = value("seasons.name").toInt();
+  const auto year = value("seasons.year").toInt();
+
+  if (!name || !year) return anime::Season{QDate::currentDate().toStdSysDays()};
+
+  return anime::Season{static_cast<anime::SeasonName>(name), std::chrono::year{year}};
+}
+
+int Session::seasonsSortColumn() const {
+  return value("seasons.sortColumn", 0).toInt();
+}
+
+Qt::SortOrder Session::seasonsSortOrder() const {
+  return static_cast<Qt::SortOrder>(value("seasons.sortOrder", 0).toInt());
+}
+
+gui::ListViewMode Session::seasonsViewMode() const {
+  return static_cast<gui::ListViewMode>(
+      value("seasons.viewMode", static_cast<int>(gui::ListViewMode::Cards)).toInt());
+}
+
 gui::AnimeListProxyModelFilter Session::searchListFilters() const {
   const auto json = QJsonDocument::fromJson(
       QByteArray::fromBase64(value("searchList.filters", QByteArray{}).toByteArray()));
@@ -127,6 +151,23 @@ void Session::setMediaDialogGeometry(const QByteArray& geometry) const {
 
 void Session::setMediaDialogSplitterState(const QByteArray& state) const {
   setValue("mediaDialog.splitterState", state.toBase64().toStdString());
+}
+
+void Session::setSeason(const anime::Season season) const {
+  setValue("seasons.name", static_cast<int>(season.name));
+  setValue("seasons.year", static_cast<int>(season.year));
+}
+
+void Session::setSeasonsSortColumn(const int column) const {
+  setValue("seasons.sortColumn", column);
+}
+
+void Session::setSeasonsSortOrder(const Qt::SortOrder order) const {
+  setValue("seasons.sortOrder", static_cast<int>(order));
+}
+
+void Session::setSeasonsViewMode(const gui::ListViewMode mode) const {
+  setValue("seasons.viewMode", static_cast<int>(mode));
 }
 
 void Session::setSearchListFilters(const gui::AnimeListProxyModelFilter& filters) const {

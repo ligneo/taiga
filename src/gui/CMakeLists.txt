@@ -71,6 +71,8 @@ target_sources(taiga-gui PRIVATE
 	profile/profile_widget.cpp
 	profile/profile_widget.hpp
 
+	seasons/seasons_widget.cpp
+	seasons/seasons_widget.hpp
 	search/search_widget.cpp
 	search/search_widget.hpp
 
