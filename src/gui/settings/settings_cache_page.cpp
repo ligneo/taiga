@@ -33,6 +33,9 @@
 #include "gui/utils/image_provider.hpp"
 #include "gui/utils/widgets.hpp"
 #include "media/anime_history.hpp"
+#include "taiga/path.hpp"
+#include "taiga/settings.hpp"
+#include "track/feed_archive.hpp"
 
 namespace gui {
 

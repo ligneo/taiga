@@ -48,6 +48,10 @@ private:
   QLabel* m_labelHistory = nullptr;
   QCheckBox* m_checkImages = nullptr;
   QLabel* m_labelImages = nullptr;
+  QCheckBox* m_checkTorrentFiles = nullptr;
+  QLabel* m_labelTorrentFiles = nullptr;
+  QCheckBox* m_checkTorrentHistory = nullptr;
+  QLabel* m_labelTorrentHistory = nullptr;
   QPushButton* m_buttonClear = nullptr;
 };
 
