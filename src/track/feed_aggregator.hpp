@@ -39,6 +39,7 @@ public:
   ~Aggregator() override = default;
 
   void fetch(const QString& url = {}, const bool automatic = false);
+  void download(const FeedItem& item);
   void search(const QString& title);
 
   void applyAutoCheckSettings();
@@ -54,6 +55,7 @@ signals:
   void newEpisodesFound(const QStringList& lines);
   void fetchingChanged(bool fetching);
   void errorOccurred(const QString& message);
+  void downloadFinished(const QString& title);
 
 private:
   QRestAccessManager manager_{taiga::network()};

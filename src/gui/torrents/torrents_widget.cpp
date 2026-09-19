@@ -32,11 +32,13 @@
 #include "base/log.hpp"
 #include "base/string.hpp"
 #include "gui/main/main_window.hpp"
+#include "gui/main/status_bar_controller.hpp"
 #include "gui/models/torrent_model.hpp"
 #include "gui/utils/theme.hpp"
 #include "media/anime.hpp"
 #include "track/feed.hpp"
 #include "track/feed_aggregator.hpp"
+#include "track/feed_archive.hpp"
 #include "track/feed_filter_manager.hpp"
 
 namespace gui {
@@ -96,8 +98,24 @@ TorrentsWidget::TorrentsWidget(QWidget* parent)
 
   connect(track::aggregator(), &track::Aggregator::fetchingChanged, this,
           [this](bool fetching) { m_actionRefresh->setEnabled(!fetching); });
+  // A download can start on its own during an automatic check, so neither outcome may pass
+  // unseen.
+  const auto showMessage = [](const QString& text) {
+    mainWindow()->statusBarController()->showMessage({
+        .source = StatusBarController::Source::Torrents,
+        .text = text,
+        .spin = false,
+    });
+  };
   connect(track::aggregator(), &track::Aggregator::errorOccurred, this,
-          [](const QString& message) { qCritical() << message; });
+          [showMessage](const QString& message) {
+            qCritical() << message;
+            showMessage(message);
+          });
+  connect(track::aggregator(), &track::Aggregator::downloadFinished, this,
+          [showMessage](const QString& title) {
+            showMessage(tr("Sent \"%1\" to the BitTorrent client.").arg(title));
+          });
 
   if (track::aggregator()->feed().items.empty()) track::aggregator()->fetch();
 }
@@ -139,6 +157,10 @@ void TorrentsWidget::showContextMenu() {
   auto* menu = new QMenu(m_view);
   menu->setAttribute(Qt::WA_DeleteOnClose);
 
+  // v1's first menu entry, and the reason the page exists.
+  menu->addAction(theme.getIcon("cloud_download"), tr("Download"), this,
+                  [item]() { track::aggregator()->download(*item); });
+
   menu->addAction(tr("Open in browser"), this, [this, index]() { openItemLink(index); });
 
   if (const auto title = item->episode.element(anitomy::ElementKind::Title); !title.empty()) {
@@ -156,9 +178,9 @@ void TorrentsWidget::showContextMenu() {
 
   const auto sourceIndex = m_proxyModel->mapToSource(index);
 
-  menu->addAction(tr("Discard"), this, [this, sourceIndex]() {
-    // @TODO: Add the title to the archive, so that it stays discarded after the next check.
+  menu->addAction(tr("Discard"), this, [this, sourceIndex, item]() {
     m_model->discardItem(sourceIndex);
+    track::archive.add(QString::fromStdString(item->title));
   });
 
   const auto animeId = item->episode.animeId();

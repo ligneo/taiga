@@ -41,6 +41,7 @@ public:
     Export,
     Selection,
     Library,
+    Torrents,
   };
 
   struct Message {

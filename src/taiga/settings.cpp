@@ -224,6 +224,33 @@ bool Settings::torrentNotifyNewEpisodes() const {
   return value("torrents.discovery.newAction", u"notify"_s).toString() == u"notify";
 }
 
+int Settings::torrentArchiveMaxCount() const {
+  return value("torrents.archive.maxCount", 1000).toInt();
+}
+
+// The three below have no control of their own in v1 either; they live in its Advanced table.
+bool Settings::torrentDownloadUseMagnet() const {
+  return value("torrents.download.useMagnet", false).toBool();
+}
+
+std::string Settings::torrentDownloadFileLocation() const {
+  return value("torrents.download.fileLocation").toString().toStdString();
+}
+
+bool Settings::torrentDownloadOpen() const {
+  return value("torrents.download.open", true).toBool();
+}
+
+// "default" hands the file to whatever the desktop opens it with; anything else is the command in
+// `torrents.download.appPath`.
+std::string Settings::torrentDownloadAppMode() const {
+  return value("torrents.download.appMode", u"default"_s).toString().toStdString();
+}
+
+std::string Settings::torrentDownloadAppPath() const {
+  return value("torrents.download.appPath").toString().toStdString();
+}
+
 bool Settings::torrentFilterEnabled() const {
   return value("torrents.filters.enabled", true).toBool();
 }
@@ -278,6 +305,30 @@ void Settings::setDisabledStreamingProviders(std::vector<std::string> providers)
       std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
       std::ranges::to<QList>();
   setValue("recognition.streaming.disabledProviders", QJsonArray::fromStringList(list));
+}
+
+void Settings::setTorrentArchiveMaxCount(const int count) const {
+  setValue("torrents.archive.maxCount", count);
+}
+
+void Settings::setTorrentDownloadOpen(const bool open) const {
+  setValue("torrents.download.open", open);
+}
+
+void Settings::setTorrentDownloadUseMagnet(const bool use) const {
+  setValue("torrents.download.useMagnet", use);
+}
+
+void Settings::setTorrentDownloadAppMode(const std::string& mode) const {
+  setValue("torrents.download.appMode", mode);
+}
+
+void Settings::setTorrentDownloadAppPath(const std::string& path) const {
+  setValue("torrents.download.appPath", path);
+}
+
+void Settings::setTorrentDownloadFileLocation(const std::string& path) const {
+  setValue("torrents.download.fileLocation", path);
 }
 
 void Settings::setTorrentFilterEnabled(const bool enabled) const {

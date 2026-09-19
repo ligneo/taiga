@@ -18,7 +18,13 @@
 
 #include "feed_aggregator.hpp"
 
+#include <QDesktopServices>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QNetworkRequest>
+#include <QProcess>
+#include <QRegularExpression>
 #include <QRestReply>
 #include <QUrl>
 #include <map>
@@ -28,7 +34,9 @@
 #include "base/string.hpp"
 #include "media/anime_db.hpp"
 #include "media/anime_utils.hpp"
+#include "taiga/path.hpp"
 #include "taiga/settings.hpp"
+#include "track/feed_archive.hpp"
 #include "track/feed_filter_manager.hpp"
 
 namespace track {
@@ -101,6 +109,15 @@ void Aggregator::fetch(const QString& requestedUrl, const bool automatic) {
     feed_ = *feed;
     examineFeed(feed_);
     filterManager.filter(feed_);
+
+    // Anything already downloaded or thrown away is dropped, as in v1's `FilterArchived()`.
+    for (auto& item : feed_.items) {
+      if (item.isDiscarded()) continue;
+      if (archive.contains(QString::fromStdString(item.title))) {
+        item.state = FeedItemState::DiscardedNormal;
+      }
+    }
+
     emit feedChanged();
 
     // Only an automatic check notifies, so that refreshing by hand stays quiet. As in v1.
@@ -109,6 +126,136 @@ void Aggregator::fetch(const QString& requestedUrl, const bool automatic) {
         emit newEpisodesFound(lines);
       }
     }
+  });
+}
+
+namespace {
+
+// v1 passes the download folder to the client it recognizes, each with its own flags. The names
+// below are the ones that exist on Linux; v1's PicoTorrent and uTorrent are Windows-only.
+QStringList clientArguments(const QString& command, const QString& target) {
+  const auto name = QFileInfo(command).fileName();
+
+  if (name.contains(u"aria2c"_s, Qt::CaseInsensitive)) return {target};
+  if (name.contains(u"deluge-console"_s, Qt::CaseInsensitive)) return {u"add"_s, target};
+  if (name.contains(u"transmission-remote"_s, Qt::CaseInsensitive)) return {u"-a"_s, target};
+  if (name.contains(u"qbittorrent"_s, Qt::CaseInsensitive))
+    return {u"--skip-dialog=true"_s, target};
+
+  return {target};
+}
+
+// A feed title becomes a file name, so it cannot carry a separator or the characters a file
+// system refuses.
+QString sanitizedFileName(QString title) {
+  static const QRegularExpression invalid{uR"([/\\:*?"<>|])"_s};
+  title.replace(invalid, u"_"_s);
+  return title.trimmed().left(200);
+}
+
+}  // namespace
+
+// Hands a torrent to a BitTorrent client, remembering it so that the next check does not offer it
+// again. A magnet link goes straight to the client; anything else is fetched to a file first.
+void Aggregator::download(const FeedItem& item) {
+  const auto title = QString::fromStdString(item.title);
+
+  const auto handOff = [this, title](const QString& target) {
+    // The archive is written before the hand-off on purpose: if launching the client fails, the
+    // item must still not come back on the next check, exactly as in v1.
+    archive.add(title);
+
+    for (auto& feedItem : feed_.items) {
+      if (feedItem.title == title.toStdString()) feedItem.state = FeedItemState::DiscardedNormal;
+    }
+
+    emit feedChanged();
+
+    if (!taiga::settings.torrentDownloadOpen()) {
+      emit downloadFinished(title);
+      return;
+    }
+
+    const auto mode = QString::fromStdString(taiga::settings.torrentDownloadAppMode());
+    const auto command = QString::fromStdString(taiga::settings.torrentDownloadAppPath());
+
+    bool started = false;
+
+    if (mode != u"default" && !command.isEmpty()) {
+      started = QProcess::startDetached(command, clientArguments(command, target));
+    } else {
+      const auto url = target.startsWith(u"magnet:") ? QUrl{target} : QUrl::fromLocalFile(target);
+      started = QDesktopServices::openUrl(url);
+    }
+
+    if (!started) {
+      emit errorOccurred(tr("Could not open \"%1\" with a BitTorrent client.").arg(title));
+      return;
+    }
+
+    emit downloadFinished(title);
+  };
+
+  const auto magnet = QString::fromStdString(item.magnet_link);
+
+  if (!magnet.isEmpty() && taiga::settings.torrentDownloadUseMagnet()) {
+    handOff(magnet);
+    return;
+  }
+
+  const auto link = QString::fromStdString(item.link);
+
+  if (link.startsWith(u"magnet:")) {
+    handOff(link);
+    return;
+  }
+
+  if (link.isEmpty()) {
+    if (magnet.isEmpty()) {
+      emit errorOccurred(tr("\"%1\" has nothing to download.").arg(title));
+      return;
+    }
+    handOff(magnet);
+    return;
+  }
+
+  auto directory = QString::fromStdString(taiga::settings.torrentDownloadFileLocation());
+  if (directory.isEmpty()) {
+    directory = u"%1/torrents"_s.arg(QString::fromStdString(taiga::get_data_path()));
+  }
+
+  if (!QDir().mkpath(directory)) {
+    emit errorOccurred(tr("Could not create the folder for torrent files."));
+    return;
+  }
+
+  const auto path = u"%1/%2.torrent"_s.arg(directory).arg(sanitizedFileName(title));
+
+  QNetworkRequest request{QUrl{link}};
+  request.setHeaders(taiga::NetworkAccessManager::commonHeaders());
+  request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                       QNetworkRequest::NoLessSafeRedirectPolicy);
+
+  manager_.get(request, this, [this, title, path, magnet, handOff](QRestReply& reply) {
+    if (!reply.isHttpStatusSuccess() || reply.hasError()) {
+      // Some providers only serve the file to a browser, so a magnet link is the way out.
+      if (!magnet.isEmpty()) {
+        handOff(magnet);
+        return;
+      }
+      emit errorOccurred(tr("Could not download \"%1\": %2").arg(title).arg(reply.errorString()));
+      return;
+    }
+
+    QFile file(path);
+
+    if (!file.open(QIODevice::WriteOnly) || file.write(reply.readBody()) < 0) {
+      emit errorOccurred(tr("Could not save the torrent file for \"%1\".").arg(title));
+      return;
+    }
+
+    file.close();
+    handOff(path);
   });
 }
 

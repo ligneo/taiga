@@ -44,6 +44,12 @@ public:
   std::chrono::minutes torrentAutoCheckInterval() const;
   bool torrentNotifyNewEpisodes() const;
   bool torrentFilterEnabled() const;
+  int torrentArchiveMaxCount() const;
+  bool torrentDownloadOpen() const;
+  bool torrentDownloadUseMagnet() const;
+  std::string torrentDownloadAppMode() const;
+  std::string torrentDownloadAppPath() const;
+  std::string torrentDownloadFileLocation() const;
   std::optional<QJsonArray> torrentFilters() const;
   std::string service() const;
   std::vector<std::string> libraryFolders() const;
@@ -76,6 +82,12 @@ public:
   void setTorrentAutoCheckInterval(const std::chrono::minutes interval) const;
   void setTorrentNotifyNewEpisodes(const bool enabled) const;
   void setTorrentFilterEnabled(const bool enabled) const;
+  void setTorrentArchiveMaxCount(const int count) const;
+  void setTorrentDownloadOpen(const bool open) const;
+  void setTorrentDownloadUseMagnet(const bool use) const;
+  void setTorrentDownloadAppMode(const std::string& mode) const;
+  void setTorrentDownloadAppPath(const std::string& path) const;
+  void setTorrentDownloadFileLocation(const std::string& path) const;
   void setTorrentFilters(const QJsonArray& filters) const;
   void setService(const std::string& service) const;
   void setLibraryFolders(std::vector<std::string> folders) const;

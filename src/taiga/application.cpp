@@ -39,6 +39,7 @@
 #include "taiga/path.hpp"
 #include "taiga/settings.hpp"
 #include "taiga/version.hpp"
+#include "track/feed_archive.hpp"
 #include "track/media.hpp"
 
 namespace taiga {
@@ -90,6 +91,7 @@ int Application::run() {
   anime::db.init();
   anime::history.init();
   sync::queue.init();
+  track::archive.init();
   track::media::detection()->init();
   gui::imageProvider.init();
 
