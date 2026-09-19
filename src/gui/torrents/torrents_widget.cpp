@@ -34,8 +34,10 @@
 #include "gui/main/main_window.hpp"
 #include "gui/models/torrent_model.hpp"
 #include "gui/utils/theme.hpp"
+#include "media/anime.hpp"
 #include "track/feed.hpp"
 #include "track/feed_aggregator.hpp"
+#include "track/feed_filter_manager.hpp"
 
 namespace gui {
 
@@ -148,6 +150,34 @@ void TorrentsWidget::showContextMenu() {
     const auto link = QString::fromStdString(item->magnet_link);
     menu->addAction(tr("Copy magnet link"), this,
                     [link]() { QGuiApplication::clipboard()->setText(link); });
+  }
+
+  menu->addSeparator();
+
+  const auto sourceIndex = m_proxyModel->mapToSource(index);
+
+  menu->addAction(tr("Discard"), this, [this, sourceIndex]() {
+    // @TODO: Add the title to the archive, so that it stays discarded after the next check.
+    m_model->discardItem(sourceIndex);
+  });
+
+  const auto animeId = item->episode.animeId();
+
+  if (animeId != anime::kUnknownId) {
+    menu->addAction(tr("Discard all for this anime"), this, [this, animeId]() {
+      m_model->discardItems(animeId);
+      track::filterManager.addDiscardFilter(animeId);
+    });
+
+    const auto group = item->episode.element(anitomy::ElementKind::ReleaseGroup);
+
+    if (!group.empty()) {
+      const auto resolution = item->episode.element(anitomy::ElementKind::VideoResolution);
+      menu->addAction(tr("Select fansub group"), this, [this, animeId, group, resolution]() {
+        m_model->discardOtherFansubs(animeId, group, resolution);
+        track::filterManager.setFansubFilter(animeId, group, resolution);
+      });
+    }
   }
 
   menu->popup(QCursor::pos());

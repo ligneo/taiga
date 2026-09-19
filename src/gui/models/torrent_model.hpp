@@ -21,6 +21,7 @@
 #include <QAbstractItemModel>
 #include <QList>
 #include <array>
+#include <string>
 
 namespace track {
 struct FeedItem;
@@ -68,6 +69,13 @@ public:
 
   const track::FeedItem* itemAt(const QModelIndex& index) const;
   QList<const track::FeedItem*> checkedItems() const;
+
+  // Right-click actions on the torrents page, as in v1: discard one item, every item of the given
+  // anime, or the ones released by a different group than the one given.
+  void discardItem(const QModelIndex& index);
+  void discardItems(const int animeId);
+  void discardOtherFansubs(const int animeId, const std::string& group,
+                           const std::string& videoResolution);
 
 private:
   static constexpr int kCategoryCount = 3;

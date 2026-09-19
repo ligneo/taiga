@@ -19,7 +19,9 @@
 #include "torrent_model.hpp"
 
 #include <QDateTime>
+#include <QGuiApplication>
 #include <QLocale>
+#include <QPalette>
 #include <map>
 
 #include "base/string.hpp"
@@ -116,6 +118,8 @@ void TorrentModel::refreshCategories() {
   const auto& items = track::aggregator()->feed().items;
 
   for (int i = 0; i < static_cast<int>(items.size()); ++i) {
+    // A filter with the "hide" option keeps its items out of the list entirely, as in v1.
+    if (items.at(i).state == track::FeedItemState::DiscardedHidden) continue;
     m_categories.at(static_cast<int>(items.at(i).torrent_category)).append(i);
   }
 }
@@ -128,6 +132,49 @@ QList<const track::FeedItem*> TorrentModel::checkedItems() const {
   }
 
   return items;
+}
+
+void TorrentModel::discardItem(const QModelIndex& index) {
+  const auto item = mutableItemAt(index);
+
+  if (!item) return;
+
+  item->state = track::FeedItemState::DiscardedNormal;
+  emit dataChanged(index, index.siblingAtColumn(NUM_COLUMNS - 1));
+}
+
+void TorrentModel::discardItems(const int animeId) {
+  auto& items = const_cast<track::Feed&>(track::aggregator()->feed()).items;
+
+  beginResetModel();
+
+  for (auto& item : items) {
+    if (item.episode.animeId() == animeId) item.state = track::FeedItemState::DiscardedNormal;
+  }
+
+  endResetModel();
+}
+
+void TorrentModel::discardOtherFansubs(const int animeId, const std::string& group,
+                                       const std::string& videoResolution) {
+  auto& items = const_cast<track::Feed&>(track::aggregator()->feed()).items;
+
+  beginResetModel();
+
+  for (auto& item : items) {
+    if (item.episode.animeId() != animeId) continue;
+
+    const auto itemGroup = item.episode.element(anitomy::ElementKind::ReleaseGroup);
+    const auto itemResolution = item.episode.element(anitomy::ElementKind::VideoResolution);
+
+    if (compareStrings(itemGroup, group, Qt::CaseInsensitive) != 0 ||
+        (!videoResolution.empty() &&
+         compareStrings(itemResolution, videoResolution, Qt::CaseInsensitive) != 0)) {
+      item.state = track::FeedItemState::DiscardedNormal;
+    }
+  }
+
+  endResetModel();
 }
 
 bool TorrentModel::setData(const QModelIndex& index, const QVariant& value, int role) {
@@ -206,6 +253,13 @@ QVariant TorrentModel::data(const QModelIndex& index, int role) const {
       }
       break;
     }
+
+    case Qt::ForegroundRole:
+      // A filter with the "deactivate" option leaves its items in the list, but grayed out.
+      if (item.state == track::FeedItemState::DiscardedInactive) {
+        return QGuiApplication::palette().brush(QPalette::Disabled, QPalette::WindowText);
+      }
+      break;
 
     case Qt::ToolTipRole:
       return QString::fromStdString(item.title);
