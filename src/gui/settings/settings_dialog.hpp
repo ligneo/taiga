@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QDialog>
+#include <map>
 #include <vector>
 
 class QTreeWidgetItem;
@@ -31,6 +32,12 @@ namespace gui {
 
 class SettingsPage;
 
+// Pages that something outside the dialog needs to open directly.
+enum class SettingsPageId {
+  Accounts,
+  Library,
+};
+
 class SettingsDialog final : public QDialog {
   Q_OBJECT
   Q_DISABLE_COPY_MOVE(SettingsDialog)
@@ -39,16 +46,18 @@ public:
   SettingsDialog(QWidget* parent);
   ~SettingsDialog() = default;
 
-  static void show(QWidget* parent);
+  static void show(QWidget* parent, const SettingsPageId page = SettingsPageId::Accounts);
 
 public slots:
   void accept() override;
 
 private:
   void addPage(QTreeWidgetItem* item, SettingsPage* page);
+  void setCurrentPage(const SettingsPageId page);
 
   Ui::SettingsDialog* ui_ = nullptr;
   std::vector<SettingsPage*> pages_;
+  std::map<SettingsPageId, QTreeWidgetItem*> items_;
 };
 
 }  // namespace gui

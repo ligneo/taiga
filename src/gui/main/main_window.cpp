@@ -130,6 +130,8 @@ void MainWindow::initActions() {
   connect(ui_->actionAddNewFolder, &QAction::triggered, this, &MainWindow::addNewFolder);
   connect(ui_->actionExit, &QAction::triggered, this, &QApplication::quit, Qt::QueuedConnection);
   connect(ui_->actionSettings, &QAction::triggered, this, [this]() { SettingsDialog::show(this); });
+  connect(ui_->actionLibraryFolders, &QAction::triggered, this,
+          [this]() { SettingsDialog::show(this, SettingsPageId::Library); });
   // Both actions pick the anime themselves, so a failure has to be said out loud. v1 shows a
   // message box; v2 already reports playback this way.
   const auto playbackFailed = [this](const QString& text) {
@@ -175,6 +177,17 @@ void MainWindow::initActions() {
                 .spin = false,
             });
           });
+
+  ui_->actionToggleDetection->setChecked(taiga::settings.mediaDetectionEnabled());
+  connect(ui_->actionToggleDetection, &QAction::toggled, this, [](const bool checked) {
+    taiga::settings.setMediaDetectionEnabled(checked);
+    track::media::detection()->setEnabled(checked);
+  });
+
+  // Neither of these has anything behind it yet, and a menu entry that does nothing is worse
+  // than one that is not there. Both come back with the features they belong to.
+  ui_->actionToggleSharing->setVisible(false);
+  ui_->actionCheckForUpdates->setVisible(false);
 
   ui_->actionToggleSynchronization->setChecked(taiga::settings.syncEnabled());
   connect(ui_->actionToggleSynchronization, &QAction::toggled, this,
@@ -435,11 +448,13 @@ void MainWindow::initToolbar() {
   {
     const auto button = static_cast<QToolButton*>(ui_->toolbar->widgetForAction(ui_->actionMenu));
     button->setPopupMode(QToolButton::InstantPopup);
+    // The menu bar is hidden, so this button is the only way to reach it. It used to carry a few
+    // of its entries, which left the rest of them unreachable.
     button->setMenu([this]() {
       auto menu = new QMenu(this);
-      menu->addAction(ui_->actionToggleDetection);
-      menu->addAction(ui_->actionToggleSharing);
-      menu->addAction(ui_->actionToggleSynchronization);
+      menu->addMenu(ui_->menuList);
+      menu->addMenu(ui_->menuLibrary);
+      menu->addMenu(ui_->menuTools);
       menu->addSeparator();
       menu->addMenu(ui_->menuHelp);
       menu->addSeparator();

@@ -22,8 +22,8 @@
 #include "gui/settings/settings_accounts_page.hpp"
 #include "gui/settings/settings_advanced_page.hpp"
 #include "gui/settings/settings_anime_list_page.hpp"
-#include "gui/settings/settings_cache_page.hpp"
 #include "gui/settings/settings_application_page.hpp"
+#include "gui/settings/settings_cache_page.hpp"
 #include "gui/settings/settings_library_page.hpp"
 #include "gui/settings/settings_media_players_page.hpp"
 #include "gui/settings/settings_recognition_page.hpp"
@@ -119,7 +119,17 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
             }
           });
 
-  ui_->treeWidget->setCurrentItem(accountsItem);
+  items_ = {
+      {SettingsPageId::Accounts, accountsItem},
+      {SettingsPageId::Library, libraryItem},
+  };
+
+  setCurrentPage(SettingsPageId::Accounts);
+}
+
+void SettingsDialog::setCurrentPage(const SettingsPageId page) {
+  const auto it = items_.find(page);
+  if (it != items_.end()) ui_->treeWidget->setCurrentItem(it->second);
 }
 
 void SettingsDialog::accept() {
@@ -137,10 +147,11 @@ void SettingsDialog::addPage(QTreeWidgetItem* item, SettingsPage* page) {
   pages_.push_back(page);
 }
 
-void SettingsDialog::show(QWidget* parent) {
+void SettingsDialog::show(QWidget* parent, const SettingsPageId page) {
   auto dlg = new SettingsDialog(parent);
   dlg->setAttribute(Qt::WA_DeleteOnClose);
   dlg->setModal(true);
+  dlg->setCurrentPage(page);
   dlg->QDialog::show();
 }
 

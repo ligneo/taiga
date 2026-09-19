@@ -142,12 +142,21 @@ bool Detection::init() {
     return false;
   }
 
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_LINUX)
-  const auto interval = taiga::settings.mediaDetectionInterval();
-  pollTimer_->start(interval);
-#endif
+  setEnabled(taiga::settings.mediaDetectionEnabled());
 
   return true;
+}
+
+// v1's `program/general/enablerecognition`: detection can be turned off without quitting.
+void Detection::setEnabled(const bool enabled) {
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_LINUX)
+  if (enabled) {
+    pollTimer_->start(taiga::settings.mediaDetectionInterval());
+  } else {
+    pollTimer_->stop();
+    reset();
+  }
+#endif
 }
 
 void Detection::poll() {

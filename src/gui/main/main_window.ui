@@ -138,6 +138,7 @@
       <string>Folders</string>
      </property>
      <addaction name="actionAddNewFolder"/>
+     <addaction name="actionLibraryFolders"/>
     </widget>
     <addaction name="menuLibraryFolders"/>
     <addaction name="actionScanAvailableEpisodes"/>
@@ -263,7 +264,7 @@
   </action>
   <action name="actionLibraryFolders">
    <property name="text">
-    <string>Library folders</string>
+    <string>Manage folders...</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

@@ -50,6 +50,7 @@ public:
   const std::optional<player_t> getCurrentPlayer() const;
 
   bool init();
+  void setEnabled(const bool enabled);
 
   bool isMediaIdentified() const;
   void setCurrentEpisodeAnimeId(int animeId);

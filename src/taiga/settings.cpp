@@ -75,6 +75,10 @@ std::vector<std::string> Settings::libraryFolders() const {
          std::ranges::to<std::vector>();
 }
 
+bool Settings::mediaDetectionEnabled() const {
+  return value("track.detection.enabled", true).toBool();
+}
+
 std::chrono::milliseconds Settings::mediaDetectionInterval() const {
   const auto interval = value("track.detection.interval", 3000).toInt();
   return std::chrono::milliseconds{interval};
@@ -255,6 +259,10 @@ void Settings::setLibraryFolders(std::vector<std::string> folders) const {
       std::views::transform([](const std::string& s) { return QString::fromStdString(s); }) |
       std::ranges::to<QList>();
   setValue("library.folders", QJsonArray::fromStringList(list));
+}
+
+void Settings::setMediaDetectionEnabled(const bool enabled) const {
+  setValue("track.detection.enabled", enabled);
 }
 
 void Settings::setMediaDetectionInterval(const std::chrono::milliseconds interval) const {
