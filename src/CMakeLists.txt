@@ -112,6 +112,8 @@ target_sources(taiga PRIVATE
 	track/feed.cpp
 	track/feed_aggregator.cpp
 	track/feed_aggregator.hpp
+	track/feed_filter.cpp
+	track/feed_filter.hpp
 	track/feed.hpp
 	track/episode.hpp
 	track/media.cpp

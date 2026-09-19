@@ -43,35 +43,6 @@ QString between(const QString& text, const QString& from, const QString& to) {
   return last < 0 ? text.mid(begin) : text.mid(begin, last - begin);
 }
 
-quint64 parseSizeString(QString value) {
-  static const std::map<QString, quint64> units{
-      {u"KB"_s, 1000ULL},
-      {u"KiB"_s, 1024ULL},
-      {u"MB"_s, 1000ULL * 1000},
-      {u"MiB"_s, 1024ULL * 1024},
-      {u"GB"_s, 1000ULL * 1000 * 1000},
-      {u"GiB"_s, 1024ULL * 1024 * 1024},
-      {u"TB"_s, 1000ULL * 1000 * 1000 * 1000},
-      {u"TiB"_s, 1024ULL * 1024 * 1024 * 1024},
-  };
-
-  quint64 unit = 1;
-
-  if (const auto pos = value.indexOf(QRegularExpression{u"[^0-9.]"_s}); pos >= 0) {
-    const auto name = value.mid(pos).trimmed();
-    value.truncate(pos);
-
-    for (const auto& [key, value] : units) {
-      if (compareStrings(name.toStdString(), key.toStdString(), Qt::CaseInsensitive) == 0) {
-        unit = value;
-        break;
-      }
-    }
-  }
-
-  return static_cast<quint64>(unit * value.toDouble());
-}
-
 std::optional<int> namespaceInt(const FeedItem& item, const std::string& name) {
   const auto it = item.namespace_elements.find(name);
   if (it == item.namespace_elements.end()) return std::nullopt;
@@ -209,6 +180,46 @@ TorrentCategory torrentCategory(const FeedItem& item) {
 }
 
 }  // namespace
+
+bool FeedItem::isDiscarded() const {
+  switch (state) {
+    case FeedItemState::DiscardedNormal:
+    case FeedItemState::DiscardedInactive:
+    case FeedItemState::DiscardedHidden:
+      return true;
+    default:
+      return false;
+  }
+}
+
+quint64 parseSizeString(QString value) {
+  static const std::map<QString, quint64> units{
+      {u"KB"_s, 1000ULL},
+      {u"KiB"_s, 1024ULL},
+      {u"MB"_s, 1000ULL * 1000},
+      {u"MiB"_s, 1024ULL * 1024},
+      {u"GB"_s, 1000ULL * 1000 * 1000},
+      {u"GiB"_s, 1024ULL * 1024 * 1024},
+      {u"TB"_s, 1000ULL * 1000 * 1000 * 1000},
+      {u"TiB"_s, 1024ULL * 1024 * 1024 * 1024},
+  };
+
+  quint64 unit = 1;
+
+  if (const auto pos = value.indexOf(QRegularExpression{u"[^0-9.]"_s}); pos >= 0) {
+    const auto name = value.mid(pos).trimmed();
+    value.truncate(pos);
+
+    for (const auto& [key, value] : units) {
+      if (compareStrings(name.toStdString(), key.toStdString(), Qt::CaseInsensitive) == 0) {
+        unit = value;
+        break;
+      }
+    }
+  }
+
+  return static_cast<quint64>(unit * value.toDouble());
+}
 
 FeedSource feedSource(const std::string& channelLink) {
   static const std::map<QString, FeedSource> sources{

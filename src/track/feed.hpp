@@ -31,7 +31,9 @@ namespace track {
 
 enum class FeedItemState {
   Blank,
-  Discarded,
+  DiscardedNormal,
+  DiscardedInactive,
+  DiscardedHidden,
   Selected,
 };
 
@@ -73,6 +75,8 @@ struct FeedItem : rss::Item {
   std::optional<int> leechers;
   std::optional<int> downloads;
   quint64 file_size = 0;
+
+  bool isDiscarded() const;
 };
 
 struct Feed {
@@ -82,6 +86,7 @@ struct Feed {
 };
 
 FeedSource feedSource(const std::string& channelLink);
+quint64 parseSizeString(QString value);
 std::optional<Feed> parseFeed(const QString& data);
 
 // Parses and identifies every item, then categorizes it. Runs once per feed, as in v1.
