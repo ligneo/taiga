@@ -19,7 +19,6 @@
 #pragma once
 
 #include <QMainWindow>
-
 #include <optional>
 
 #include "track/episode.hpp"
@@ -46,6 +45,11 @@ class SearchWidget;
 class TorrentsWidget;
 class StatusBarController;
 class TrayIcon;
+
+enum class ExportFormat {
+  Markdown,
+  MyAnimeListXml,
+};
 
 enum class MainWindowPage {
   Home,
@@ -100,6 +104,7 @@ private:
   void initNowPlaying();
   void initPage(MainWindowPage page);
   void initStatusbar();
+  void exportList(const ExportFormat format);
   void initToolbar();
   void initTrayIcon();
 

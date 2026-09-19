@@ -43,6 +43,7 @@
 #include "gui/utils/widgets.hpp"
 #include "media/anime_db.hpp"
 #include "media/anime_list.hpp"
+#include "media/anime_list_export.hpp"
 #include "media/anime_utils.hpp"
 #include "sync/anilist/anilist.hpp"
 #include "sync/kitsu/kitsu.hpp"
@@ -148,6 +149,10 @@ void MainWindow::initActions() {
       playbackFailed(tr("Could not find an available episode to play."));
     }
   });
+  connect(ui_->actionExportListAsMarkdown, &QAction::triggered, this,
+          [this]() { exportList(ExportFormat::Markdown); });
+  connect(ui_->actionExportListAsMyAnimeListXML, &QAction::triggered, this,
+          [this]() { exportList(ExportFormat::MyAnimeListXml); });
   connect(ui_->actionAbout, &QAction::triggered, this, &MainWindow::about);
   connect(ui_->actionDonate, &QAction::triggered, this, &MainWindow::donate);
   connect(ui_->actionSupport, &QAction::triggered, this, &MainWindow::support);
@@ -384,6 +389,42 @@ void MainWindow::initStatusbar() {
         .text = tr("Anime removed from database: %1").arg(title),
         .spin = false,
     });
+  });
+}
+
+// v1 asks for a folder and names the file itself. A save dialog does the same job while letting
+// the name be changed, which is what a Linux user expects.
+void MainWindow::exportList(const ExportFormat format) {
+  const bool markdown = format == ExportFormat::Markdown;
+
+  const auto name = u"animelist_%1.%2"_s.arg(QDateTime::currentSecsSinceEpoch())
+                        .arg(markdown ? u"md"_s : u"xml"_s);
+  const auto filter = markdown ? tr("Markdown (*.md)") : tr("MyAnimeList XML (*.xml)");
+
+  const auto path = QFileDialog::getSaveFileName(
+      this, tr("Export List"), u"%1/%2"_s.arg(QDir::homePath()).arg(name), filter);
+
+  if (path.isEmpty()) return;
+
+  const auto exported = markdown ? anime::list::exportAsMarkdown(path.toStdString())
+                                 : anime::list::exportAsXml(path.toStdString());
+
+  auto text = exported ? tr("Exported list to: %1").arg(path)
+                       : tr("Could not export list to: %1").arg(path);
+
+  // The XML puts the active service's IDs in a MyAnimeList field. Saying so beats handing over a
+  // file that looks importable. See the `@TODO` in `anime_list_export.cpp`.
+  if (exported && !markdown) {
+    if (const auto service = sync::currentServiceId(); service != sync::ServiceId::MyAnimeList) {
+      text +=
+          u" "_s + tr("(anime IDs are %1's, not MyAnimeList's)").arg(sync::serviceName(service));
+    }
+  }
+
+  m_statusBarController->showMessage({
+      .source = StatusBarController::Source::Export,
+      .text = text,
+      .spin = false,
   });
 }
 
