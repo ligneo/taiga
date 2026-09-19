@@ -70,10 +70,18 @@ SearchWidget::SearchWidget(QWidget* parent)
       m_sortMenu(new QMenu(this)),
       m_viewMenu(new QMenu(this)) {
   m_proxyModel->sort(taiga::session.searchListSortColumn(), taiga::session.searchListSortOrder());
-  m_proxyModel->setFilters(taiga::session.searchListFilters());
 
+  // Search starts unfiltered. Filters left over from a previous run would quietly turn a general
+  // search into a narrow one, with nothing on screen to say why nothing was found.
   static const auto filterValue = [](QComboBox* combo, int index) {
-    return index > -1 ? std::optional<int>{combo->itemData(index).toInt()} : std::nullopt;
+    const auto data = index > -1 ? combo->itemData(index) : QVariant{};
+    return data.isValid() ? std::optional<int>{data.toInt()} : std::nullopt;
+  };
+
+  // Clearing a filter is possible with Escape or a right-click, but nothing says so. Every filter
+  // gets a visible way out.
+  static const auto addAnyItem = [](QComboBox* combo, const QString& text) {
+    combo->addItem(text, QVariant{});
   };
 
   auto filtersLayout = new QHBoxLayout();
@@ -83,11 +91,9 @@ SearchWidget::SearchWidget(QWidget* parent)
   // Year
   {
     m_comboYear->setPlaceholderText("Year");
+    addAnyItem(m_comboYear, tr("Any year"));
     for (int year = QDate::currentDate().year() + 1; year >= 1940; --year) {
       m_comboYear->addItem(QString::number(year), year);
-    }
-    if (m_proxyModel->filters().year) {
-      m_comboYear->setCurrentText(QString::number(*m_proxyModel->filters().year));
     }
     connect(m_comboYear, &QComboBox::currentIndexChanged, this, [this](int index) {
       m_proxyModel->setYearFilter(filterValue(m_comboYear, index));
@@ -99,6 +105,7 @@ SearchWidget::SearchWidget(QWidget* parent)
   // Season
   {
     m_comboSeason->setPlaceholderText("Season");
+    addAnyItem(m_comboSeason, tr("Any season"));
     const auto seasons = {
         anime::SeasonName::Winter,
         anime::SeasonName::Spring,
@@ -107,10 +114,6 @@ SearchWidget::SearchWidget(QWidget* parent)
     };
     for (const auto season : seasons) {
       m_comboSeason->addItem(formatSeasonName(season), static_cast<int>(season));
-    }
-    if (m_proxyModel->filters().season) {
-      m_comboSeason->setCurrentText(
-          formatSeasonName(static_cast<anime::SeasonName>(*m_proxyModel->filters().season)));
     }
     connect(m_comboSeason, &QComboBox::currentIndexChanged, this, [this](int index) {
       m_proxyModel->setSeasonFilter(filterValue(m_comboSeason, index));
@@ -122,12 +125,9 @@ SearchWidget::SearchWidget(QWidget* parent)
   // Type
   {
     m_comboType->setPlaceholderText("Type");
+    addAnyItem(m_comboType, tr("Any type"));
     for (const auto type : anime::kTypes) {
       m_comboType->addItem(formatType(type), static_cast<int>(type));
-    }
-    if (m_proxyModel->filters().type) {
-      m_comboType->setCurrentText(
-          formatType(static_cast<anime::Type>(*m_proxyModel->filters().type)));
     }
     connect(m_comboType, &QComboBox::currentIndexChanged, this, [this](int index) {
       m_proxyModel->setTypeFilter(filterValue(m_comboType, index));
@@ -139,12 +139,9 @@ SearchWidget::SearchWidget(QWidget* parent)
   // Status
   {
     m_comboStatus->setPlaceholderText("Status");
+    addAnyItem(m_comboStatus, tr("Any status"));
     for (const auto status : anime::kStatuses) {
       m_comboStatus->addItem(formatStatus(status), static_cast<int>(status));
-    }
-    if (m_proxyModel->filters().status) {
-      m_comboStatus->setCurrentText(
-          formatStatus(static_cast<anime::Status>(*m_proxyModel->filters().status)));
     }
     connect(m_comboStatus, &QComboBox::currentIndexChanged, this, [this](int index) {
       m_proxyModel->setStatusFilter(filterValue(m_comboStatus, index));
@@ -156,12 +153,9 @@ SearchWidget::SearchWidget(QWidget* parent)
   // List status
   {
     m_comboListStatus->setPlaceholderText("List status");
+    addAnyItem(m_comboListStatus, tr("Any list status"));
     for (const auto status : anime::list::kStatuses) {
       m_comboListStatus->addItem(formatListStatus(status), static_cast<int>(status));
-    }
-    if (m_proxyModel->filters().listStatus.status) {
-      m_comboListStatus->setCurrentText(formatListStatus(
-          static_cast<anime::list::Status>(*m_proxyModel->filters().listStatus.status)));
     }
     connect(m_comboListStatus, &QComboBox::currentIndexChanged, this, [this](int index) {
       m_proxyModel->setListStatusFilter({
@@ -214,7 +208,6 @@ SearchWidget::SearchWidget(QWidget* parent)
 }
 
 void SearchWidget::saveState() {
-  taiga::session.setSearchListFilters(m_proxyModel->filters());
   taiga::session.setSearchListSortColumn(m_proxyModel->sortColumn());
   taiga::session.setSearchListSortOrder(m_proxyModel->sortOrder());
   taiga::session.setSearchListViewMode(m_viewMode);
