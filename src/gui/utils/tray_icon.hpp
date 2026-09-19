@@ -1,6 +1,6 @@
 /**
  * Taiga
- * Copyright (C) 2010-2024, Eren Okka
+ * Copyright (C) 2010-2026, Eren Okka
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
 
 #pragma once
 
+#include <QIcon>
 #include <QObject>
 #include <QString>
 
-class QIcon;
 class QMenu;
 class QSystemTrayIcon;
 
@@ -32,18 +32,31 @@ class TrayIcon final : public QObject {
   Q_DISABLE_COPY_MOVE(TrayIcon)
 
 public:
+  enum class Badge {
+    None,
+    Success,
+    Error,
+  };
+
   TrayIcon(QObject* parent, const QIcon& icon, QMenu* menu);
 
   void showMessage(const QString& title, const QString& text) const;
   bool isVisible() const;
+
+  void setBadge(Badge badge);
 
 signals:
   void activated();
   void messageClicked();
 
 private:
-  QMenu* m_contextMenu;
-  QSystemTrayIcon* m_icon;
+  void updateIcon();
+  void paintBadge(QPixmap& pixmap) const;
+
+  Badge m_badge = Badge::None;
+  QIcon m_baseIcon;
+  QMenu* m_contextMenu = nullptr;
+  QSystemTrayIcon* m_icon = nullptr;
 };
 
 }  // namespace gui

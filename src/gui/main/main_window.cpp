@@ -26,6 +26,7 @@
 #include <QNetworkReply>
 #include <QtWidgets>
 #include <algorithm>
+#include <optional>
 
 #include "base/string.hpp"
 #include "gui/common/spinner_widget.hpp"
@@ -722,6 +723,16 @@ void MainWindow::initTrayIcon() {
             } else {
               m_trayIcon->showMessage(tr("Do you want to update your anime list?"),
                                       u"%1\n%2"_s.arg(title, tr("Episode %1").arg(state.episode)));
+            }
+          });
+
+  connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
+          [this](std::optional<track::Episode> episode) {
+            if (!episode) {
+              m_trayIcon->setBadge(TrayIcon::Badge::None);
+            } else {
+              const bool recognized = anime::db.item(episode->animeId()) != nullptr;
+              m_trayIcon->setBadge(recognized ? TrayIcon::Badge::Success : TrayIcon::Badge::Error);
             }
           });
 }
