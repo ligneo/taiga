@@ -20,10 +20,20 @@
 
 #include <QString>
 #include <optional>
+#include <vector>
 
 #include "track/feed_filter.hpp"
 
 namespace track::util {
+
+// Filters travel between users as one line of text: v1's XML, deflated and Base64'd behind a "TAI"
+// header. The format is kept byte for byte so that strings shared by v1 users still work.
+QString encodeFilters(const std::vector<Filter>& filters);
+std::optional<std::vector<Filter>> decodeFilters(const QString& input);
+
+// The XML inside that string, which is also what v1 writes.
+QString filtersToXml(const std::vector<Filter>& filters);
+std::optional<std::vector<Filter>> filtersFromXml(const QString& xml);
 
 // Filters are stored by shortcode rather than by index, so that reordering an enumeration does not
 // change what is already on disk. The vocabulary is v1's, which also makes its filters readable.

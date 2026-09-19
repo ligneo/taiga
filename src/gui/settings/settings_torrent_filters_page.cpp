@@ -19,18 +19,23 @@
 #include "settings_torrent_filters_page.hpp"
 
 #include <QCheckBox>
+#include <QDialogButtonBox>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QMessageBox>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <algorithm>
 
 #include "gui/torrents/filter_dialog.hpp"
 #include "gui/utils/format.hpp"
+#include "gui/utils/widgets.hpp"
 #include "taiga/settings.hpp"
 #include "track/feed_filter_manager.hpp"
+#include "track/feed_filter_util.hpp"
 
 namespace gui {
 
@@ -49,6 +54,42 @@ QString describeFilter(const track::Filter& filter) {
   const auto separator = filter.match == track::FilterMatch::All ? u" & "_s : u" | "_s;
 
   return u"%1 — %2"_s.arg(formatFilterAction(filter.action)).arg(conditions.join(separator));
+}
+
+// v1 shares filters as one line of text rather than a file, so both ends of the trip are a box
+// the user can copy from or paste into.
+std::optional<QString> textDialog(QWidget* parent, const QString& title, const QString& info,
+                                  const QString& text, const bool readOnly) {
+  QDialog dialog(parent);
+  dialog.setWindowTitle(title);
+
+  const auto layout = new QVBoxLayout(&dialog);
+  layout->addWidget(new QLabel(info, &dialog));
+
+  const auto edit = new QPlainTextEdit(text, &dialog);
+  edit->setReadOnly(readOnly);
+  edit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+  layout->addWidget(edit);
+
+  const auto buttons = new QDialogButtonBox(
+      readOnly ? QDialogButtonBox::Close : QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+      &dialog);
+  layout->addWidget(buttons);
+
+  QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+  QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+  dialog.resize(560, 300);
+
+  if (readOnly) {
+    edit->selectAll();
+    dialog.exec();
+    return std::nullopt;
+  }
+
+  if (dialog.exec() != QDialog::Accepted) return std::nullopt;
+
+  return edit->toPlainText();
 }
 
 }  // namespace
@@ -87,6 +128,17 @@ TorrentFiltersPage::TorrentFiltersPage(QWidget* parent)
   buttonLayout->addWidget(m_buttonDown);
   groupLayout->addLayout(buttonLayout);
 
+  // v1 keeps these apart from the editing buttons, because they act on the whole list.
+  const auto listButtonLayout = new QHBoxLayout();
+  const auto buttonImport = new QPushButton(tr("Import filters..."), group);
+  const auto buttonExport = new QPushButton(tr("Export filters..."), group);
+  const auto buttonReset = new QPushButton(tr("Reset filters"), group);
+  listButtonLayout->addWidget(buttonImport);
+  listButtonLayout->addWidget(buttonExport);
+  listButtonLayout->addStretch();
+  listButtonLayout->addWidget(buttonReset);
+  groupLayout->addLayout(listButtonLayout);
+
   layout->addWidget(group);
 
   connect(buttonAdd, &QPushButton::clicked, this, &TorrentFiltersPage::addFilter);
@@ -97,6 +149,9 @@ TorrentFiltersPage::TorrentFiltersPage(QWidget* parent)
   connect(m_listFilters, &QListWidget::itemSelectionChanged, this,
           &TorrentFiltersPage::refreshState);
   connect(m_listFilters, &QListWidget::itemDoubleClicked, this, &TorrentFiltersPage::editFilter);
+  connect(buttonImport, &QPushButton::clicked, this, &TorrentFiltersPage::importFilters);
+  connect(buttonExport, &QPushButton::clicked, this, &TorrentFiltersPage::exportFilters);
+  connect(buttonReset, &QPushButton::clicked, this, &TorrentFiltersPage::resetFilters);
   connect(m_checkEnabled, &QCheckBox::toggled, this,
           [this](bool enabled) { m_listFilters->setEnabled(enabled); });
 }
@@ -179,6 +234,51 @@ void TorrentFiltersPage::moveFilter(const int offset) {
   std::swap(m_filters.at(row), m_filters.at(target));
   refreshList();
   m_listFilters->setCurrentRow(target);
+}
+
+void TorrentFiltersPage::importFilters() {
+  const auto text =
+      textDialog(this, tr("Import Filters"),
+                 tr("Paste the filter text below. This replaces your current filters."), {}, false);
+
+  if (!text || text->trimmed().isEmpty()) return;
+
+  const auto filters = track::util::decodeFilters(*text);
+
+  if (!filters) {
+    QMessageBox::warning(this, tr("Import Filters"),
+                         tr("Could not read the filter text. It may be missing characters, or "
+                            "have been written by an incompatible version."));
+    return;
+  }
+
+  m_filters = *filters;
+  refreshList();
+}
+
+void TorrentFiltersPage::exportFilters() {
+  applyCheckStates();
+
+  if (m_filters.empty()) {
+    QMessageBox::information(this, tr("Export Filters"), tr("There are no filters to export."));
+    return;
+  }
+
+  textDialog(this, tr("Export Filters"), tr("Copy the text below and share it with other people:"),
+             track::util::encodeFilters(m_filters), true);
+}
+
+void TorrentFiltersPage::resetFilters() {
+  if (!confirm(this, tr("Are you sure you want to reset the filters?"),
+               tr("All custom filters will be lost."), tr("Reset"))) {
+    return;
+  }
+
+  m_filters.clear();
+  for (const auto& preset : track::filterManager.presets()) {
+    if (preset.is_default) m_filters.push_back(preset.filter);
+  }
+  refreshList();
 }
 
 void TorrentFiltersPage::refreshList() {

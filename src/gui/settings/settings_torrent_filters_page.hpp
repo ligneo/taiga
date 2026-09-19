@@ -46,6 +46,9 @@ private:
   void editFilter();
   void removeFilter();
   void moveFilter(const int offset);
+  void importFilters();
+  void exportFilters();
+  void resetFilters();
   void refreshList();
   void refreshState();
 
