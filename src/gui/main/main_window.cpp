@@ -56,6 +56,7 @@
 #include "taiga/settings.hpp"
 #include "track/episode.hpp"
 #include "track/feed_aggregator.hpp"
+#include "track/library.hpp"
 #include "track/media.hpp"
 #include "track/update.hpp"
 #include "ui_main_window.h"
@@ -133,6 +134,22 @@ void MainWindow::initActions() {
   connect(ui_->actionProfile, &QAction::triggered, this, &MainWindow::profile);
   connect(ui_->actionDisplayWindow, &QAction::triggered, this, &MainWindow::displayWindow);
   connect(ui_->actionSynchronize, &QAction::triggered, this, &MainWindow::synchronize);
+
+  connect(ui_->actionScanAvailableEpisodes, &QAction::triggered, this, [this]() {
+    m_statusBarController->showMessage({
+        .source = StatusBarController::Source::Library,
+        .text = tr("Scanning available episodes..."),
+    });
+    track::library()->scan();
+  });
+  connect(track::library(), &track::Library::scanCompleted, this,
+          [this](const int animeCount, const int episodeCount) {
+            m_statusBarController->showMessage({
+                .source = StatusBarController::Source::Library,
+                .text = tr("Found %1 episodes of %2 anime.").arg(episodeCount).arg(animeCount),
+                .spin = false,
+            });
+          });
 
   ui_->actionToggleSynchronization->setChecked(taiga::settings.syncEnabled());
   connect(ui_->actionToggleSynchronization, &QAction::toggled, this,

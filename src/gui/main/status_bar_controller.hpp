@@ -40,6 +40,7 @@ public:
     Playback,
     Export,
     Selection,
+    Library,
   };
 
   struct Message {
