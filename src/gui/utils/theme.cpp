@@ -92,4 +92,16 @@ QString Theme::readStylesheet(const QString& name) const {
   return base::readFile(u":/styles/%1.qss"_s.arg(name));
 }
 
+QColor Theme::errorColor() {
+  return QColor(0xe5, 0x39, 0x35);  // Red 600
+}
+
+QColor Theme::successColor() {
+  return QColor(0x43, 0xa0, 0x47);  // Green 600
+}
+
+QColor Theme::warningColor() {
+  return QColor(0xfb, 0x8c, 0x00);  // Orange 600
+}
+
 }  // namespace gui

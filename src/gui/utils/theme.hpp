@@ -37,6 +37,10 @@ public:
   void initStyle();
   bool isDark() const;
 
+  static QColor errorColor();
+  static QColor successColor();
+  static QColor warningColor();
+
 private:
   QString readStylesheet(const QString& name) const;
 
