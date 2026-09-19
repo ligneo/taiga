@@ -40,6 +40,8 @@ public:
 
   void fetch(const QString& url = {}, const bool automatic = false);
   void download(const FeedItem& item);
+  void downloadSelected();
+  void discardSelected();
   void search(const QString& title);
 
   void applyAutoCheckSettings();

@@ -22,29 +22,32 @@
 
 class QCheckBox;
 class QComboBox;
+class QLineEdit;
 class QRadioButton;
-class QSpinBox;
 
 namespace gui {
 
-class TorrentsPage final : public SettingsPage {
+class TorrentDownloadsPage final : public SettingsPage {
   Q_OBJECT
-  Q_DISABLE_COPY_MOVE(TorrentsPage)
+  Q_DISABLE_COPY_MOVE(TorrentDownloadsPage)
 
 public:
-  TorrentsPage(QWidget* parent);
-  ~TorrentsPage() override = default;
+  TorrentDownloadsPage(QWidget* parent);
+  ~TorrentDownloadsPage() override = default;
 
   void load() override;
   void save() override;
 
 private:
-  QComboBox* m_comboSource = nullptr;
-  QComboBox* m_comboSearch = nullptr;
-  QCheckBox* m_checkAutoCheck = nullptr;
-  QSpinBox* m_spinInterval = nullptr;
-  QRadioButton* m_radioNotify = nullptr;
-  QRadioButton* m_radioDownload = nullptr;
+  void refreshState();
+
+  QComboBox* m_comboSortBy = nullptr;
+  QComboBox* m_comboSortOrder = nullptr;
+  QLineEdit* m_editLocation = nullptr;
+  QCheckBox* m_checkOpen = nullptr;
+  QRadioButton* m_radioDefaultApp = nullptr;
+  QRadioButton* m_radioCustomApp = nullptr;
+  QLineEdit* m_editAppPath = nullptr;
 };
 
 }  // namespace gui

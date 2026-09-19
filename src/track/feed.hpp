@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <QDateTime>
 #include <QString>
 #include <cstdint>
 #include <optional>
@@ -87,6 +88,7 @@ struct Feed {
 
 FeedSource feedSource(const std::string& channelLink);
 quint64 parseSizeString(QString value);
+QDateTime parseDate(const FeedItem& item);
 std::optional<Feed> parseFeed(const QString& data);
 
 // Parses and identifies every item, then categorizes it. Runs once per feed, as in v1.

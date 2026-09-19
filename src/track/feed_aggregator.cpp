@@ -27,6 +27,7 @@
 #include <QRegularExpression>
 #include <QRestReply>
 #include <QUrl>
+#include <algorithm>
 #include <map>
 #include <set>
 
@@ -120,10 +121,15 @@ void Aggregator::fetch(const QString& requestedUrl, const bool automatic) {
 
     emit feedChanged();
 
-    // Only an automatic check notifies, so that refreshing by hand stays quiet. As in v1.
-    if (automatic && taiga::settings.torrentNotifyNewEpisodes()) {
-      if (const auto lines = newEpisodeLines(); !lines.isEmpty()) {
-        emit newEpisodesFound(lines);
+    // Only an automatic check acts on its own, so that refreshing by hand stays quiet. As in v1.
+    if (automatic) {
+      if (taiga::settings.torrentNotifyNewEpisodes()) {
+        if (const auto lines = newEpisodeLines(); !lines.isEmpty()) {
+          emit newEpisodesFound(lines);
+        }
+      } else if (taiga::settings.torrentDownloadNewEpisodes()) {
+        // The filters decide what is selected. With them off, this would download everything.
+        if (taiga::settings.torrentFilterEnabled()) downloadSelected();
       }
     }
   });
@@ -135,12 +141,27 @@ namespace {
 // below are the ones that exist on Linux; v1's PicoTorrent and uTorrent are Windows-only.
 QStringList clientArguments(const QString& command, const QString& target) {
   const auto name = QFileInfo(command).fileName();
+  const auto folder = QString::fromStdString(taiga::settings.torrentDownloadLocation());
+  const auto matches = [&name](const char* client) {
+    return name.contains(QLatin1StringView{client}, Qt::CaseInsensitive);
+  };
 
-  if (name.contains(u"aria2c"_s, Qt::CaseInsensitive)) return {target};
-  if (name.contains(u"deluge-console"_s, Qt::CaseInsensitive)) return {u"add"_s, target};
-  if (name.contains(u"transmission-remote"_s, Qt::CaseInsensitive)) return {u"-a"_s, target};
-  if (name.contains(u"qbittorrent"_s, Qt::CaseInsensitive))
-    return {u"--skip-dialog=true"_s, target};
+  if (matches("aria2c")) {
+    if (folder.isEmpty()) return {target};
+    return {u"--dir=%1"_s.arg(folder), target};
+  }
+  if (matches("deluge-console")) {
+    if (folder.isEmpty()) return {u"add"_s, target};
+    return {u"add"_s, u"-p"_s, folder, target};
+  }
+  if (matches("transmission-remote")) {
+    if (folder.isEmpty()) return {u"-a"_s, target};
+    return {u"-a"_s, target, u"-w"_s, folder};
+  }
+  if (matches("qbittorrent")) {
+    if (folder.isEmpty()) return {u"--skip-dialog=true"_s, target};
+    return {u"--skip-dialog=true"_s, u"--save-path=%1"_s.arg(folder), target};
+  }
 
   return {target};
 }
@@ -154,6 +175,64 @@ QString sanitizedFileName(QString title) {
 }
 
 }  // namespace
+
+// v1 downloads the marked items one after another, ordered by the queue settings.
+void Aggregator::downloadSelected() {
+  std::vector<const FeedItem*> items;
+
+  for (const auto& item : feed_.items) {
+    if (item.state == FeedItemState::Selected) items.push_back(&item);
+  }
+
+  if (items.empty()) {
+    emit errorOccurred(tr("No torrents are marked for download."));
+    return;
+  }
+
+  const auto sortBy = QString::fromStdString(taiga::settings.torrentDownloadSortBy());
+  const auto descending =
+      taiga::settings.torrentDownloadSortOrder() == Qt::SortOrder::DescendingOrder;
+
+  std::ranges::stable_sort(items, [&sortBy, descending](const FeedItem* a, const FeedItem* b) {
+    // Items of the same anime stay together, as in v1.
+    if (a->episode.animeId() != b->episode.animeId()) {
+      return a->episode.animeId() < b->episode.animeId();
+    }
+
+    if (sortBy == u"releaseDate") {
+      const auto first = parseDate(*a);
+      const auto second = parseDate(*b);
+      return descending ? second < first : first < second;
+    }
+
+    const auto number = [](const FeedItem* item) {
+      const auto range = item->episode.episodeNumberRange();
+      return range ? range->second : 0;
+    };
+
+    return descending ? number(b) < number(a) : number(a) < number(b);
+  });
+
+  // A copy is needed: downloading changes the feed the pointers come from.
+  std::vector<FeedItem> queue;
+  for (const auto* item : items) queue.push_back(*item);
+
+  for (const auto& item : queue) download(item);
+}
+
+// v1's "Discard all", which throws the marked items away and remembers them.
+void Aggregator::discardSelected() {
+  int count = 0;
+
+  for (auto& item : feed_.items) {
+    if (item.state != FeedItemState::Selected) continue;
+    item.state = FeedItemState::DiscardedNormal;
+    archive.add(QString::fromStdString(item.title));
+    ++count;
+  }
+
+  if (count) emit feedChanged();
+}
 
 // Hands a torrent to a BitTorrent client, remembering it so that the next check does not offer it
 // again. A magnet link goes straight to the client; anything else is fetched to a file first.

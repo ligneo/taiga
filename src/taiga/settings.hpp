@@ -43,8 +43,12 @@ public:
   bool torrentAutoCheckEnabled() const;
   std::chrono::minutes torrentAutoCheckInterval() const;
   bool torrentNotifyNewEpisodes() const;
+  bool torrentDownloadNewEpisodes() const;
   bool torrentFilterEnabled() const;
   int torrentArchiveMaxCount() const;
+  std::string torrentDownloadSortBy() const;
+  Qt::SortOrder torrentDownloadSortOrder() const;
+  std::string torrentDownloadLocation() const;
   bool torrentDownloadOpen() const;
   bool torrentDownloadUseMagnet() const;
   std::string torrentDownloadAppMode() const;
@@ -81,8 +85,12 @@ public:
   void setTorrentAutoCheckEnabled(const bool enabled) const;
   void setTorrentAutoCheckInterval(const std::chrono::minutes interval) const;
   void setTorrentNotifyNewEpisodes(const bool enabled) const;
+  void setTorrentDownloadNewEpisodes(const bool enabled) const;
   void setTorrentFilterEnabled(const bool enabled) const;
   void setTorrentArchiveMaxCount(const int count) const;
+  void setTorrentDownloadSortBy(const std::string& sortBy) const;
+  void setTorrentDownloadSortOrder(const Qt::SortOrder order) const;
+  void setTorrentDownloadLocation(const std::string& path) const;
   void setTorrentDownloadOpen(const bool open) const;
   void setTorrentDownloadUseMagnet(const bool use) const;
   void setTorrentDownloadAppMode(const std::string& mode) const;

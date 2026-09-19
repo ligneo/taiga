@@ -92,6 +92,7 @@ int Application::run() {
   anime::history.init();
   sync::queue.init();
   track::archive.init();
+  track::archive.init();
   track::media::detection()->init();
   gui::imageProvider.init();
 

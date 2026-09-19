@@ -219,13 +219,34 @@ std::chrono::minutes Settings::torrentAutoCheckInterval() const {
 }
 
 bool Settings::torrentNotifyNewEpisodes() const {
-  // v1 stores an action rather than a flag, with `download` as the other value. That one needs
-  // filters to be of any use, so only `notify` is offered for now.
   return value("torrents.discovery.newAction", u"notify"_s).toString() == u"notify";
+}
+
+// v1's other action for a new torrent. It only makes sense with filters, which decide what counts
+// as selected; without them every release of every episode would be downloaded.
+bool Settings::torrentDownloadNewEpisodes() const {
+  return value("torrents.discovery.newAction").toString() == u"download";
 }
 
 int Settings::torrentArchiveMaxCount() const {
   return value("torrents.archive.maxCount", 1000).toInt();
+}
+
+// v1 orders the download queue by episode number or release date.
+std::string Settings::torrentDownloadSortBy() const {
+  return value("torrents.download.sortBy", u"episodeNumber"_s).toString().toStdString();
+}
+
+Qt::SortOrder Settings::torrentDownloadSortOrder() const {
+  return value("torrents.download.sortOrder").toString() == u"descending"
+             ? Qt::SortOrder::DescendingOrder
+             : Qt::SortOrder::AscendingOrder;
+}
+
+// Where the BitTorrent client is told to put the files. v1 prefers the anime's own folder and
+// falls back to this one; v2 has no per-anime folder, so this is the only one.
+std::string Settings::torrentDownloadLocation() const {
+  return value("torrents.download.location").toString().toStdString();
 }
 
 // The three below have no control of their own in v1 either; they live in its Advanced table.
@@ -283,6 +304,10 @@ void Settings::setTorrentDiscoveryUrl(const std::string& url) const {
   setValue("torrents.discovery.url", url);
 }
 
+void Settings::setTorrentDownloadNewEpisodes(const bool enabled) const {
+  if (enabled) setValue("torrents.discovery.newAction", u"download"_s);
+}
+
 void Settings::setTorrentNotifyNewEpisodes(const bool enabled) const {
   setValue("torrents.discovery.newAction", enabled ? u"notify"_s : u"none"_s);
 }
@@ -309,6 +334,19 @@ void Settings::setDisabledStreamingProviders(std::vector<std::string> providers)
 
 void Settings::setTorrentArchiveMaxCount(const int count) const {
   setValue("torrents.archive.maxCount", count);
+}
+
+void Settings::setTorrentDownloadSortBy(const std::string& sortBy) const {
+  setValue("torrents.download.sortBy", sortBy);
+}
+
+void Settings::setTorrentDownloadSortOrder(const Qt::SortOrder order) const {
+  setValue("torrents.download.sortOrder",
+           order == Qt::SortOrder::DescendingOrder ? u"descending"_s : u"ascending"_s);
+}
+
+void Settings::setTorrentDownloadLocation(const std::string& path) const {
+  setValue("torrents.download.location", path);
 }
 
 void Settings::setTorrentDownloadOpen(const bool open) const {

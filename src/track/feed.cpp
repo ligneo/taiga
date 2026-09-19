@@ -19,6 +19,7 @@
 #include "feed.hpp"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QRegularExpression>
 #include <QUrl>
 #include <map>
@@ -190,6 +191,29 @@ bool FeedItem::isDiscarded() const {
     default:
       return false;
   }
+}
+
+QDateTime parseDate(const FeedItem& item) {
+  auto value = QString::fromStdString(item.pub_date).trimmed();
+
+  // Qt only accepts a numeric zone offset, while RFC 2822 also allows the obsolete zone names that
+  // some providers still use (e.g. Tokyo Toshokan publishes dates ending in `GMT`).
+  static const std::map<QString, QString> zones{
+      {u"UT"_s, u"+0000"_s},  {u"GMT"_s, u"+0000"_s}, {u"UTC"_s, u"+0000"_s},
+      {u"EST"_s, u"-0500"_s}, {u"EDT"_s, u"-0400"_s}, {u"CST"_s, u"-0600"_s},
+      {u"CDT"_s, u"-0500"_s}, {u"MST"_s, u"-0700"_s}, {u"MDT"_s, u"-0600"_s},
+      {u"PST"_s, u"-0800"_s}, {u"PDT"_s, u"-0700"_s},
+  };
+
+  if (const auto pos = value.lastIndexOf(u' '); pos > 0) {
+    if (const auto it = zones.find(value.mid(pos + 1).toUpper()); it != zones.end()) {
+      value.replace(pos + 1, value.size() - pos - 1, it->second);
+    }
+  }
+
+  auto date = QDateTime::fromString(value, Qt::RFC2822Date);
+  if (!date.isValid()) date = QDateTime::fromString(value, Qt::ISODate);
+  return date;
 }
 
 quint64 parseSizeString(QString value) {

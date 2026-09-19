@@ -35,6 +35,7 @@
 #include "gui/main/status_bar_controller.hpp"
 #include "gui/models/torrent_model.hpp"
 #include "gui/utils/theme.hpp"
+#include "gui/utils/widgets.hpp"
 #include "media/anime.hpp"
 #include "track/feed.hpp"
 #include "track/feed_aggregator.hpp"
@@ -124,6 +125,25 @@ void TorrentsWidget::initToolbar() {
   m_actionRefresh = new QAction(theme.getIcon("sync"), tr("Refresh"), this);
   connect(m_actionRefresh, &QAction::triggered, this, []() { track::aggregator()->fetch(); });
   m_toolbar->addAction(m_actionRefresh);
+
+  // v1 puts these next to the check button: act on everything that is marked.
+  m_toolbar->addSeparator();
+
+  const auto actionDownload =
+      new QAction(theme.getIcon("cloud_download"), tr("Download marked torrents"), this);
+  connect(actionDownload, &QAction::triggered, this,
+          []() { track::aggregator()->downloadSelected(); });
+  m_toolbar->addAction(actionDownload);
+
+  const auto actionDiscard = new QAction(theme.getIcon("delete"), tr("Discard marked"), this);
+  connect(actionDiscard, &QAction::triggered, this, [this]() {
+    if (!confirm(this, tr("Are you sure you want to discard the marked torrents?"),
+                 tr("They will not be offered again."), tr("Discard"))) {
+      return;
+    }
+    track::aggregator()->discardSelected();
+  });
+  m_toolbar->addAction(actionDiscard);
 }
 
 void TorrentsWidget::setFilterText(const QString& text) {

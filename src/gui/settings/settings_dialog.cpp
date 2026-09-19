@@ -28,6 +28,7 @@
 #include "gui/settings/settings_media_players_page.hpp"
 #include "gui/settings/settings_recognition_page.hpp"
 #include "gui/settings/settings_streaming_page.hpp"
+#include "gui/settings/settings_torrent_downloads_page.hpp"
 #include "gui/settings/settings_torrent_filters_page.hpp"
 #include "gui/settings/settings_torrents_page.hpp"
 #include "gui/utils/theme.hpp"
@@ -78,10 +79,11 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
     add_child(item, "mIRC");
   }
   QTreeWidgetItem* torrentsItem = nullptr;
+  QTreeWidgetItem* torrentDownloadsItem = nullptr;
   QTreeWidgetItem* torrentFiltersItem = nullptr;
   {
     torrentsItem = add_item("rss_feed", "Torrents");
-    add_child(torrentsItem, "Downloads");
+    torrentDownloadsItem = add_child(torrentsItem, "Downloads");
     torrentFiltersItem = add_child(torrentsItem, "Filters");
   }
   QTreeWidgetItem* advancedItem = nullptr;
@@ -101,6 +103,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   addPage(mediaPlayersItem, new MediaPlayersPage(this));
   addPage(streamingItem, new StreamingPage(this));
   addPage(torrentsItem, new TorrentsPage(this));
+  addPage(torrentDownloadsItem, new TorrentDownloadsPage(this));
   addPage(torrentFiltersItem, new TorrentFiltersPage(this));
   addPage(advancedItem, new AdvancedPage(this));
   addPage(cacheItem, new CachePage(this));
