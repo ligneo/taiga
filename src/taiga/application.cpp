@@ -35,6 +35,7 @@
 #include "media/anime_db.hpp"
 #include "media/anime_history.hpp"
 #include "sync/queue.hpp"
+#include "taiga/autostart.hpp"
 #include "taiga/config.h"
 #include "taiga/path.hpp"
 #include "taiga/settings.hpp"
@@ -89,6 +90,7 @@ int Application::run() {
   local_server_.listen(TAIGA_APP_NAME);
 
   taiga::settings.init();
+  taiga::applyAutoStart();
   anime::db.init();
   anime::history.init();
   sync::queue.init();
@@ -110,6 +112,11 @@ int Application::run() {
 
   window_ = new gui::MainWindow();
   window_->init();
+
+  // v1's `program/startup/minimize`: Taiga starts in the tray and detects from there.
+  if (taiga::settings.appStartMinimized()) {
+    return QApplication::exec();
+  }
 
 #ifdef Q_OS_WINDOWS
   // Delay showing the window to avoid a white flash.

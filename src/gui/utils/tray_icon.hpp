@@ -35,6 +35,7 @@ public:
   TrayIcon(QObject* parent, const QIcon& icon, QMenu* menu);
 
   void showMessage(const QString& title, const QString& text) const;
+  bool isVisible() const;
 
 signals:
   void activated();

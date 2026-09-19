@@ -18,18 +18,25 @@
 
 #include "settings_application_page.hpp"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QVBoxLayout>
 
 #include "gui/utils/theme.hpp"
+#include "taiga/autostart.hpp"
 #include "taiga/settings.hpp"
 
 namespace gui {
 
 ApplicationPage::ApplicationPage(QWidget* parent)
-    : SettingsPage(parent), m_comboColorScheme(new QComboBox(this)) {
+    : SettingsPage(parent),
+      m_comboColorScheme(new QComboBox(this)),
+      m_checkAutoStart(new QCheckBox(tr("Start Taiga when the session begins"), this)),
+      m_checkStartMinimized(new QCheckBox(tr("Start minimized to the tray"), this)),
+      m_checkCloseToTray(new QCheckBox(tr("Minimize to tray when closed"), this)),
+      m_checkMinimizeToTray(new QCheckBox(tr("Minimize to tray when minimized"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Appearance
@@ -45,15 +52,44 @@ ApplicationPage::ApplicationPage(QWidget* parent)
     layout->addWidget(group);
   }
 
+  // Startup
+  {
+    const auto group = new QGroupBox(tr("Startup"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+    groupLayout->addWidget(m_checkAutoStart);
+    groupLayout->addWidget(m_checkStartMinimized);
+    layout->addWidget(group);
+  }
+
+  // System tray
+  {
+    const auto group = new QGroupBox(tr("System tray"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+    groupLayout->addWidget(m_checkCloseToTray);
+    groupLayout->addWidget(m_checkMinimizeToTray);
+    layout->addWidget(group);
+  }
+
   layout->addStretch();
 }
 
 void ApplicationPage::load() {
   const auto scheme = static_cast<int>(taiga::settings.appColorScheme());
   m_comboColorScheme->setCurrentIndex(m_comboColorScheme->findData(scheme));
+
+  m_checkAutoStart->setChecked(taiga::settings.appAutoStart());
+  m_checkStartMinimized->setChecked(taiga::settings.appStartMinimized());
+  m_checkCloseToTray->setChecked(taiga::settings.appCloseToTray());
+  m_checkMinimizeToTray->setChecked(taiga::settings.appMinimizeToTray());
 }
 
 void ApplicationPage::save() {
+  taiga::settings.setAppAutoStart(m_checkAutoStart->isChecked());
+  taiga::settings.setAppStartMinimized(m_checkStartMinimized->isChecked());
+  taiga::settings.setAppCloseToTray(m_checkCloseToTray->isChecked());
+  taiga::settings.setAppMinimizeToTray(m_checkMinimizeToTray->isChecked());
+  taiga::applyAutoStart();
+
   const auto scheme = m_comboColorScheme->currentData().value<Qt::ColorScheme>();
   if (scheme == taiga::settings.appColorScheme()) return;
 

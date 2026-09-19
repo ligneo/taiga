@@ -113,6 +113,23 @@ bool Settings::sidebarVisible() const {
 
 // v1's `program/list/progress/showaired` and `showavailable`, both on by default there.
 // v1's `anime/folders/watch/enabled`, on by default there as well.
+// v1's `program/general/autostart`, `close`, `minimize` and `program/startup/minimize`.
+bool Settings::appAutoStart() const {
+  return value("app.autoStart", false).toBool();
+}
+
+bool Settings::appCloseToTray() const {
+  return value("app.closeToTray", false).toBool();
+}
+
+bool Settings::appMinimizeToTray() const {
+  return value("app.minimizeToTray", false).toBool();
+}
+
+bool Settings::appStartMinimized() const {
+  return value("app.startMinimized", false).toBool();
+}
+
 bool Settings::libraryWatchFolders() const {
   return value("library.folders.watch", true).toBool();
 }
@@ -444,6 +461,22 @@ void Settings::setProxyPassword(const std::string& password) const {
 
 void Settings::setSidebarVisible(const bool visible) const {
   setValue("app.sidebarVisible", visible);
+}
+
+void Settings::setAppAutoStart(const bool enabled) const {
+  setValue("app.autoStart", enabled);
+}
+
+void Settings::setAppCloseToTray(const bool enabled) const {
+  setValue("app.closeToTray", enabled);
+}
+
+void Settings::setAppMinimizeToTray(const bool enabled) const {
+  setValue("app.minimizeToTray", enabled);
+}
+
+void Settings::setAppStartMinimized(const bool enabled) const {
+  setValue("app.startMinimized", enabled);
 }
 
 void Settings::setLibraryWatchFolders(const bool watch) const {

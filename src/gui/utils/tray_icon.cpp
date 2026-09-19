@@ -57,4 +57,8 @@ void TrayIcon::showMessage(const QString& title, const QString& text) const {
   m_icon->showMessage(title, text, QSystemTrayIcon::Information);
 }
 
+bool TrayIcon::isVisible() const {
+  return m_icon && m_icon->isVisible();
+}
+
 }  // namespace gui

@@ -537,6 +537,18 @@ void MainWindow::initViewMenu() {
   action->setChecked(m_navigationWidget->isVisible());
 }
 
+// v1's `program/general/minimize`. Qt has no separate minimize event, so the state change is
+// what tells us.
+void MainWindow::changeEvent(QEvent* event) {
+  if (event->type() == QEvent::WindowStateChange && isMinimized()) {
+    if (taiga::settings.appMinimizeToTray() && m_trayIcon && m_trayIcon->isVisible()) {
+      QTimer::singleShot(0, this, &QWidget::hide);
+    }
+  }
+
+  QMainWindow::changeEvent(event);
+}
+
 void MainWindow::initToolbar() {
   ui_->toolbar->setIconSize(QSize{24, 24});
 
@@ -605,6 +617,13 @@ void MainWindow::initTrayIcon() {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
+  // v1's `program/general/close`: the window goes away but Taiga keeps detecting.
+  if (taiga::settings.appCloseToTray() && m_trayIcon && m_trayIcon->isVisible()) {
+    hide();
+    event->ignore();
+    return;
+  }
+
   taiga::session.setMainWindowGeometry(saveGeometry());
   if (m_listWidget) m_listWidget->saveState();
   if (m_searchWidget) m_searchWidget->saveState();

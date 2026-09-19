@@ -68,6 +68,10 @@ public:
   std::string proxyUsername() const;
   std::string proxyPassword() const;
   bool sidebarVisible() const;
+  bool appAutoStart() const;
+  bool appCloseToTray() const;
+  bool appMinimizeToTray() const;
+  bool appStartMinimized() const;
   bool listShowAiredEpisodes() const;
   bool listShowAvailableEpisodes() const;
   bool streamingMediaEnabled() const;
@@ -115,6 +119,10 @@ public:
   void setProxyUsername(const std::string& username) const;
   void setProxyPassword(const std::string& password) const;
   void setSidebarVisible(const bool visible) const;
+  void setAppAutoStart(const bool enabled) const;
+  void setAppCloseToTray(const bool enabled) const;
+  void setAppMinimizeToTray(const bool enabled) const;
+  void setAppStartMinimized(const bool enabled) const;
   void setListShowAiredEpisodes(const bool show) const;
   void setListShowAvailableEpisodes(const bool show) const;
   void setStreamingMediaEnabled(const bool enabled) const;

@@ -89,6 +89,8 @@ target_sources(taiga PRIVATE
 	sync/service.hpp
 
 	taiga/accounts.cpp
+	taiga/autostart.cpp
+	taiga/autostart.hpp
 	taiga/accounts.hpp
 	taiga/application.cpp
 	taiga/application.hpp

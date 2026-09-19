@@ -18,30 +18,10 @@
 
 #pragma once
 
-#include "gui/settings/settings_page.hpp"
+namespace taiga {
 
-class QCheckBox;
-class QComboBox;
+// Writes or removes the desktop entry that starts Taiga with the session, to match the setting.
+// v1 uses a registry key for this; the freedesktop equivalent is a file in the autostart folder.
+void applyAutoStart();
 
-namespace gui {
-
-class ApplicationPage final : public SettingsPage {
-  Q_OBJECT
-  Q_DISABLE_COPY_MOVE(ApplicationPage)
-
-public:
-  ApplicationPage(QWidget* parent);
-  ~ApplicationPage() override = default;
-
-  void load() override;
-  void save() override;
-
-private:
-  QComboBox* m_comboColorScheme = nullptr;
-  QCheckBox* m_checkAutoStart = nullptr;
-  QCheckBox* m_checkStartMinimized = nullptr;
-  QCheckBox* m_checkCloseToTray = nullptr;
-  QCheckBox* m_checkMinimizeToTray = nullptr;
-};
-
-}  // namespace gui
+}  // namespace taiga
