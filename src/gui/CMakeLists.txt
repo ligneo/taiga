@@ -90,6 +90,10 @@ target_sources(taiga-gui PRIVATE
 	settings/settings_anime_list_page.hpp
 	settings/settings_application_page.cpp
 	settings/settings_application_page.hpp
+	settings/settings_discord_page.cpp
+	settings/settings_http_page.cpp
+	settings/settings_http_page.hpp
+	settings/settings_discord_page.hpp
 	settings/settings_dialog.cpp
 	settings/settings_dialog.hpp
 	settings/settings_library_page.cpp

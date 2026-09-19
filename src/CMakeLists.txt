@@ -32,6 +32,11 @@ target_sources(taiga PRIVATE
 	compat/settings.cpp
 	compat/settings.hpp
 
+	link/discord.cpp
+	link/http.cpp
+	link/http.hpp
+	link/discord.hpp
+
 	media/anime_db.cpp
 	media/anime_db.hpp
 	media/anime_history.cpp

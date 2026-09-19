@@ -95,8 +95,6 @@ int Application::run() {
   anime::history.init();
   sync::queue.init();
   track::archive.init();
-  track::archive.init();
-  track::archive.init();
   track::library()->applyWatchSettings();
   if (taiga::settings.libraryScanOnStartup()) track::library()->scan();
   track::media::detection()->init();

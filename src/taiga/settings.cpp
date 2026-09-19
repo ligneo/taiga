@@ -183,6 +183,39 @@ bool Settings::streamingMediaEnabled() const {
   return value("recognition.streaming.enabled", false).toBool();
 }
 
+// v1's `announce/discord/*`. The application id has no control in v1 either; it belongs in the
+// advanced table.
+// v1's `announce/http/*`, with its default format.
+bool Settings::httpShareEnabled() const {
+  return value("sharing.http.enabled", false).toBool();
+}
+
+std::string Settings::httpShareUrl() const {
+  return value("sharing.http.url").toString().toStdString();
+}
+
+std::string Settings::httpShareFormat() const {
+  static const auto defaultFormat =
+      u"user=%user%&name=%title%&ep=%episode%&eptotal=%total%&score=%score%&picurl=%image%"_s;
+  return value("sharing.http.format", defaultFormat).toString().toStdString();
+}
+
+bool Settings::discordEnabled() const {
+  return value("sharing.discord.enabled", false).toBool();
+}
+
+std::string Settings::discordApplicationId() const {
+  return value("sharing.discord.applicationId", u"379871385176244224"_s).toString().toStdString();
+}
+
+bool Settings::discordTimeEnabled() const {
+  return value("sharing.discord.showTime", true).toBool();
+}
+
+bool Settings::discordUsernameEnabled() const {
+  return value("sharing.discord.showUsername", true).toBool();
+}
+
 bool Settings::syncEnabled() const {
   return value("sync.enabled", true).toBool();
 }
@@ -552,6 +585,34 @@ void Settings::setListShowAvailableEpisodes(const bool show) const {
 
 void Settings::setStreamingMediaEnabled(const bool enabled) const {
   setValue("recognition.streaming.enabled", enabled);
+}
+
+void Settings::setHttpShareEnabled(const bool enabled) const {
+  setValue("sharing.http.enabled", enabled);
+}
+
+void Settings::setHttpShareUrl(const std::string& url) const {
+  setValue("sharing.http.url", url);
+}
+
+void Settings::setHttpShareFormat(const std::string& format) const {
+  setValue("sharing.http.format", format);
+}
+
+void Settings::setDiscordEnabled(const bool enabled) const {
+  setValue("sharing.discord.enabled", enabled);
+}
+
+void Settings::setDiscordApplicationId(const std::string& id) const {
+  setValue("sharing.discord.applicationId", id);
+}
+
+void Settings::setDiscordTimeEnabled(const bool enabled) const {
+  setValue("sharing.discord.showTime", enabled);
+}
+
+void Settings::setDiscordUsernameEnabled(const bool enabled) const {
+  setValue("sharing.discord.showUsername", enabled);
 }
 
 void Settings::setSyncEnabled(const bool enabled) const {

@@ -24,6 +24,8 @@
 #include "gui/settings/settings_anime_list_page.hpp"
 #include "gui/settings/settings_application_page.hpp"
 #include "gui/settings/settings_cache_page.hpp"
+#include "gui/settings/settings_discord_page.hpp"
+#include "gui/settings/settings_http_page.hpp"
 #include "gui/settings/settings_library_page.hpp"
 #include "gui/settings/settings_media_players_page.hpp"
 #include "gui/settings/settings_recognition_page.hpp"
@@ -67,6 +69,8 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   QTreeWidgetItem* recognitionItem = nullptr;
   QTreeWidgetItem* mediaPlayersItem = nullptr;
   QTreeWidgetItem* streamingItem = nullptr;
+  QTreeWidgetItem* discordItem = nullptr;
+  QTreeWidgetItem* httpItem = nullptr;
   {
     recognitionItem = add_item("check_circle", "Recognition");
     mediaPlayersItem = add_child(recognitionItem, "Media players");
@@ -74,9 +78,8 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   }
   {
     auto item = add_item("share", "Sharing");
-    add_child(item, "Discord");
-    add_child(item, "HTTP");
-    add_child(item, "mIRC");
+    discordItem = add_child(item, "Discord");
+    httpItem = add_child(item, "HTTP");
   }
   QTreeWidgetItem* torrentsItem = nullptr;
   QTreeWidgetItem* torrentDownloadsItem = nullptr;
@@ -102,6 +105,8 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   addPage(recognitionItem, new RecognitionPage(this));
   addPage(mediaPlayersItem, new MediaPlayersPage(this));
   addPage(streamingItem, new StreamingPage(this));
+  addPage(discordItem, new DiscordPage(this));
+  addPage(httpItem, new HttpPage(this));
   addPage(torrentsItem, new TorrentsPage(this));
   addPage(torrentDownloadsItem, new TorrentDownloadsPage(this));
   addPage(torrentFiltersItem, new TorrentFiltersPage(this));

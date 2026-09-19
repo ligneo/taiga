@@ -42,6 +42,8 @@
 #include "gui/utils/theme.hpp"
 #include "gui/utils/tray_icon.hpp"
 #include "gui/utils/widgets.hpp"
+#include "link/discord.hpp"
+#include "link/http.hpp"
 #include "media/anime_db.hpp"
 #include "media/anime_list.hpp"
 #include "media/anime_list_export.hpp"
@@ -249,6 +251,28 @@ void MainWindow::initNowPlaying() {
 
   connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
           &MainWindow::notifyEpisodeDetected);
+
+  // v1 shares what is playing over Discord's rich presence.
+  connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
+          [](std::optional<track::Episode> episode) {
+            if (!episode) {
+              link::discord()->clearPresence();
+              return;
+            }
+
+            const auto item = anime::db.item(episode->animeId());
+            const auto title =
+                item ? QString::fromStdString(anime::preferredTitle(*item))
+                     : QString::fromStdString(episode->element(anitomy::ElementKind::Title));
+            const auto number =
+                QString::fromStdString(episode->element(anitomy::ElementKind::Episode));
+
+            link::http::announce(*episode);
+
+            link::discord()->updatePresence(
+                title, number.isEmpty() ? QString{} : tr("Episode %1").arg(number),
+                item ? QString::fromStdString(item->image_url) : QString{}, std::time(nullptr));
+          });
 }
 
 void MainWindow::initPage(MainWindowPage page) {
