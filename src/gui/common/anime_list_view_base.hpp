@@ -21,6 +21,7 @@
 #include <QAbstractItemView>
 #include <QObject>
 #include <QTreeWidget>
+#include <string>
 
 #include "gui/common/anime_list_context.hpp"
 
@@ -52,6 +53,7 @@ public slots:
   void openAnimePage(const QModelIndex& index);
   void playNextEpisode(const QModelIndex& index);
   void showMediaDialog(const QModelIndex& index);
+  void triggerClickAction(const QModelIndex& index, const std::string& action);
   void showMediaMenu();
   void updateSelectionStatus(const QItemSelection& selected, const QItemSelection& deselected);
 

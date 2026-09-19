@@ -40,6 +40,7 @@ public:
   ~MediaMenu() = default;
 
   void popup();
+  void openFolder() const;
 
 private slots:
   void addToList(const anime::list::Status status) const;
@@ -53,7 +54,7 @@ private slots:
   void editScore(int value) const;
   void editStatus(const anime::list::Status status) const;
   void matchNowPlaying() const;
-  void openFolder() const;
+
   void playEpisode(int number) const;
   void playRandomEpisode() const;
   void refresh() const;

@@ -33,6 +33,7 @@
 #include "media/anime_list_utils.hpp"
 #include "media/anime_season.hpp"
 #include "media/anime_utils.hpp"
+#include "taiga/settings.hpp"
 
 namespace gui {
 
@@ -192,6 +193,18 @@ QVariant AnimeListModel::data(const QModelIndex& index, int role) const {
         case COLUMN_NOTES:
           if (entry) return QString::fromStdString(entry->notes);
           break;
+      }
+      break;
+
+    case Qt::FontRole:
+      // v1 highlights anime with an episode you have not watched yet.
+      if (taiga::settings.listHighlightNewEpisodes() && entry) {
+        const auto aired = anime::estimateLastAiredEpisodeNumber(*anime);
+        if (aired > entry->watched_episodes) {
+          auto font = QApplication::font();
+          font.setWeight(QFont::Weight::DemiBold);
+          return font;
+        }
       }
       break;
 

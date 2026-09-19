@@ -74,6 +74,9 @@ public:
   bool appCloseToTray() const;
   bool appMinimizeToTray() const;
   bool appStartMinimized() const;
+  std::string listDoubleClickAction() const;
+  std::string listMiddleClickAction() const;
+  bool listHighlightNewEpisodes() const;
   bool listShowAiredEpisodes() const;
   bool listShowAvailableEpisodes() const;
   bool streamingMediaEnabled() const;
@@ -127,6 +130,9 @@ public:
   void setAppCloseToTray(const bool enabled) const;
   void setAppMinimizeToTray(const bool enabled) const;
   void setAppStartMinimized(const bool enabled) const;
+  void setListDoubleClickAction(const std::string& action) const;
+  void setListMiddleClickAction(const std::string& action) const;
+  void setListHighlightNewEpisodes(const bool highlight) const;
   void setListShowAiredEpisodes(const bool show) const;
   void setListShowAvailableEpisodes(const bool show) const;
   void setStreamingMediaEnabled(const bool enabled) const;

@@ -38,6 +38,7 @@
 #include "media/anime_list.hpp"
 #include "media/anime_utils.hpp"
 #include "sync/service.hpp"
+#include "taiga/settings.hpp"
 #include "track/play.hpp"
 
 namespace gui {
@@ -53,7 +54,9 @@ ListViewBase::ListViewBase(QWidget* parent, QAbstractItemView* view, AnimeListMo
 
   connect(mainWindow()->searchBox(), &QLineEdit::textChanged, this, &ListViewBase::filterByText);
 
-  connect(m_view, &QAbstractItemView::doubleClicked, this, &ListViewBase::showMediaDialog);
+  connect(m_view, &QAbstractItemView::doubleClicked, this, [this](const QModelIndex& index) {
+    triggerClickAction(index, taiga::settings.listDoubleClickAction());
+  });
 
   connect(m_view, &QWidget::customContextMenuRequested, this, &ListViewBase::showMediaMenu);
 
@@ -165,6 +168,25 @@ void ListViewBase::updateSelectionStatus(const QItemSelection&, const QItemSelec
 QModelIndexList ListViewBase::selectedIndexes() {
   const auto model = m_view->selectionModel();
   return model->selectedRows().size() ? model->selectedRows() : model->selectedIndexes();
+}
+
+// v1 lets the user choose what a click does. Its "edit details" and "view anime info" both open
+// the same dialog here, so they are one entry.
+void ListViewBase::triggerClickAction(const QModelIndex& index, const std::string& action) {
+  if (action == "details") {
+    showMediaDialog(index);
+  } else if (action == "animePage") {
+    openAnimePage(index);
+  } else if (action == "playNextEpisode") {
+    playNextEpisode(index);
+  } else if (action == "openFolder") {
+    const auto sourceIndex = m_proxyModel->mapToSource(index);
+    const auto item = m_model->getAnime(sourceIndex);
+    if (!item) return;
+    QMap<int, ListEntry> entries;
+    if (const auto entry = m_model->getListEntry(sourceIndex)) entries[item->id] = *entry;
+    MediaMenu{m_view, {*item}, entries, m_view->selectionModel(), m_context}.openFolder();
+  }
 }
 
 }  // namespace gui

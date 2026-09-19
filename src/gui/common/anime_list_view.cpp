@@ -26,6 +26,7 @@
 #include "gui/models/anime_list_model.hpp"
 #include "gui/models/anime_list_proxy_model.hpp"
 #include "gui/utils/painters.hpp"
+#include "taiga/settings.hpp"
 #include "track/play.hpp"
 
 namespace gui {
@@ -94,10 +95,12 @@ void ListView::mousePressEvent(QMouseEvent* event) {
     const QModelIndex index = indexAt(event->pos());
     if (index.isValid()) {
       setCurrentIndex(index);
+      // Searching is about finding a title rather than watching it, so that page keeps its own
+      // behavior; everywhere else the setting decides. v1 has the same split.
       if (m_base->context() == AnimeListContext::Search) {
         m_base->openAnimePage(index);
       } else {
-        m_base->playNextEpisode(index);
+        m_base->triggerClickAction(index, taiga::settings.listMiddleClickAction());
       }
       return;
     }

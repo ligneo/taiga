@@ -157,6 +157,20 @@ qint64 Settings::libraryMinimumFileSize() const {
   return value("library.minimumFileSize", 0).toLongLong();
 }
 
+// v1 lets both clicks be chosen from the same list of actions.
+std::string Settings::listDoubleClickAction() const {
+  return value("animeList.action.doubleClick", u"details"_s).toString().toStdString();
+}
+
+std::string Settings::listMiddleClickAction() const {
+  return value("animeList.action.middleClick", u"playNextEpisode"_s).toString().toStdString();
+}
+
+// v1's `program/list/filter/episodes/highlight`.
+bool Settings::listHighlightNewEpisodes() const {
+  return value("animeList.highlightNewEpisodes", true).toBool();
+}
+
 bool Settings::listShowAiredEpisodes() const {
   return value("animeList.progress.showAired", true).toBool();
 }
@@ -514,6 +528,18 @@ void Settings::setLibraryScanOnStartup(const bool scan) const {
 
 void Settings::setLibraryMinimumFileSize(const qint64 bytes) const {
   setValue("library.minimumFileSize", bytes);
+}
+
+void Settings::setListDoubleClickAction(const std::string& action) const {
+  setValue("animeList.action.doubleClick", action);
+}
+
+void Settings::setListMiddleClickAction(const std::string& action) const {
+  setValue("animeList.action.middleClick", action);
+}
+
+void Settings::setListHighlightNewEpisodes(const bool highlight) const {
+  setValue("animeList.highlightNewEpisodes", highlight);
 }
 
 void Settings::setListShowAiredEpisodes(const bool show) const {

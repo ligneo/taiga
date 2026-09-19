@@ -18,6 +18,7 @@
 
 #include "settings_anime_list_page.hpp"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -28,8 +29,16 @@
 
 namespace gui {
 
+using namespace Qt::StringLiterals;
+
 AnimeListPage::AnimeListPage(QWidget* parent)
-    : SettingsPage(parent), m_comboTitleLanguage(new QComboBox(this)) {
+    : SettingsPage(parent),
+      m_comboTitleLanguage(new QComboBox(this)),
+      m_comboDoubleClick(new QComboBox(this)),
+      m_comboMiddleClick(new QComboBox(this)),
+      m_checkHighlight(new QCheckBox(tr("Highlight anime with new episodes"), this)),
+      m_checkShowAired(new QCheckBox(tr("Show aired episodes on the progress bar"), this)),
+      m_checkShowAvailable(new QCheckBox(tr("Show available episodes on the progress bar"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Appearance
@@ -42,6 +51,33 @@ AnimeListPage::AnimeListPage(QWidget* parent)
     m_comboTitleLanguage->addItem(tr("Native"), static_cast<int>(anime::TitleLanguage::Native));
     form->addRow(tr("Title language preference:"), m_comboTitleLanguage);
 
+    form->addRow(tr("Progress bar:"), m_checkShowAired);
+    form->addRow(QString{}, m_checkShowAvailable);
+    form->addRow(QString{}, m_checkHighlight);
+
+    layout->addWidget(group);
+  }
+
+  // Actions
+  {
+    const auto group = new QGroupBox(tr("Actions"), this);
+    const auto form = new QFormLayout(group);
+
+    // v1 offers six; its "edit details" and "view anime info" open the same dialog here.
+    const QList<QPair<QString, QString>> actions{
+        {tr("Do nothing"), u"none"_s},           {tr("Open details"), u"details"_s},
+        {tr("Open folder"), u"openFolder"_s},    {tr("Play next episode"), u"playNextEpisode"_s},
+        {tr("Open anime page"), u"animePage"_s},
+    };
+
+    for (const auto& [text, value] : actions) {
+      m_comboDoubleClick->addItem(text, value);
+      m_comboMiddleClick->addItem(text, value);
+    }
+
+    form->addRow(tr("Double click:"), m_comboDoubleClick);
+    form->addRow(tr("Middle click:"), m_comboMiddleClick);
+
     layout->addWidget(group);
   }
 
@@ -51,12 +87,31 @@ AnimeListPage::AnimeListPage(QWidget* parent)
 void AnimeListPage::load() {
   const auto language = static_cast<int>(taiga::settings.titleLanguage());
   m_comboTitleLanguage->setCurrentIndex(m_comboTitleLanguage->findData(language));
+
+  m_comboDoubleClick->setCurrentIndex(std::max(
+      m_comboDoubleClick->findData(QString::fromStdString(taiga::settings.listDoubleClickAction())),
+      0));
+  m_comboMiddleClick->setCurrentIndex(std::max(
+      m_comboMiddleClick->findData(QString::fromStdString(taiga::settings.listMiddleClickAction())),
+      0));
+
+  m_checkHighlight->setChecked(taiga::settings.listHighlightNewEpisodes());
+  m_checkShowAired->setChecked(taiga::settings.listShowAiredEpisodes());
+  m_checkShowAvailable->setChecked(taiga::settings.listShowAvailableEpisodes());
 }
 
 void AnimeListPage::save() {
   const auto language =
       static_cast<anime::TitleLanguage>(m_comboTitleLanguage->currentData().toInt());
   taiga::settings.setTitleLanguage(language);
+
+  taiga::settings.setListDoubleClickAction(
+      m_comboDoubleClick->currentData().toString().toStdString());
+  taiga::settings.setListMiddleClickAction(
+      m_comboMiddleClick->currentData().toString().toStdString());
+  taiga::settings.setListHighlightNewEpisodes(m_checkHighlight->isChecked());
+  taiga::settings.setListShowAiredEpisodes(m_checkShowAired->isChecked());
+  taiga::settings.setListShowAvailableEpisodes(m_checkShowAvailable->isChecked());
 }
 
 }  // namespace gui

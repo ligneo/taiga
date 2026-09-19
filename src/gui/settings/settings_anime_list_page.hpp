@@ -20,6 +20,7 @@
 
 #include "gui/settings/settings_page.hpp"
 
+class QCheckBox;
 class QComboBox;
 
 namespace gui {
@@ -37,6 +38,11 @@ public:
 
 private:
   QComboBox* m_comboTitleLanguage = nullptr;
+  QComboBox* m_comboDoubleClick = nullptr;
+  QComboBox* m_comboMiddleClick = nullptr;
+  QCheckBox* m_checkHighlight = nullptr;
+  QCheckBox* m_checkShowAired = nullptr;
+  QCheckBox* m_checkShowAvailable = nullptr;
 };
 
 }  // namespace gui
