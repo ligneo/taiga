@@ -60,6 +60,7 @@ void Database::init() {
     return;
   }
 
+  upgradeTables();
   readItems();
   readEntries();
   readSettings();
@@ -204,6 +205,16 @@ QString Database::fileName() const {
 
 QString Database::sql(const QString& name) const {
   return base::readFile(u":/sql/%1.sql"_s.arg(name));
+}
+
+// Tables are only created with a new database, so columns added later must be added here.
+void Database::upgradeTables() {
+  if (!db_.open()) return;
+
+  if (!db_.record("anime_settings").contains("folder")) {
+    QSqlQuery q{db_};
+    q.exec("ALTER TABLE anime_settings ADD COLUMN folder TEXT NOT NULL DEFAULT ''");
+  }
 }
 
 void Database::createTables() {
