@@ -369,8 +369,18 @@ Qt::SortOrder Settings::torrentDownloadSortOrder() const {
 
 // Where the BitTorrent client is told to put the files. v1 prefers the anime's own folder and
 // falls back to this one; v2 has no per-anime folder, so this is the only one.
+// v1's `rss/torrent/options/autocreatefolder`.
+bool Settings::torrentDownloadCreateSubfolder() const {
+  return value("torrents.download.createSubfolder", false).toBool();
+}
+
 std::string Settings::torrentDownloadLocation() const {
   return value("torrents.download.location").toString().toStdString();
+}
+
+// v1's `rss/torrent/options/autosetfolder`.
+bool Settings::torrentDownloadUseAnimeFolder() const {
+  return value("torrents.download.useAnimeFolder", true).toBool();
 }
 
 // The three below have no control of their own in v1 either; they live in its Advanced table.
@@ -469,8 +479,16 @@ void Settings::setTorrentDownloadSortOrder(const Qt::SortOrder order) const {
            order == Qt::SortOrder::DescendingOrder ? u"descending"_s : u"ascending"_s);
 }
 
+void Settings::setTorrentDownloadCreateSubfolder(const bool enabled) const {
+  setValue("torrents.download.createSubfolder", enabled);
+}
+
 void Settings::setTorrentDownloadLocation(const std::string& path) const {
   setValue("torrents.download.location", path);
+}
+
+void Settings::setTorrentDownloadUseAnimeFolder(const bool enabled) const {
+  setValue("torrents.download.useAnimeFolder", enabled);
 }
 
 void Settings::setTorrentDownloadOpen(const bool open) const {

@@ -50,7 +50,10 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
     : SettingsPage(parent),
       m_comboSortBy(new QComboBox(this)),
       m_comboSortOrder(new QComboBox(this)),
+      m_checkUseAnimeFolder(
+          new QCheckBox(tr("Use the anime's folder as the download location"), this)),
       m_editLocation(new QLineEdit(this)),
+      m_checkCreateSubfolder(new QCheckBox(tr("Create a subfolder named after the anime"), this)),
       m_checkOpen(new QCheckBox(tr("Open downloaded .torrent files"), this)),
       m_radioDefaultApp(
           new QRadioButton(tr("Use the default application associated with .torrent files"), this)),
@@ -82,29 +85,24 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
     const auto groupLayout = new QVBoxLayout(group);
 
     const auto pathLayout = new QHBoxLayout();
-    const auto buttonBrowse = new QPushButton(tr("Browse..."), group);
+    m_buttonBrowseLocation = new QPushButton(tr("Browse..."), group);
     m_editLocation->setPlaceholderText(tr("Leave empty to let the client decide"));
     pathLayout->addWidget(m_editLocation);
-    pathLayout->addWidget(buttonBrowse);
+    pathLayout->addWidget(m_buttonBrowseLocation);
 
-    groupLayout->addWidget(new QLabel(tr("Save downloads to:"), group));
+    m_labelLocation = new QLabel(tr("If the anime has no folder, save downloads to:"), group);
+
+    groupLayout->addWidget(m_checkUseAnimeFolder);
+    groupLayout->addWidget(m_labelLocation);
     groupLayout->addLayout(pathLayout);
+    groupLayout->addWidget(m_checkCreateSubfolder);
 
     const auto note = new QLabel(
         tr("Note: This is only supported by %1.").arg(QString::fromUtf8(kSupportedClients)), group);
     note->setWordWrap(true);
     groupLayout->addWidget(note);
 
-    // v1 prefers each anime's own folder and treats this one as the fallback. v2 has no per-anime
-    // folder, so there is nothing to fall back from.
-    const auto missing = new QLabel(
-        tr("Taiga cannot yet use a separate folder per anime, so every download goes here."),
-        group);
-    missing->setWordWrap(true);
-    missing->setEnabled(false);
-    groupLayout->addWidget(missing);
-
-    connect(buttonBrowse, &QPushButton::clicked, this, [this]() {
+    connect(m_buttonBrowseLocation, &QPushButton::clicked, this, [this]() {
       const auto directory = QFileDialog::getExistingDirectory(
           this, tr("Download Location"),
           m_editLocation->text().isEmpty() ? QDir::homePath() : m_editLocation->text(),
@@ -143,6 +141,8 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
 
   layout->addStretch();
 
+  connect(m_checkUseAnimeFolder, &QCheckBox::toggled, this, &TorrentDownloadsPage::refreshState);
+  connect(m_editLocation, &QLineEdit::textChanged, this, &TorrentDownloadsPage::refreshState);
   connect(m_checkOpen, &QCheckBox::toggled, this, &TorrentDownloadsPage::refreshState);
   connect(m_radioCustomApp, &QRadioButton::toggled, this, &TorrentDownloadsPage::refreshState);
 }
@@ -153,7 +153,9 @@ void TorrentDownloadsPage::load() {
   m_comboSortOrder->setCurrentIndex(std::max(
       m_comboSortOrder->findData(static_cast<int>(taiga::settings.torrentDownloadSortOrder())), 0));
 
+  m_checkUseAnimeFolder->setChecked(taiga::settings.torrentDownloadUseAnimeFolder());
   m_editLocation->setText(QString::fromStdString(taiga::settings.torrentDownloadLocation()));
+  m_checkCreateSubfolder->setChecked(taiga::settings.torrentDownloadCreateSubfolder());
 
   m_checkOpen->setChecked(taiga::settings.torrentDownloadOpen());
 
@@ -169,13 +171,22 @@ void TorrentDownloadsPage::save() {
   taiga::settings.setTorrentDownloadSortBy(m_comboSortBy->currentData().toString().toStdString());
   taiga::settings.setTorrentDownloadSortOrder(
       static_cast<Qt::SortOrder>(m_comboSortOrder->currentData().toInt()));
+  taiga::settings.setTorrentDownloadUseAnimeFolder(m_checkUseAnimeFolder->isChecked());
   taiga::settings.setTorrentDownloadLocation(m_editLocation->text().trimmed().toStdString());
+  taiga::settings.setTorrentDownloadCreateSubfolder(m_checkCreateSubfolder->isChecked());
   taiga::settings.setTorrentDownloadOpen(m_checkOpen->isChecked());
   taiga::settings.setTorrentDownloadAppMode(m_radioCustomApp->isChecked() ? "custom" : "default");
   taiga::settings.setTorrentDownloadAppPath(m_editAppPath->text().trimmed().toStdString());
 }
 
 void TorrentDownloadsPage::refreshState() {
+  // As in v1, a folder is only handed to the client with the first option on.
+  const bool useFolder = m_checkUseAnimeFolder->isChecked();
+  m_labelLocation->setEnabled(useFolder);
+  m_editLocation->setEnabled(useFolder);
+  m_buttonBrowseLocation->setEnabled(useFolder);
+  m_checkCreateSubfolder->setEnabled(useFolder && !m_editLocation->text().trimmed().isEmpty());
+
   const bool open = m_checkOpen->isChecked();
 
   m_radioDefaultApp->setEnabled(open);

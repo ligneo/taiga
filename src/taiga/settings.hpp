@@ -55,7 +55,9 @@ public:
   int torrentArchiveMaxCount() const;
   std::string torrentDownloadSortBy() const;
   Qt::SortOrder torrentDownloadSortOrder() const;
+  bool torrentDownloadCreateSubfolder() const;
   std::string torrentDownloadLocation() const;
+  bool torrentDownloadUseAnimeFolder() const;
   bool torrentDownloadOpen() const;
   bool torrentDownloadUseMagnet() const;
   std::string torrentDownloadAppMode() const;
@@ -120,7 +122,9 @@ public:
   void setTorrentArchiveMaxCount(const int count) const;
   void setTorrentDownloadSortBy(const std::string& sortBy) const;
   void setTorrentDownloadSortOrder(const Qt::SortOrder order) const;
+  void setTorrentDownloadCreateSubfolder(const bool enabled) const;
   void setTorrentDownloadLocation(const std::string& path) const;
+  void setTorrentDownloadUseAnimeFolder(const bool enabled) const;
   void setTorrentDownloadOpen(const bool open) const;
   void setTorrentDownloadUseMagnet(const bool use) const;
   void setTorrentDownloadAppMode(const std::string& mode) const;

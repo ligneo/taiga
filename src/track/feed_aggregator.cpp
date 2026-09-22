@@ -139,9 +139,8 @@ namespace {
 
 // v1 passes the download folder to the client it recognizes, each with its own flags. The names
 // below are the ones that exist on Linux; v1's PicoTorrent and uTorrent are Windows-only.
-QStringList clientArguments(const QString& command, const QString& target) {
+QStringList clientArguments(const QString& command, const QString& target, const QString& folder) {
   const auto name = QFileInfo(command).fileName();
-  const auto folder = QString::fromStdString(taiga::settings.torrentDownloadLocation());
   const auto matches = [&name](const char* client) {
     return name.contains(QLatin1StringView{client}, Qt::CaseInsensitive);
   };
@@ -172,6 +171,39 @@ QString sanitizedFileName(QString title) {
   static const QRegularExpression invalid{uR"([/\\:*?"<>|])"_s};
   title.replace(invalid, u"_"_s);
   return title.trimmed().left(200);
+}
+
+// v1's download folder: the anime's own folder, or else the fallback location, optionally with a
+// subfolder named after the anime that then becomes the anime's folder.
+QString downloadFolder(const track::Episode& episode) {
+  if (!taiga::settings.torrentDownloadUseAnimeFolder()) return {};
+
+  const auto animeId = episode.animeId();
+
+  if (const auto settings = anime::db.settings(animeId)) {
+    const auto folder = QString::fromStdString(settings->folder);
+    if (!folder.isEmpty() && QFileInfo(folder).isDir()) return folder;
+  }
+
+  auto folder = QString::fromStdString(taiga::settings.torrentDownloadLocation());
+  if (folder.isEmpty() || !taiga::settings.torrentDownloadCreateSubfolder()) return folder;
+
+  const auto anime = anime::db.item(animeId);
+  const auto title = anime ? QString::fromStdString(anime::preferredTitle(*anime))
+                           : QString::fromStdString(episode.element(anitomy::ElementKind::Title));
+  const auto subfolder = sanitizedFileName(title);
+  if (subfolder.isEmpty()) return folder;
+
+  folder = QDir(folder).filePath(subfolder);
+
+  if (QDir().mkpath(folder) && anime) {
+    auto settings =
+        anime::db.settings(animeId) ? *anime::db.settings(animeId) : anime::Settings{.id = animeId};
+    settings.folder = folder.toStdString();
+    anime::db.updateSettings(settings);
+  }
+
+  return folder;
 }
 
 }  // namespace
@@ -239,7 +271,7 @@ void Aggregator::discardSelected() {
 void Aggregator::download(const FeedItem& item) {
   const auto title = QString::fromStdString(item.title);
 
-  const auto handOff = [this, title](const QString& target) {
+  const auto handOff = [this, title, episode = item.episode](const QString& target) {
     // The archive is written before the hand-off on purpose: if launching the client fails, the
     // item must still not come back on the next check, exactly as in v1.
     archive.add(title);
@@ -261,7 +293,8 @@ void Aggregator::download(const FeedItem& item) {
     bool started = false;
 
     if (mode != u"default" && !command.isEmpty()) {
-      started = QProcess::startDetached(command, clientArguments(command, target));
+      started = QProcess::startDetached(command,
+                                        clientArguments(command, target, downloadFolder(episode)));
     } else {
       const auto url = target.startsWith(u"magnet:") ? QUrl{target} : QUrl::fromLocalFile(target);
       started = QDesktopServices::openUrl(url);

@@ -22,7 +22,9 @@
 
 class QCheckBox;
 class QComboBox;
+class QLabel;
 class QLineEdit;
+class QPushButton;
 class QRadioButton;
 
 namespace gui {
@@ -43,7 +45,11 @@ private:
 
   QComboBox* m_comboSortBy = nullptr;
   QComboBox* m_comboSortOrder = nullptr;
+  QCheckBox* m_checkUseAnimeFolder = nullptr;
+  QLabel* m_labelLocation = nullptr;
   QLineEdit* m_editLocation = nullptr;
+  QPushButton* m_buttonBrowseLocation = nullptr;
+  QCheckBox* m_checkCreateSubfolder = nullptr;
   QCheckBox* m_checkOpen = nullptr;
   QRadioButton* m_radioDefaultApp = nullptr;
   QRadioButton* m_radioCustomApp = nullptr;
