@@ -115,7 +115,25 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   addPage(cacheItem, new CachePage(this));
 
   connect(ui_->treeWidget, &QTreeWidget::currentItemChanged, this,
-          [this](QTreeWidgetItem* current, QTreeWidgetItem*) {
+          [this](QTreeWidgetItem* current, QTreeWidgetItem* previous) {
+            // As in v1, a section without a page of its own opens its first page.
+            if (current && !current->data(0, Qt::UserRole).isValid()) {
+              // Moving up from its first page must not bounce back to it.
+              if (previous && previous->parent() == current) {
+                if (const auto above = ui_->treeWidget->itemAbove(current)) {
+                  ui_->treeWidget->setCurrentItem(above);
+                  return;
+                }
+              }
+              for (int i = 0; i < current->childCount(); ++i) {
+                const auto child = current->child(i);
+                if (!child->isDisabled() && child->data(0, Qt::UserRole).isValid()) {
+                  ui_->treeWidget->setCurrentItem(child);
+                  return;
+                }
+              }
+            }
+
             if (current) {
               auto text = current->text(0);
               if (current->parent()) {
