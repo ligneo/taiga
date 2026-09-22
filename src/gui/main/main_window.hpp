@@ -88,7 +88,6 @@ public slots:
 
 private slots:
   void about();
-  void confirmListEntryUpdate(track::Episode episode);
   void notifyEpisodeDetected(std::optional<track::Episode> episode);
   void donate() const;
   void setPage(MainWindowPage page);

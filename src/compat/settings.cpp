@@ -111,6 +111,13 @@ void parseAccountElement(QXmlStreamReader& xml, const taiga::Settings& settings,
   while (xml.readNextStartElement()) {
     if (xml.name() == u"update") {
       settings.setService(XML_ATTR_STR(u"activeservice"));
+      settings.setUpdateAskToConfirm(XML_ATTR_BOOL(u"asktoconfirm"));
+      settings.setUpdateDelay(std::chrono::seconds{XML_ATTR_INT(u"delay")});
+      settings.setUpdateLibraryOnly(XML_ATTR_BOOL(u"outofroot"));
+      settings.setUpdateOutOfRange(XML_ATTR_BOOL(u"outofrange"));
+      settings.setUpdatePauseWhenUnfocused(XML_ATTR_BOOL(u"checkplayer"));
+      settings.setUpdateTrigger(XML_ATTR_BOOL(u"waitplayer") ? track::UpdateTrigger::OnPlayerClose
+                                                             : track::UpdateTrigger::AfterDelay);
       xml.skipCurrentElement();
 
     } else if (xml.name() == u"anilist") {

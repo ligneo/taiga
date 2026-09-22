@@ -69,7 +69,7 @@
 #include "track/library.hpp"
 #include "track/media.hpp"
 #include "track/play.hpp"
-#include "track/update.hpp"
+#include "track/update_session.hpp"
 #include "ui_main_window.h"
 
 #ifdef Q_OS_WINDOWS
@@ -257,9 +257,6 @@ void MainWindow::initNowPlaying() {
 
   ui_->centralWidget->layout()->addWidget(m_nowPlayingWidget);
   m_nowPlayingWidget->hide();
-
-  connect(track::media::detection(), &track::media::Detection::listEntryUpdateRequested, this,
-          &MainWindow::confirmListEntryUpdate);
 
   connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
           &MainWindow::notifyEpisodeDetected);
@@ -700,8 +697,29 @@ void MainWindow::initTrayIcon() {
           });
 
   connect(m_trayIcon, &TrayIcon::activated, this, &MainWindow::displayWindow);
-  connect(m_trayIcon, &TrayIcon::messageClicked, this,
-          []() { QMessageBox::information(nullptr, "Taiga", tr("Clicked message")); });
+  connect(m_trayIcon, &TrayIcon::messageClicked, this, &MainWindow::displayWindow);
+
+  connect(track::updateSession(), &track::UpdateSession::confirmationRequested, this,
+          [this](const track::UpdateState& state) {
+            if (isActiveWindow()) return;
+
+            const auto episode = track::media::detection()->getCurrentEpisode();
+            const auto item = episode ? anime::db.item(episode->animeId()) : nullptr;
+            if (!item) return;
+
+            const auto title = QString::fromStdString(anime::preferredTitle(*item));
+
+            if (state.reason == track::UpdateDecision::Reason::SkipsAhead) {
+              m_trayIcon->showMessage(tr("Confirm list update"),
+                                      tr("%1: episode %2 is ahead of your progress (%3).")
+                                          .arg(title)
+                                          .arg(state.episode)
+                                          .arg(state.previousEpisode));
+            } else {
+              m_trayIcon->showMessage(tr("Do you want to update your anime list?"),
+                                      u"%1\n%2"_s.arg(title, tr("Episode %1").arg(state.episode)));
+            }
+          });
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
@@ -784,35 +802,6 @@ void MainWindow::notifyEpisodeDetected(std::optional<track::Episode> episode) {
 
     m_trayIcon->showMessage(tr("Episode not recognized"),
                             QString::fromStdString(episode->element(anitomy::ElementKind::Title)));
-  }
-}
-
-void MainWindow::confirmListEntryUpdate(track::Episode episode) {
-  const auto item = anime::db.item(episode.animeId());
-  if (!item) return;
-
-  const auto range = episode.episodeNumberRange();
-
-  QMessageBox dialog{this};
-  dialog.setIcon(QMessageBox::Question);
-  dialog.setWindowTitle(TAIGA_APP_NAME);
-  dialog.setText(tr("Do you want to update your anime list?"));
-  dialog.setInformativeText(u"%1\n%2"_s.arg(QString::fromStdString(anime::preferredTitle(*item)),
-                                            tr("Episode %1").arg(range ? range->second : 1)));
-  dialog.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-  dialog.setDefaultButton(QMessageBox::Yes);
-
-  const auto checkBox = new QCheckBox(tr("Don't ask again, update automatically"), &dialog);
-  dialog.setCheckBox(checkBox);
-
-  const bool accepted = dialog.exec() == QMessageBox::Yes;
-
-  if (checkBox->isChecked()) {
-    taiga::settings.setSyncUpdateAskToConfirm(false);
-  }
-
-  if (accepted) {
-    track::updateListEntry(episode);
   }
 }
 

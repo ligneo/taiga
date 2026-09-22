@@ -23,6 +23,7 @@
 #include <optional>
 #include <ranges>
 
+#include "taiga/settings.hpp"
 #include "track/episode.hpp"
 #include "track/recognition.hpp"
 
@@ -77,6 +78,21 @@ std::optional<QString> findFolder(const QString& path, const int anime_id) {
   }
 
   return std::nullopt;
+}
+
+bool isInsideLibraryFolders(const QString& path) {
+  const auto normalizedPath = QDir::cleanPath(path);
+#ifdef Q_OS_WINDOWS
+  constexpr auto sensitivity = Qt::CaseInsensitive;
+#else
+  constexpr auto sensitivity = Qt::CaseSensitive;
+#endif
+
+  return std::ranges::any_of(taiga::settings.libraryFolders(), [&](const std::string& folder) {
+    auto root = QDir::cleanPath(QString::fromStdString(folder));
+    if (!root.endsWith(u'/')) root += u'/';
+    return normalizedPath.startsWith(root, sensitivity);
+  });
 }
 
 }  // namespace track

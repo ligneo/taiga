@@ -43,6 +43,7 @@
 #include "track/feed_archive.hpp"
 #include "track/library.hpp"
 #include "track/media.hpp"
+#include "track/update_session.hpp"
 
 namespace taiga {
 
@@ -98,6 +99,7 @@ int Application::run() {
   track::library()->applyWatchSettings();
   if (taiga::settings.libraryScanOnStartup()) track::library()->scan();
   track::media::detection()->init();
+  track::updateSession()->init();
   gui::imageProvider.init();
 
   gui::theme.initStyle();

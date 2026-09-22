@@ -27,11 +27,15 @@
 
 #include "base/settings.hpp"
 #include "media/anime.hpp"
+#include "track/update_trigger.hpp"
 
 namespace taiga {
 
 class Settings final : public base::Settings {
 public:
+  static constexpr std::chrono::seconds kUpdateDelayMin{10};
+  static constexpr std::chrono::seconds kUpdateDelayMax{3600};
+
   static constexpr QLatin1StringView kAppStyleSystem{"system"};
 
   void init() const;
@@ -93,13 +97,13 @@ public:
   bool syncEnabled() const;
   bool syncNotifyNotRecognized() const;
   bool syncNotifyRecognized() const;
-  bool syncUpdateAskToConfirm() const;
-  bool syncUpdateCheckPlayer() const;
-  bool syncUpdateOutOfRange() const;
-  bool syncUpdateOutOfRoot() const;
-  bool syncUpdateWaitPlayer() const;
-  std::chrono::seconds syncUpdateDelay() const;
   anime::TitleLanguage titleLanguage() const;
+  bool updateAskToConfirm() const;
+  std::chrono::seconds updateDelay() const;
+  bool updateLibraryOnly() const;
+  bool updateOutOfRange() const;
+  bool updatePauseWhenUnfocused() const;
+  track::UpdateTrigger updateTrigger() const;
 
   void setAppColorScheme(const Qt::ColorScheme scheme) const;
   void setAppStyle(const std::string& style) const;
@@ -158,13 +162,13 @@ public:
   void setSyncEnabled(const bool enabled) const;
   void setSyncNotifyNotRecognized(const bool enabled) const;
   void setSyncNotifyRecognized(const bool enabled) const;
-  void setSyncUpdateAskToConfirm(const bool enabled) const;
-  void setSyncUpdateCheckPlayer(const bool enabled) const;
-  void setSyncUpdateOutOfRange(const bool enabled) const;
-  void setSyncUpdateOutOfRoot(const bool enabled) const;
-  void setSyncUpdateWaitPlayer(const bool enabled) const;
-  void setSyncUpdateDelay(const std::chrono::seconds delay) const;
   void setTitleLanguage(const anime::TitleLanguage language) const;
+  void setUpdateAskToConfirm(const bool enabled) const;
+  void setUpdateDelay(const std::chrono::seconds delay) const;
+  void setUpdateLibraryOnly(const bool enabled) const;
+  void setUpdateOutOfRange(const bool enabled) const;
+  void setUpdatePauseWhenUnfocused(const bool enabled) const;
+  void setUpdateTrigger(const track::UpdateTrigger trigger) const;
 
 private:
   QString fileName() const override;

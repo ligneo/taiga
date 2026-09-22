@@ -34,7 +34,6 @@
 #include "track/media_mpris.hpp"
 #endif
 #include "track/recognition.hpp"
-#include "track/update.hpp"
 
 namespace track::media {
 
@@ -130,6 +129,15 @@ const std::optional<Episode> Detection::getCurrentEpisode() const {
   return currentEpisode_;
 }
 
+const std::optional<std::string> Detection::getCurrentFile() const {
+  if (!currentMedia_) return std::nullopt;
+
+  auto file = extractMediaFields(*currentMedia_).file;
+  if (file.empty()) return std::nullopt;
+
+  return file;
+}
+
 const std::optional<Detection::media_t> Detection::getCurrentMedia() const {
   return currentMedia_;
 }
@@ -210,36 +218,9 @@ void Detection::poll() {
 
   if (hasEpisodeChanged(*episode)) {
     currentEpisode_ = episode;
-    episodeElapsed_ = {};
-    episodeProcessed_ = false;
     emit currentEpisodeChanged(episode);
-  } else if (!taiga::settings.syncUpdateCheckPlayer() || isPlayerFocused()) {
-    // Being out of focus is our best guess for the media player not playing.
-    episodeElapsed_ += taiga::settings.mediaDetectionInterval();
-  }
-
-  if (!episodeProcessed_ && timeUntilUpdate() <= std::chrono::seconds{0} &&
-      !taiga::settings.syncUpdateWaitPlayer()) {
-    episodeProcessed_ = true;
-    requestListEntryUpdate(*currentEpisode_);
   }
 #endif
-}
-
-void Detection::requestListEntryUpdate(const Episode& episode) {
-  if (!isUpdateAllowed(episode)) return;
-
-  if (taiga::settings.syncUpdateAskToConfirm()) {
-    emit listEntryUpdateRequested(episode);
-  } else {
-    updateListEntry(episode);
-  }
-}
-
-std::chrono::seconds Detection::timeUntilUpdate() const {
-  const auto delay = taiga::settings.syncUpdateDelay();
-  const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(episodeElapsed_);
-  return elapsed < delay ? delay - elapsed : std::chrono::seconds{0};
 }
 
 bool Detection::isPlayerFocused() const {
@@ -265,17 +246,9 @@ void Detection::setCurrentEpisodeAnimeId(int animeId) {
 }
 
 void Detection::reset() {
-  if (currentEpisode_ && !episodeProcessed_ && timeUntilUpdate() <= std::chrono::seconds{0} &&
-      taiga::settings.syncUpdateWaitPlayer()) {
-    episodeProcessed_ = true;
-    requestListEntryUpdate(*currentEpisode_);
-  }
-
   currentPlayer_.reset();
   currentMedia_.reset();
   currentPlayerId_ = {};
-  episodeElapsed_ = {};
-  episodeProcessed_ = false;
 
   if (currentEpisode_) {
     currentEpisode_.reset();

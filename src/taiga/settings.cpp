@@ -20,6 +20,7 @@
 
 #include <QFile>
 #include <QJsonArray>
+#include <algorithm>
 #include <ranges>
 
 #include "base/string.hpp"
@@ -238,31 +239,6 @@ bool Settings::syncNotifyRecognized() const {
   return value("sync.notify.recognized", true).toBool();
 }
 
-bool Settings::syncUpdateAskToConfirm() const {
-  return value("sync.update.askToConfirm", true).toBool();
-}
-
-bool Settings::syncUpdateCheckPlayer() const {
-  return value("sync.update.checkPlayer", false).toBool();
-}
-
-std::chrono::seconds Settings::syncUpdateDelay() const {
-  const auto delay = value("sync.update.delay", 120).toInt();
-  return std::chrono::seconds{delay};
-}
-
-bool Settings::syncUpdateOutOfRange() const {
-  return value("sync.update.outOfRange", false).toBool();
-}
-
-bool Settings::syncUpdateOutOfRoot() const {
-  return value("sync.update.outOfRoot", false).toBool();
-}
-
-bool Settings::syncUpdateWaitPlayer() const {
-  return value("sync.update.waitPlayer", false).toBool();
-}
-
 anime::TitleLanguage Settings::titleLanguage() const {
   if (!titleLanguageCache_) {
     const auto language = value("library.titleLanguage", u"romaji"_s).toString();
@@ -275,6 +251,35 @@ anime::TitleLanguage Settings::titleLanguage() const {
     }
   }
   return *titleLanguageCache_;
+}
+
+// v1 asked before every update. With this off, only an episode that skips ahead asks.
+bool Settings::updateAskToConfirm() const {
+  return value("track.update.askToConfirm", true).toBool();
+}
+
+std::chrono::seconds Settings::updateDelay() const {
+  const std::chrono::seconds delay{value("track.update.delay", 120).toInt()};
+  return std::clamp(delay, kUpdateDelayMin, kUpdateDelayMax);
+}
+
+bool Settings::updateLibraryOnly() const {
+  return value("track.update.libraryOnly", false).toBool();
+}
+
+// v1's `account/update/outofrange`: an episode that skips ahead is ignored instead of asked about.
+bool Settings::updateOutOfRange() const {
+  return value("track.update.outOfRange", false).toBool();
+}
+
+bool Settings::updatePauseWhenUnfocused() const {
+  return value("track.update.pauseWhenUnfocused", false).toBool();
+}
+
+track::UpdateTrigger Settings::updateTrigger() const {
+  const auto trigger = value("track.update.trigger", u"afterDelay"_s).toString();
+  if (trigger == u"onPlayerClose") return track::UpdateTrigger::OnPlayerClose;
+  return track::UpdateTrigger::AfterDelay;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -645,30 +650,6 @@ void Settings::setSyncNotifyRecognized(const bool enabled) const {
   setValue("sync.notify.recognized", enabled);
 }
 
-void Settings::setSyncUpdateAskToConfirm(const bool enabled) const {
-  setValue("sync.update.askToConfirm", enabled);
-}
-
-void Settings::setSyncUpdateCheckPlayer(const bool enabled) const {
-  setValue("sync.update.checkPlayer", enabled);
-}
-
-void Settings::setSyncUpdateDelay(const std::chrono::seconds delay) const {
-  setValue("sync.update.delay", static_cast<int>(delay.count()));
-}
-
-void Settings::setSyncUpdateOutOfRange(const bool enabled) const {
-  setValue("sync.update.outOfRange", enabled);
-}
-
-void Settings::setSyncUpdateOutOfRoot(const bool enabled) const {
-  setValue("sync.update.outOfRoot", enabled);
-}
-
-void Settings::setSyncUpdateWaitPlayer(const bool enabled) const {
-  setValue("sync.update.waitPlayer", enabled);
-}
-
 void Settings::setTitleLanguage(const anime::TitleLanguage language) const {
   const auto slug = [language]() -> std::string {
     switch (language) {
@@ -683,6 +664,32 @@ void Settings::setTitleLanguage(const anime::TitleLanguage language) const {
   }();
   setValue("library.titleLanguage", slug);
   titleLanguageCache_ = language;
+}
+
+void Settings::setUpdateAskToConfirm(const bool enabled) const {
+  setValue("track.update.askToConfirm", enabled);
+}
+
+void Settings::setUpdateDelay(const std::chrono::seconds delay) const {
+  setValue("track.update.delay", static_cast<int>(delay.count()));
+}
+
+void Settings::setUpdateLibraryOnly(const bool enabled) const {
+  setValue("track.update.libraryOnly", enabled);
+}
+
+void Settings::setUpdateOutOfRange(const bool enabled) const {
+  setValue("track.update.outOfRange", enabled);
+}
+
+void Settings::setUpdatePauseWhenUnfocused(const bool enabled) const {
+  setValue("track.update.pauseWhenUnfocused", enabled);
+}
+
+void Settings::setUpdateTrigger(const track::UpdateTrigger trigger) const {
+  const std::string slug =
+      trigger == track::UpdateTrigger::OnPlayerClose ? "onPlayerClose" : "afterDelay";
+  setValue("track.update.trigger", slug);
 }
 
 }  // namespace taiga

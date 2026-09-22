@@ -22,8 +22,8 @@
 #include <QObject>
 #include <QTimer>
 #include <anisthesia.hpp>
-#include <chrono>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "track/episode.hpp"
@@ -46,6 +46,7 @@ public:
   Detection(QObject* parent);
 
   const std::optional<Episode> getCurrentEpisode() const;
+  const std::optional<std::string> getCurrentFile() const;
   const std::optional<media_t> getCurrentMedia() const;
   const std::optional<player_t> getCurrentPlayer() const;
 
@@ -56,22 +57,15 @@ public:
   bool isPlayerFocused() const;
   void setCurrentEpisodeAnimeId(int animeId);
 
-  std::chrono::seconds timeUntilUpdate() const;
-
 signals:
   void enabledChanged(bool enabled) const;
   void currentEpisodeChanged(std::optional<Episode> media) const;
-  void listEntryUpdateRequested(Episode episode) const;
 
 private:
   void poll();
-  void requestListEntryUpdate(const Episode& episode);
   void reset();
 
   bool hasEpisodeChanged(const Episode& episode) const;
-
-  std::chrono::milliseconds episodeElapsed_{0};
-  bool episodeProcessed_ = false;
 
   std::optional<Episode> currentEpisode_;
   std::optional<media_t> currentMedia_;

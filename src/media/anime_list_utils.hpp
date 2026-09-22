@@ -28,6 +28,10 @@ struct Entry;
 
 float getProgressRatio(const Details* item, const Entry* entry);
 
+bool isInList(const Entry* entry);
+
+Entry entryWithEpisodeWatched(const Details& item, const Entry* entry, const int number);
+
 void save(Entry entry);
 void remove(const int animeId);
 

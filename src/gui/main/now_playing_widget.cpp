@@ -20,9 +20,10 @@
 
 #include <QBoxLayout>
 #include <QLabel>
-#include <format>
 #include <optional>
+#include <utility>
 
+#include "base/chrono.hpp"
 #include "base/string.hpp"
 #include "gui/media/media_dialog.hpp"
 #include "gui/utils/format.hpp"
@@ -31,9 +32,79 @@
 #include "media/anime_utils.hpp"
 #include "track/episode.hpp"
 #include "track/media.hpp"
-#include "track/update.hpp"
+#include "track/update_session.hpp"
 
 namespace gui {
+
+namespace {
+
+QString formatUpdateState(const track::UpdateState& state) {
+  using Phase = track::UpdateState::Phase;
+  using Reason = track::UpdateDecision::Reason;
+
+  switch (state.phase) {
+    case Phase::Countdown:
+      return u"List update in <b style=\"font-weight: 600;\">%1</b>%2"_s
+          .arg(formatDuration(Duration{state.remaining}))
+          .arg(state.paused ? u" (paused)"_s : QString{});
+
+    case Phase::WaitingForClose:
+      return u"List will be updated when the media is closed"_s;
+
+    case Phase::Denied:
+      switch (state.reason) {
+        case Reason::AlreadyWatched:
+          return u"List won't be updated: episode already watched"_s;
+        case Reason::InvalidEpisode:
+          return u"List won't be updated: invalid episode number"_s;
+        case Reason::OutsideLibrary:
+          return u"List won't be updated: file is outside of library folders"_s;
+        case Reason::SkipsAhead:
+          return u"List won't be updated: episode %1 is ahead of your progress (%2)"_s
+              .arg(state.episode)
+              .arg(state.previousEpisode);
+        default:
+          return {};
+      }
+
+    case Phase::Confirming:
+      if (state.reason == Reason::SkipsAhead) {
+        return u"Episode %1 is ahead of your progress (%2)"_s.arg(state.episode)
+            .arg(state.previousEpisode);
+      }
+      return u"Do you want to update your anime list?"_s;
+
+    case Phase::Committed:
+      return u"List updated: episode %1 → %2"_s.arg(state.previousEpisode).arg(state.episode);
+
+    case Phase::Cancelled:
+      return u"List update cancelled"_s;
+
+    default:
+      return {};
+  }
+}
+
+std::pair<QString, QString> formatUpdateActions(const track::UpdateState& state) {
+  using Phase = track::UpdateState::Phase;
+
+  switch (state.phase) {
+    case Phase::Countdown:
+    case Phase::WaitingForClose:
+      return {u"Update now"_s, u"Cancel"_s};
+
+    case Phase::Confirming:
+      return {u"Update to %1"_s.arg(state.episode), u"Ignore"_s};
+
+    case Phase::Cancelled:
+      return {u"Update"_s, {}};
+
+    default:
+      return {};
+  }
+}
+
+}  // namespace
 
 NowPlayingWidget::NowPlayingWidget(QWidget* parent) : QFrame(parent) {
   setObjectName("nowPlaying");
@@ -65,25 +136,33 @@ NowPlayingWidget::NowPlayingWidget(QWidget* parent) : QFrame(parent) {
   m_timerLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
   layout->addWidget(m_timerLabel);
 
-  m_timer = new QTimer(this);
-  m_timer->setInterval(std::chrono::seconds{1});
-  connect(m_timer, &QTimer::timeout, this, &NowPlayingWidget::refreshTimer);
+  // Actions
+  m_acceptButton = new QPushButton(this);
+  layout->addWidget(m_acceptButton);
+  connect(m_acceptButton, &QPushButton::clicked, this, []() { track::updateSession()->accept(); });
+  m_cancelButton = new QPushButton(this);
+  layout->addWidget(m_cancelButton);
+  connect(m_cancelButton, &QPushButton::clicked, this, []() { track::updateSession()->cancel(); });
 
   refresh();
 
+  connect(track::updateSession(), &track::UpdateSession::stateChanged, this, [this]() {
+    refresh();
+    updateVisibility();
+  });
   connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
           [this](std::optional<track::Episode> episode) {
             if (episode) {
               setPlaying(*episode);
             } else {
-              reset();
+              refresh();
             }
+            updateVisibility();
           });
 }
 
 void NowPlayingWidget::reset() {
   hide();
-  m_timer->stop();
   m_anime.reset();
   m_episode.reset();
   refresh();
@@ -100,7 +179,12 @@ void NowPlayingWidget::setPlaying(track::Episode episode) {
 
   refresh();
   show();
-  m_timer->start();
+}
+
+void NowPlayingWidget::updateVisibility() {
+  const bool isPlaying = track::media::detection()->getCurrentEpisode().has_value();
+  const bool hasUpdate = track::updateSession()->state().phase != track::UpdateState::Phase::Idle;
+  if (!isPlaying && !hasUpdate) reset();
 }
 
 void NowPlayingWidget::refresh() {
@@ -108,6 +192,8 @@ void NowPlayingWidget::refresh() {
     m_iconLabel->setToolTip({});
     m_mainLabel->setText({});
     m_timerLabel->setText({});
+    m_acceptButton->hide();
+    m_cancelButton->hide();
     return;
   }
 
@@ -133,24 +219,22 @@ void NowPlayingWidget::refresh() {
   const auto episodeNumber = m_episode->element(anitomy::ElementKind::Episode, "1");
   const auto episodeCount = formatNumber(m_anime ? m_anime->episode_count : 0, "?");
 
-  m_mainLabel->setText(u"Watching <a href=\"#\" style=\"%3\">%1</a> – Episode %2"_s
-                           .arg(QString::fromStdString(title))
-                           .arg(u"%1/%2"_s.arg(episodeNumber).arg(episodeCount))
-                           .arg("font-weight: 600; text-decoration: none;"));
+  const bool isPlaying = track::media::detection()->getCurrentEpisode().has_value();
 
-  refreshTimer();
-}
+  m_mainLabel->setText(
+      u"%4 <a href=\"#\" style=\"%3\">%1</a> – Episode %2"_s.arg(QString::fromStdString(title))
+          .arg(u"%1/%2"_s.arg(episodeNumber).arg(episodeCount))
+          .arg("font-weight: 600; text-decoration: none;")
+          .arg(isPlaying ? u"Watching"_s : u"Watched"_s));
 
-void NowPlayingWidget::refreshTimer() {
-  if (!m_episode.has_value() || !track::isUpdateAllowed(*m_episode)) {
-    m_timerLabel->clear();
-    return;
-  }
+  const auto& state = track::updateSession()->state();
+  m_timerLabel->setText(formatUpdateState(state));
 
-  const auto remaining = track::media::detection()->timeUntilUpdate();
-
-  m_timerLabel->setText(u"List update in <b style=\"font-weight: 600;\">%1</b>"_s.arg(
-      QString::fromStdString(std::format("{:%M:%S}", remaining))));
+  const auto [acceptText, cancelText] = formatUpdateActions(state);
+  m_acceptButton->setText(acceptText);
+  m_acceptButton->setVisible(!acceptText.isEmpty());
+  m_cancelButton->setText(cancelText);
+  m_cancelButton->setVisible(!cancelText.isEmpty());
 }
 
 }  // namespace gui

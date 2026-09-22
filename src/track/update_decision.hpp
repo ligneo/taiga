@@ -1,6 +1,6 @@
 /**
  * Taiga
- * Copyright (C) 2010-2025, Eren Okka
+ * Copyright (C) 2010-2026, Eren Okka
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,36 @@
 
 #pragma once
 
-#include <QString>
 #include <optional>
+
+#include "media/anime.hpp"
+#include "media/anime_list.hpp"
+#include "track/episode.hpp"
 
 namespace track {
 
-std::optional<QString> findEpisode(const QString& path, const int anime_id,
-                                   const int episode_number);
-std::optional<QString> findFolder(const QString& path, const int anime_id);
+struct UpdateDecision {
+  enum class Action {
+    Allow,    // update automatically
+    Confirm,  // update only if user agrees
+    Deny,     // don't update
+  };
 
-bool isInsideLibraryFolders(const QString& path);
+  enum class Reason {
+    None,
+    InvalidEpisode,
+    OutsideLibrary,
+    AlreadyWatched,
+    SkipsAhead,
+  };
+
+  Action action = Action::Allow;
+  Reason reason = Reason::None;
+};
+
+std::optional<int> watchedEpisodeNumber(const Episode& episode, const anime::Details& item);
+
+UpdateDecision decideUpdate(const Episode& episode, const anime::Details& item,
+                            const ListEntry* entry, const bool outsideLibrary);
 
 }  // namespace track

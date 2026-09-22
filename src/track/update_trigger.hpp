@@ -20,9 +20,9 @@
 
 namespace track {
 
-class Episode;
-
-bool isUpdateAllowed(const Episode& episode);
-void updateListEntry(const Episode& episode);
+enum class UpdateTrigger {
+  AfterDelay,
+  OnPlayerClose,
+};
 
 }  // namespace track
