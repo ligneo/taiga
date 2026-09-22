@@ -53,6 +53,7 @@ public:
   void setEnabled(const bool enabled);
 
   bool isMediaIdentified() const;
+  bool isPlayerFocused() const;
   void setCurrentEpisodeAnimeId(int animeId);
 
   std::chrono::seconds timeUntilUpdate() const;

@@ -94,6 +94,7 @@ public:
   bool syncNotifyNotRecognized() const;
   bool syncNotifyRecognized() const;
   bool syncUpdateAskToConfirm() const;
+  bool syncUpdateCheckPlayer() const;
   bool syncUpdateOutOfRange() const;
   bool syncUpdateOutOfRoot() const;
   bool syncUpdateWaitPlayer() const;
@@ -158,6 +159,7 @@ public:
   void setSyncNotifyNotRecognized(const bool enabled) const;
   void setSyncNotifyRecognized(const bool enabled) const;
   void setSyncUpdateAskToConfirm(const bool enabled) const;
+  void setSyncUpdateCheckPlayer(const bool enabled) const;
   void setSyncUpdateOutOfRange(const bool enabled) const;
   void setSyncUpdateOutOfRoot(const bool enabled) const;
   void setSyncUpdateWaitPlayer(const bool enabled) const;

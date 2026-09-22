@@ -212,7 +212,8 @@ void Detection::poll() {
     episodeElapsed_ = {};
     episodeProcessed_ = false;
     emit currentEpisodeChanged(episode);
-  } else {
+  } else if (!taiga::settings.syncUpdateCheckPlayer() || isPlayerFocused()) {
+    // Being out of focus is our best guess for the media player not playing.
     episodeElapsed_ += taiga::settings.mediaDetectionInterval();
   }
 
@@ -238,6 +239,14 @@ std::chrono::seconds Detection::timeUntilUpdate() const {
   const auto delay = taiga::settings.syncUpdateDelay();
   const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(episodeElapsed_);
   return elapsed < delay ? delay - elapsed : std::chrono::seconds{0};
+}
+
+bool Detection::isPlayerFocused() const {
+#ifdef Q_OS_WINDOWS
+  return currentPlayerId_ && currentPlayerId_ == static_cast<void*>(GetForegroundWindow());
+#else
+  return true;  // no way to tell yet
+#endif
 }
 
 bool Detection::isMediaIdentified() const {

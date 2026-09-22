@@ -242,6 +242,10 @@ bool Settings::syncUpdateAskToConfirm() const {
   return value("sync.update.askToConfirm", true).toBool();
 }
 
+bool Settings::syncUpdateCheckPlayer() const {
+  return value("sync.update.checkPlayer", false).toBool();
+}
+
 std::chrono::seconds Settings::syncUpdateDelay() const {
   const auto delay = value("sync.update.delay", 120).toInt();
   return std::chrono::seconds{delay};
@@ -643,6 +647,10 @@ void Settings::setSyncNotifyRecognized(const bool enabled) const {
 
 void Settings::setSyncUpdateAskToConfirm(const bool enabled) const {
   setValue("sync.update.askToConfirm", enabled);
+}
+
+void Settings::setSyncUpdateCheckPlayer(const bool enabled) const {
+  setValue("sync.update.checkPlayer", enabled);
 }
 
 void Settings::setSyncUpdateDelay(const std::chrono::seconds delay) const {

@@ -38,6 +38,8 @@ RecognitionPage::RecognitionPage(QWidget* parent)
       m_checkOutOfRange(
           new QCheckBox(tr("Ignore if episode number is greater than next episode"), this)),
       m_spinDelay(new QSpinBox(this)),
+      m_checkPauseWhenUnfocused(
+          new QCheckBox(tr("Pause delay while player is not in focus"), this)),
       m_radioAfterDelay(new QRadioButton(tr("Update after delay"), this)),
       m_radioOnPlayerClose(new QRadioButton(tr("Update when media is closed (after delay)"), this)),
       m_checkAskToConfirm(new QCheckBox(tr("Ask for confirmation"), this)),
@@ -74,6 +76,7 @@ RecognitionPage::RecognitionPage(QWidget* parent)
     m_spinDelay->setSuffix(tr(" seconds"));
     form->addRow(tr("Delay:"), m_spinDelay);
     groupLayout->addLayout(form);
+    groupLayout->addWidget(m_checkPauseWhenUnfocused);
     groupLayout->addWidget(m_radioAfterDelay);
     groupLayout->addWidget(m_radioOnPlayerClose);
     groupLayout->addWidget(m_checkAskToConfirm);
@@ -100,6 +103,7 @@ void RecognitionPage::load() {
   m_checkOutOfRoot->setChecked(taiga::settings.syncUpdateOutOfRoot());
   m_checkOutOfRange->setChecked(taiga::settings.syncUpdateOutOfRange());
   m_spinDelay->setValue(static_cast<int>(taiga::settings.syncUpdateDelay().count()));
+  m_checkPauseWhenUnfocused->setChecked(taiga::settings.syncUpdateCheckPlayer());
   (taiga::settings.syncUpdateWaitPlayer() ? m_radioOnPlayerClose : m_radioAfterDelay)
       ->setChecked(true);
   m_checkAskToConfirm->setChecked(taiga::settings.syncUpdateAskToConfirm());
@@ -112,6 +116,7 @@ void RecognitionPage::save() {
   taiga::settings.setSyncUpdateOutOfRoot(m_checkOutOfRoot->isChecked());
   taiga::settings.setSyncUpdateOutOfRange(m_checkOutOfRange->isChecked());
   taiga::settings.setSyncUpdateDelay(std::chrono::seconds{m_spinDelay->value()});
+  taiga::settings.setSyncUpdateCheckPlayer(m_checkPauseWhenUnfocused->isChecked());
   taiga::settings.setSyncUpdateWaitPlayer(m_radioOnPlayerClose->isChecked());
   taiga::settings.setSyncUpdateAskToConfirm(m_checkAskToConfirm->isChecked());
   taiga::settings.setSyncNotifyRecognized(m_checkNotifyRecognized->isChecked());

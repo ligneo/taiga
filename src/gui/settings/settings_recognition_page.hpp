@@ -43,6 +43,7 @@ private:
   QCheckBox* m_checkOutOfRoot = nullptr;
   QCheckBox* m_checkOutOfRange = nullptr;
   QSpinBox* m_spinDelay = nullptr;
+  QCheckBox* m_checkPauseWhenUnfocused = nullptr;
   QRadioButton* m_radioAfterDelay = nullptr;
   QRadioButton* m_radioOnPlayerClose = nullptr;
   QCheckBox* m_checkAskToConfirm = nullptr;
