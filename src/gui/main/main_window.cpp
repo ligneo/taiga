@@ -20,6 +20,10 @@
 
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
+#include <QNetworkReply>
 #include <QtWidgets>
 #include <algorithm>
 
@@ -56,8 +60,10 @@
 #include "taiga/accounts.hpp"
 #include "taiga/application.hpp"
 #include "taiga/config.h"
+#include "taiga/network.hpp"
 #include "taiga/session.hpp"
 #include "taiga/settings.hpp"
+#include "taiga/version.hpp"
 #include "track/episode.hpp"
 #include "track/feed_aggregator.hpp"
 #include "track/library.hpp"
@@ -193,7 +199,8 @@ void MainWindow::initActions() {
   // Neither of these has anything behind it yet, and a menu entry that does nothing is worse
   // than one that is not there. Both come back with the features they belong to.
   ui_->actionToggleSharing->setVisible(false);
-  ui_->actionCheckForUpdates->setVisible(false);
+
+  connect(ui_->actionCheckForUpdates, &QAction::triggered, this, &MainWindow::checkForUpdates);
 
   ui_->actionToggleSynchronization->setChecked(taiga::settings.syncEnabled());
   connect(ui_->actionToggleSynchronization, &QAction::toggled, this,
@@ -472,6 +479,58 @@ void MainWindow::exportList(const ExportFormat format) {
       .source = StatusBarController::Source::Export,
       .text = text,
       .spin = false,
+  });
+}
+
+// v1 downloads its NSIS installer and runs it silently (`/S /D=<folder>`) to replace itself. That
+// is a Windows mechanism; on Linux Taiga is installed by the user or a package manager, so the
+// honest thing to do is say whether there is something newer and where to get it.
+void MainWindow::checkForUpdates() {
+  static const QUrl url{u"https://api.github.com/repos/erengy/taiga/releases/latest"_s};
+
+  QNetworkRequest request{url};
+  request.setHeaders(taiga::NetworkAccessManager::commonHeaders());
+
+  const auto reply = taiga::network()->get(request);
+
+  m_statusBarController->showMessage({
+      .source = StatusBarController::Source::Sync,
+      .text = tr("Checking for updates..."),
+  });
+
+  connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    reply->deleteLater();
+    m_statusBarController->clearMessage(StatusBarController::Source::Sync);
+
+    if (reply->error() != QNetworkReply::NoError) {
+      QMessageBox::warning(this, tr("Check for Updates"),
+                           tr("Could not check for updates: %1").arg(reply->errorString()));
+      return;
+    }
+
+    const auto json = QJsonDocument::fromJson(reply->readAll()).object();
+    auto tag = json[u"tag_name"_s].toString();
+    if (tag.startsWith(u'v')) tag.remove(0, 1);
+
+    const semaver::Version latest{tag.toStdString()};
+    const auto& current = taiga::version();
+
+    if (!latest || !(latest > current)) {
+      QMessageBox::information(
+          this, tr("Check for Updates"),
+          tr("You are using the latest version (%1). The newest release is %2.")
+              .arg(QString::fromStdString(current.to_string()))
+              .arg(tag.isEmpty() ? tr("unknown") : tag));
+      return;
+    }
+
+    const auto page = json[u"html_url"_s].toString();
+    const auto answer =
+        QMessageBox::question(this, tr("Check for Updates"),
+                              tr("Taiga %1 is available (you have %2). Open the release page?")
+                                  .arg(tag)
+                                  .arg(QString::fromStdString(current.to_string())));
+    if (answer == QMessageBox::Yes) QDesktopServices::openUrl(QUrl{page});
   });
 }
 

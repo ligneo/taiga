@@ -108,6 +108,7 @@ private:
   void initPage(MainWindowPage page);
   void initStatusbar();
   void exportList(const ExportFormat format);
+  void checkForUpdates();
   void initExternalLinksMenu();
   void initServicesMenu();
   void initViewMenu();
