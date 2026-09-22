@@ -231,6 +231,33 @@ void Database::upgradeTables() {
     QSqlQuery q{db_};
     q.exec("ALTER TABLE anime_settings ADD COLUMN folder TEXT NOT NULL DEFAULT ''");
   }
+
+  // String lists used to be joined with ", ", which is also how they are split back here.
+  const auto convertLists = [this](const QString& table, const QStringList& columns) {
+    for (const auto& column : columns) {
+      QSqlQuery select{db_};
+      select.exec(u"SELECT id, %1 FROM %2 WHERE %1 != ''"_s.arg(column, table));
+
+      QSqlQuery update{db_};
+      update.prepare(u"UPDATE %1 SET %2 = :value WHERE id = :id"_s.arg(table, column));
+
+      while (select.next()) {
+        // A title may start with a bracket as well, e.g. "[Oshi no Ko]".
+        const auto value = select.value(1).toString();
+        if (QJsonDocument::fromJson(value.toUtf8()).isArray()) continue;
+
+        const auto list = toVector(value.split(", ", Qt::SkipEmptyParts));
+        update.bindValue(":value", toJsonArray(list));
+        update.bindValue(":id", select.value(0));
+        update.exec();
+      }
+    }
+  };
+
+  db_.transaction();
+  convertLists(u"anime"_s, {u"synonym"_s, u"genres"_s, u"tags"_s, u"producers"_s, u"studios"_s});
+  convertLists(u"anime_settings"_s, {u"synonyms"_s});
+  db_.commit();
 }
 
 void Database::createTables() {
