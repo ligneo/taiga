@@ -195,6 +195,11 @@ void MainWindow::initActions() {
     taiga::settings.setMediaDetectionEnabled(checked);
     track::media::detection()->setEnabled(checked);
   });
+  connect(track::media::detection(), &track::media::Detection::enabledChanged, this,
+          [this](const bool enabled) {
+            const QSignalBlocker blocker(ui_->actionToggleDetection);
+            ui_->actionToggleDetection->setChecked(enabled);
+          });
 
   // Neither of these has anything behind it yet, and a menu entry that does nothing is worse
   // than one that is not there. Both come back with the features they belong to.

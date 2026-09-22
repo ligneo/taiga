@@ -58,6 +58,7 @@ public:
   std::chrono::seconds timeUntilUpdate() const;
 
 signals:
+  void enabledChanged(bool enabled) const;
   void currentEpisodeChanged(std::optional<Episode> media) const;
   void listEntryUpdateRequested(Episode episode) const;
 

@@ -21,6 +21,7 @@
 #include "gui/settings/settings_page.hpp"
 
 class QCheckBox;
+class QRadioButton;
 class QSpinBox;
 
 namespace gui {
@@ -37,14 +38,16 @@ public:
   void save() override;
 
 private:
+  QCheckBox* m_checkDetectionEnabled = nullptr;
+  QSpinBox* m_spinDetectionInterval = nullptr;
   QCheckBox* m_checkOutOfRoot = nullptr;
   QCheckBox* m_checkOutOfRange = nullptr;
+  QSpinBox* m_spinDelay = nullptr;
+  QRadioButton* m_radioAfterDelay = nullptr;
+  QRadioButton* m_radioOnPlayerClose = nullptr;
+  QCheckBox* m_checkAskToConfirm = nullptr;
   QCheckBox* m_checkNotifyRecognized = nullptr;
   QCheckBox* m_checkNotifyNotRecognized = nullptr;
-  QSpinBox* m_spinDelay = nullptr;
-  QCheckBox* m_checkWaitPlayer = nullptr;
-  QCheckBox* m_checkAskToConfirm = nullptr;
-  QSpinBox* m_spinDetectionInterval = nullptr;
 };
 
 }  // namespace gui

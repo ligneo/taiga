@@ -157,6 +157,7 @@ void Detection::setEnabled(const bool enabled) {
     reset();
   }
 #endif
+  emit enabledChanged(enabled);
 }
 
 void Detection::poll() {
