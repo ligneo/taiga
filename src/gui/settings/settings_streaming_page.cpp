@@ -19,7 +19,7 @@
 #include "settings_streaming_page.hpp"
 
 #include <QCheckBox>
-#include <QLabel>
+#include <QGroupBox>
 #include <QVBoxLayout>
 
 #include "gui/settings/settings_player_list.hpp"
@@ -30,35 +30,31 @@ namespace gui {
 
 StreamingPage::StreamingPage(QWidget* parent)
     : SettingsPage(parent),
-      m_checkEnabled(new QCheckBox(tr("Enable streaming media detection"), this)),
+      m_checkEnabled(new QCheckBox(tr("Detect streaming media in web browsers"), this)),
       m_listPlayers(new PlayerListWidget(true, this)),
       m_listProviders(new StreamListWidget(this)) {
   const auto layout = new QVBoxLayout(this);
 
   layout->addWidget(m_checkEnabled);
 
-  const auto label =
-      new QLabel(tr("Tip: Select the web browsers you use, deselect the others."), this);
-  label->setWordWrap(true);
-  layout->addWidget(label);
+  const auto browsersGroup = new QGroupBox(tr("Web browsers"), this);
+  (new QVBoxLayout(browsersGroup))->addWidget(m_listPlayers);
+  layout->addWidget(browsersGroup);
 
-  layout->addWidget(m_listPlayers);
+  const auto providersGroup = new QGroupBox(tr("Media providers"), this);
+  (new QVBoxLayout(providersGroup))->addWidget(m_listProviders);
+  layout->addWidget(providersGroup);
 
-  const auto providersLabel = new QLabel(tr("Supported media providers:"), this);
-  layout->addWidget(providersLabel);
-
-  layout->addWidget(m_listProviders);
-
-  connect(m_checkEnabled, &QCheckBox::toggled, m_listPlayers, &QWidget::setEnabled);
-  connect(m_checkEnabled, &QCheckBox::toggled, providersLabel, &QWidget::setEnabled);
-  connect(m_checkEnabled, &QCheckBox::toggled, m_listProviders, &QWidget::setEnabled);
+  // Enabled by load() through the checkbox
+  browsersGroup->setEnabled(false);
+  providersGroup->setEnabled(false);
+  connect(m_checkEnabled, &QCheckBox::toggled, browsersGroup, &QWidget::setEnabled);
+  connect(m_checkEnabled, &QCheckBox::toggled, providersGroup, &QWidget::setEnabled);
 }
 
 void StreamingPage::load() {
   m_checkEnabled->setChecked(taiga::settings.streamingMediaEnabled());
-  m_listPlayers->setEnabled(m_checkEnabled->isChecked());
   m_listPlayers->load();
-  m_listProviders->setEnabled(m_checkEnabled->isChecked());
   m_listProviders->load();
 }
 

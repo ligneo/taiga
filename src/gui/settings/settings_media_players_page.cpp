@@ -29,7 +29,7 @@ MediaPlayersPage::MediaPlayersPage(QWidget* parent)
     : SettingsPage(parent), m_listPlayers(new PlayerListWidget(false, this)) {
   const auto layout = new QVBoxLayout(this);
 
-  layout->addWidget(new QLabel(tr("Tip: Select the players you use, deselect the others."), this));
+  layout->addWidget(new QLabel(tr("Detect the following media players:"), this));
   layout->addWidget(m_listPlayers);
 }
 
