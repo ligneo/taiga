@@ -80,6 +80,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
     auto item = add_item("share", "Sharing");
     discordItem = add_child(item, "Discord");
     httpItem = add_child(item, "HTTP");
+    add_child(item, "mIRC")->setDisabled(true);  // placeholder
   }
   QTreeWidgetItem* torrentsItem = nullptr;
   QTreeWidgetItem* torrentDownloadsItem = nullptr;

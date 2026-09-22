@@ -76,7 +76,7 @@ void NavigationWidget::refresh() {
   setUpdatesEnabled(false);
   clear();
 
-  addItem("Home", "home", MainWindowPage::Home);
+  addItem("Home", "home", MainWindowPage::Home)->setDisabled(true);  // placeholder
   addItem("Search", "search", MainWindowPage::Search);
   addSeparator();
 
@@ -117,7 +117,7 @@ void NavigationWidget::mouseMoveEvent(QMouseEvent* event) {
   if (const auto item = itemAt(event->pos())) {
     const int role = static_cast<int>(NavigationItemDataRole::IsSeparator);
     const bool isSeparator = item->data(0, role).toBool();
-    if (!isSeparator) cursor = Qt::CursorShape::PointingHandCursor;
+    if (!isSeparator && !item->isDisabled()) cursor = Qt::CursorShape::PointingHandCursor;
   }
 
   setCursor(cursor);
