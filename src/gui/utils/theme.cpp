@@ -20,6 +20,7 @@
 
 #include <QApplication>
 #include <QPalette>
+#include <QStyle>
 #include <QStyleHints>
 
 #include "base/file.hpp"
@@ -46,10 +47,25 @@ const QIcon& Theme::getIcon(const QString& key, const QString& extension, bool u
 void Theme::applyStyle() {
   qApp->styleHints()->setColorScheme(taiga::settings.appColorScheme());
 
-  qApp->setStyle("fusion");
-  const QString mainStylesheet = readStylesheet("main");
-  const QString themeStylesheet = readStylesheet(isDark() ? "dark" : "light");
-  qApp->setStyleSheet(mainStylesheet + themeStylesheet);
+  // Remember the platform's style, so that it can be restored later on.
+  if (m_systemStyle.isEmpty()) m_systemStyle = qApp->style()->name();
+
+  auto style = QString::fromStdString(taiga::settings.appStyle());
+  if (style.compare(taiga::Settings::kAppStyleSystem, Qt::CaseInsensitive) == 0) {
+    style = m_systemStyle;
+  }
+  if (qApp->style()->name().compare(style, Qt::CaseInsensitive) != 0) {
+    qApp->setStyle(style);
+  }
+
+  // Our stylesheets are written for Fusion, other styles look better without them.
+  if (style.compare("fusion", Qt::CaseInsensitive) == 0) {
+    const QString mainStylesheet = readStylesheet("main");
+    const QString themeStylesheet = readStylesheet(isDark() ? "dark" : "light");
+    qApp->setStyleSheet(mainStylesheet + themeStylesheet);
+  } else {
+    qApp->setStyleSheet({});
+  }
 }
 
 void Theme::initStyle() {

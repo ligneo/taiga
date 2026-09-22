@@ -32,9 +32,12 @@ namespace taiga {
 
 class Settings final : public base::Settings {
 public:
+  static constexpr QLatin1StringView kAppStyleSystem{"system"};
+
   void init() const;
 
   Qt::ColorScheme appColorScheme() const;
+  std::string appStyle() const;
   std::vector<std::string> externalLinks() const;
   std::vector<std::string> disabledMediaPlayers() const;
   std::vector<std::string> disabledStreamingProviders() const;
@@ -98,6 +101,7 @@ public:
   anime::TitleLanguage titleLanguage() const;
 
   void setAppColorScheme(const Qt::ColorScheme scheme) const;
+  void setAppStyle(const std::string& style) const;
   void setExternalLinks(std::vector<std::string> links) const;
   void setDisabledMediaPlayers(std::vector<std::string> players) const;
   void setDisabledStreamingProviders(std::vector<std::string> providers) const;

@@ -22,7 +22,9 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QStyleFactory>
 #include <QVBoxLayout>
+#include <algorithm>
 
 #include "gui/utils/theme.hpp"
 #include "taiga/autostart.hpp"
@@ -32,6 +34,7 @@ namespace gui {
 
 ApplicationPage::ApplicationPage(QWidget* parent)
     : SettingsPage(parent),
+      m_comboStyle(new QComboBox(this)),
       m_comboColorScheme(new QComboBox(this)),
       m_checkAutoStart(new QCheckBox(tr("Start Taiga when the session begins"), this)),
       m_checkStartMinimized(new QCheckBox(tr("Start minimized to the tray"), this)),
@@ -44,6 +47,20 @@ ApplicationPage::ApplicationPage(QWidget* parent)
     const auto group = new QGroupBox(tr("Appearance"), this);
     const auto form = new QFormLayout(group);
 
+    {
+      const QString system{taiga::Settings::kAppStyleSystem};
+      auto keys = QStyleFactory::keys();
+      const auto style = QString::fromStdString(taiga::settings.appStyle()).toLower();
+      if (style != system && !keys.contains(style, Qt::CaseInsensitive)) {
+        keys.append(style);  // keep unavailable style
+      }
+      keys.sort(Qt::CaseInsensitive);
+      m_comboStyle->addItem(tr("System"), system);
+      for (const auto& key : keys) {
+        m_comboStyle->addItem(key, key.toLower());
+      }
+      form->addRow(tr("Style:"), m_comboStyle);
+    }
     m_comboColorScheme->addItem(tr("System default"), static_cast<int>(Qt::ColorScheme::Unknown));
     m_comboColorScheme->addItem(tr("Light"), static_cast<int>(Qt::ColorScheme::Light));
     m_comboColorScheme->addItem(tr("Dark"), static_cast<int>(Qt::ColorScheme::Dark));
@@ -74,6 +91,9 @@ ApplicationPage::ApplicationPage(QWidget* parent)
 }
 
 void ApplicationPage::load() {
+  const auto style = QString::fromStdString(taiga::settings.appStyle()).toLower();
+  m_comboStyle->setCurrentIndex(std::max(0, m_comboStyle->findData(style)));
+
   const auto scheme = static_cast<int>(taiga::settings.appColorScheme());
   m_comboColorScheme->setCurrentIndex(m_comboColorScheme->findData(scheme));
 
@@ -90,9 +110,11 @@ void ApplicationPage::save() {
   taiga::settings.setAppMinimizeToTray(m_checkMinimizeToTray->isChecked());
   taiga::applyAutoStart();
 
+  const auto style = m_comboStyle->currentData().toString().toStdString();
   const auto scheme = m_comboColorScheme->currentData().value<Qt::ColorScheme>();
-  if (scheme == taiga::settings.appColorScheme()) return;
+  if (style == taiga::settings.appStyle() && scheme == taiga::settings.appColorScheme()) return;
 
+  taiga::settings.setAppStyle(style);
   taiga::settings.setAppColorScheme(scheme);
   theme.applyStyle();
 }

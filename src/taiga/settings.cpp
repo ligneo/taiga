@@ -59,6 +59,16 @@ Qt::ColorScheme Settings::appColorScheme() const {
       .value<Qt::ColorScheme>();
 }
 
+std::string Settings::appStyle() const {
+#ifdef Q_OS_WINDOWS
+  // Fusion is more consistent than the Windows 11 style.
+  const auto defaultStyle = u"fusion"_s;
+#else
+  const auto defaultStyle = QString{kAppStyleSystem};
+#endif
+  return value("app.style", defaultStyle).toString().toStdString();
+}
+
 std::vector<std::string> Settings::disabledMediaPlayers() const {
   return value("recognition.mediaPlayers.disabled").toJsonArray().toVariantList() |
          std::views::transform([](const QVariant& v) { return v.toString().toStdString(); }) |
@@ -267,6 +277,10 @@ anime::TitleLanguage Settings::titleLanguage() const {
 
 void Settings::setAppColorScheme(const Qt::ColorScheme scheme) const {
   setValue("app.colorScheme", static_cast<int>(scheme));
+}
+
+void Settings::setAppStyle(const std::string& style) const {
+  setValue("app.style", style);
 }
 
 // Each entry is v1's `Name|URL`, and a lone "-" is a separator. Keeping v1's shape means a list

@@ -41,6 +41,7 @@ private:
   QString readStylesheet(const QString& name) const;
 
   QHash<QString, QIcon> m_icons;
+  QString m_systemStyle;
 };
 
 inline Theme theme;
