@@ -22,7 +22,6 @@
 #include "media/anime.hpp"
 #include "media/anime_db.hpp"
 #include "media/anime_list_utils.hpp"
-#include "sync/queue.hpp"
 #include "taiga/settings.hpp"
 #include "track/media.hpp"
 #include "track/scanner.hpp"
@@ -204,9 +203,6 @@ void UpdateSession::commit(const Anime& item) {
 
   qDebug() << "Updating list:" << item.id << "episode" << *number;
   anime::list::save(anime::list::entryWithEpisodeWatched(item, entry, *number));
-
-  // v1's `program/general/enablesync` only holds back automatic synchronization.
-  if (taiga::settings.syncEnabled()) sync::queue.process();
 
   committed_ = true;
   timer_->stop();
