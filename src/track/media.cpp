@@ -30,6 +30,7 @@
 #include "track/media_player.hpp"
 #include "track/media_stream.hpp"
 #ifdef Q_OS_LINUX
+#include "track/media_focus.hpp"
 #include "track/media_mpris.hpp"
 #endif
 #include "track/recognition.hpp"
@@ -244,6 +245,9 @@ std::chrono::seconds Detection::timeUntilUpdate() const {
 bool Detection::isPlayerFocused() const {
 #ifdef Q_OS_WINDOWS
   return currentPlayerId_ && currentPlayerId_ == static_cast<void*>(GetForegroundWindow());
+#elif defined(Q_OS_LINUX)
+  const auto processId = getFocusedProcessId();
+  return !processId || *processId == currentPlayerId_;  // assume focused if we can't tell
 #else
   return true;  // no way to tell yet
 #endif
