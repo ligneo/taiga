@@ -28,6 +28,8 @@ class QLabel;
 
 namespace gui {
 
+enum class AnimeListGroupBy;
+
 class AnimeListModel;
 class AnimeListProxyModel;
 class ListView;
@@ -46,9 +48,11 @@ public:
   void saveState();
 
 private:
+  void initGroupMenu();
   void initSeasonMenu();
   void initSortMenu();
   void initViewMenu();
+  void setGroupBy(AnimeListGroupBy groupBy);
   void setViewMode(ListViewMode mode);
   void setSeason(const anime::Season season);
   void refresh();
@@ -60,8 +64,10 @@ private:
   ListView* m_listView = nullptr;
   ListViewCards* m_listViewCards = nullptr;
   ListViewMode m_viewMode = ListViewMode::Cards;
+  QAction* m_actionGroup = nullptr;
   QAction* m_actionSeason = nullptr;
   QLabel* m_labelStatus = nullptr;
+  QMenu* m_groupMenu = nullptr;
   QMenu* m_seasonMenu = nullptr;
   QMenu* m_sortMenu = nullptr;
   QMenu* m_viewMenu = nullptr;

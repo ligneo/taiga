@@ -31,6 +31,46 @@
 
 namespace gui {
 
+namespace {
+
+// The height of the band drawn above the first item of a group.
+constexpr int kGroupHeaderHeight = 28;
+
+QString groupName(const QModelIndex& index) {
+  return index.data(static_cast<int>(AnimeListItemDataRole::GroupName)).toString();
+}
+
+// A header belongs to the first row of each group, so the row above decides.
+bool startsGroup(const QModelIndex& index) {
+  const auto name = groupName(index);
+  if (name.isEmpty()) return false;
+  if (index.row() == 0) return true;
+  return groupName(index.siblingAtRow(index.row() - 1)) != name;
+}
+
+void paintGroupHeader(QPainter* painter, const QStyleOptionViewItem& option,
+                      const QModelIndex& index) {
+  const PainterStateSaver painterStateSaver(painter);
+
+  QRect rect = option.rect;
+  rect.setHeight(kGroupHeaderHeight);
+
+  painter->setPen(Qt::NoPen);
+  painter->setBrush(theme.isDark() ? QColor{255, 255, 255, 12} : QColor{0, 0, 0, 12});
+  painter->drawRect(rect);
+
+  // Only the first column carries the text; the rest of the columns just continue the band.
+  if (index.column() > 0) return;
+
+  QFont font = option.font;
+  font.setBold(true);
+  painter->setFont(font);
+  painter->setPen(option.palette.color(QPalette::ColorRole::Text));
+  painter->drawText(rect.adjusted(8, 0, -8, 0), Qt::AlignVCenter | Qt::AlignLeft, groupName(index));
+}
+
+}  // namespace
+
 ListItemDelegate::ListItemDelegate(QObject* parent) : QStyledItemDelegate(parent) {}
 
 void ListItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
@@ -67,35 +107,44 @@ void ListItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionV
 
 void ListItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
                              const QModelIndex& index) const {
+  QStyleOptionViewItem opt = option;
+
+  // The first item of a group gets a taller row (see sizeHint) and gives the extra band to the
+  // group header; what is left is painted as an ordinary item.
+  if (startsGroup(index)) {
+    paintGroupHeader(painter, opt, index);
+    opt.rect.adjust(0, kGroupHeaderHeight, 0, 0);
+  }
+
   // Grid lines
   if (index.column() > 0) {
     const PainterStateSaver painterStateSaver(painter);
     painter->setPen(theme.isDark() ? QColor{255, 255, 255, 8} : QColor{0, 0, 0, 8});
-    painter->drawLine(option.rect.topLeft(), option.rect.bottomLeft());
+    painter->drawLine(opt.rect.topLeft(), opt.rect.bottomLeft());
   }
 
   switch (index.column()) {
     case AnimeListModel::COLUMN_PROGRESS: {
       const PainterStateSaver painterStateSaver(painter);
-      QStyledItemDelegate::paint(painter, option, index);
+      QStyledItemDelegate::paint(painter, opt, index);
       const auto anime =
           index.data(static_cast<int>(AnimeListItemDataRole::Anime)).value<const Anime*>();
       const auto entry =
           index.data(static_cast<int>(AnimeListItemDataRole::ListEntry)).value<const ListEntry*>();
-      QStyleOptionViewItem opt = option;
-      opt.rect.adjust(2, 2, -2, -2);
-      paintProgressBar(painter, opt, anime, entry);
+      QStyleOptionViewItem progressOption = opt;
+      progressOption.rect.adjust(2, 2, -2, -2);
+      paintProgressBar(painter, progressOption, anime, entry);
       return;
     }
   }
 
-  QStyledItemDelegate::paint(painter, option, index);
+  QStyledItemDelegate::paint(painter, opt, index);
 }
 
 QSize ListItemDelegate::sizeHint(const QStyleOptionViewItem& option,
                                  const QModelIndex& index) const {
   if (index.isValid()) {
-    return QSize(0, 24);
+    return QSize(0, startsGroup(index) ? 24 + kGroupHeaderHeight : 24);
   }
 
   return QStyledItemDelegate::sizeHint(option, index);

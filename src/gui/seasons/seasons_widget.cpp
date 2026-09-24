@@ -20,6 +20,7 @@
 
 #include <QActionGroup>
 #include <QDate>
+#include <QHash>
 #include <QLabel>
 #include <QToolBar>
 #include <QToolButton>
@@ -65,26 +66,31 @@ SeasonsWidget::SeasonsWidget(QWidget* parent)
       m_model(new AnimeListModel(this)),
       m_proxyModel(new AnimeListProxyModel(this)),
       m_labelStatus(new QLabel(this)),
+      m_groupMenu(new QMenu(this)),
       m_seasonMenu(new QMenu(this)),
       m_sortMenu(new QMenu(this)),
       m_viewMenu(new QMenu(this)) {
   m_proxyModel->setSourceModel(m_model);
+  m_proxyModel->setGroupBy(taiga::session.seasonsGroupBy());
   m_proxyModel->sort(taiga::session.seasonsSortColumn(), taiga::session.seasonsSortOrder());
 
   // Toolbar
   {
     m_actionSeason = new QAction(theme.getIcon("calendar_month"), tr("Select season"), this);
     const auto actionRefresh = new QAction(theme.getIcon("sync"), tr("Refresh data"), this);
+    m_actionGroup = new QAction(theme.getIcon("lists"), tr("Group by"), this);
     const auto actionSort = new QAction(theme.getIcon("sort"), tr("Sort by"), this);
     const auto actionView = new QAction(theme.getIcon("grid_view"), tr("View"), this);
 
     m_toolbar->addAction(m_actionSeason);
     m_toolbar->addAction(actionRefresh);
     m_toolbar->addSeparator();
+    m_toolbar->addAction(m_actionGroup);
     m_toolbar->addAction(actionSort);
     m_toolbar->addAction(actionView);
 
     for (const auto& [action, menu] : {std::pair{m_actionSeason, m_seasonMenu},
+                                       {m_actionGroup, m_groupMenu},
                                        {actionSort, m_sortMenu},
                                        {actionView, m_viewMenu}}) {
       const auto button = static_cast<QToolButton*>(m_toolbar->widgetForAction(action));
@@ -100,10 +106,12 @@ SeasonsWidget::SeasonsWidget(QWidget* parent)
   m_toolbarLayout->addWidget(m_labelStatus);
   m_toolbarLayout->addStretch();
 
+  connect(m_groupMenu, &QMenu::aboutToShow, this, &SeasonsWidget::initGroupMenu);
   connect(m_seasonMenu, &QMenu::aboutToShow, this, &SeasonsWidget::initSeasonMenu);
   connect(m_sortMenu, &QMenu::aboutToShow, this, &SeasonsWidget::initSortMenu);
   connect(m_viewMenu, &QMenu::aboutToShow, this, &SeasonsWidget::initViewMenu);
 
+  setGroupBy(taiga::session.seasonsGroupBy());
   setViewMode(taiga::session.seasonsViewMode());
 
   const QList<sync::Service*> services{
@@ -126,6 +134,7 @@ SeasonsWidget::SeasonsWidget(QWidget* parent)
 
 void SeasonsWidget::saveState() {
   taiga::session.setSeason(m_season);
+  taiga::session.setSeasonsGroupBy(m_proxyModel->groupBy());
   taiga::session.setSeasonsSortColumn(m_proxyModel->sortColumn());
   taiga::session.setSeasonsSortOrder(m_proxyModel->sortOrder());
   taiga::session.setSeasonsViewMode(m_viewMode);
@@ -148,8 +157,50 @@ void SeasonsWidget::refresh() {
 }
 
 void SeasonsWidget::updateStatus() {
-  m_labelStatus->setText(
-      tr("%1 · %2 titles").arg(formatSeason(m_season)).arg(m_proxyModel->rowCount()));
+  QStringList parts{tr("%1 · %2 titles").arg(formatSeason(m_season)).arg(m_proxyModel->rowCount())};
+
+  // The cards cannot carry a group header, so the breakdown is spelled out here instead.
+  for (const auto& [name, count] : m_proxyModel->groupCounts()) {
+    parts.push_back(u"%1 %2"_s.arg(name).arg(count));
+  }
+
+  m_labelStatus->setText(parts.join(u" · "_s));
+}
+
+void SeasonsWidget::initGroupMenu() {
+  // v1 has the same three (`dlg_season.cpp`), minus the option to turn grouping off.
+  const QList<QPair<QString, AnimeListGroupBy>> items{
+      {tr("None"), AnimeListGroupBy::None},
+      {tr("Airing status"), AnimeListGroupBy::AiringStatus},
+      {tr("List status"), AnimeListGroupBy::ListStatus},
+      {tr("Type"), AnimeListGroupBy::Type},
+  };
+
+  const auto actionGroup = new QActionGroup(this);
+
+  m_groupMenu->clear();
+
+  for (const auto& [text, groupBy] : items) {
+    const auto action =
+        m_groupMenu->addAction(text, this, [this, groupBy]() { setGroupBy(groupBy); });
+    action->setCheckable(true);
+    action->setChecked(groupBy == m_proxyModel->groupBy());
+    actionGroup->addAction(action);
+  }
+}
+
+void SeasonsWidget::setGroupBy(const AnimeListGroupBy groupBy) {
+  m_proxyModel->setGroupBy(groupBy);
+
+  static const QHash<AnimeListGroupBy, QString> names{
+      {AnimeListGroupBy::None, tr("None")},
+      {AnimeListGroupBy::AiringStatus, tr("Airing status")},
+      {AnimeListGroupBy::ListStatus, tr("List status")},
+      {AnimeListGroupBy::Type, tr("Type")},
+  };
+  m_actionGroup->setText(tr("Group by: %1").arg(names.value(groupBy)));
+
+  updateStatus();
 }
 
 void SeasonsWidget::initSeasonMenu() {

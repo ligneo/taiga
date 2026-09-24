@@ -18,10 +18,21 @@
 
 #pragma once
 
+#include <QList>
 #include <QSortFilterProxyModel>
 #include <optional>
 
 namespace gui {
+
+// v1 groups the Seasons page by airing status, list status or type (`dlg_season.cpp`). There the
+// grouping is a feature of the Win32 list view; here it is a sort key, so that both the list and
+// the cards keep the items of a group together.
+enum class AnimeListGroupBy {
+  None,
+  AiringStatus,
+  ListStatus,
+  Type,
+};
 
 struct AnimeListStatusFilter {
   std::optional<int> status;
@@ -48,6 +59,10 @@ public:
   const AnimeListProxyModelFilter& filters() const;
   void setFilters(const AnimeListProxyModelFilter& filters);
 
+  AnimeListGroupBy groupBy() const;
+  void setGroupBy(AnimeListGroupBy groupBy);
+  QList<QPair<QString, int>> groupCounts() const;
+
   void setYearFilter(std::optional<int> year);
   void setSeasonFilter(std::optional<int> season);
   void setTypeFilter(std::optional<int> type);
@@ -55,12 +70,15 @@ public:
   void setListStatusFilter(AnimeListStatusFilter filter);
   void setTextFilter(const QString& text);
 
+  QVariant data(const QModelIndex& index, int role) const override;
+
 protected:
   bool filterAcceptsRow(int row, const QModelIndex& parent) const override;
   bool lessThan(const QModelIndex& lhs, const QModelIndex& rhs) const override;
 
 private:
   AnimeListProxyModelFilter m_filter;
+  AnimeListGroupBy m_groupBy = AnimeListGroupBy::None;
 };
 
 }  // namespace gui

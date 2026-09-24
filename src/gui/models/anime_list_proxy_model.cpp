@@ -18,10 +18,12 @@
 
 #include "anime_list_proxy_model.hpp"
 
+#include <limits>
 #include <ranges>
 
 #include "base/string.hpp"
 #include "gui/models/anime_list_model.hpp"
+#include "gui/utils/format.hpp"
 #include "media/anime.hpp"
 #include "media/anime_list.hpp"
 #include "media/anime_list_utils.hpp"
@@ -38,6 +40,44 @@ const Anime* getAnime(const QModelIndex& index) {
 const ListEntry* getListEntry(const QModelIndex& index) {
   const int role = static_cast<int>(gui::AnimeListItemDataRole::ListEntry);
   return index.data(role).value<const ListEntry*>();
+}
+
+anime::list::Status listStatus(const ListEntry* entry) {
+  if (!entry || entry->pending_delete) return anime::list::Status::NotInList;
+  return entry->status;
+}
+
+// The key orders the groups. v1 lists them in enum order and keeps "not in list" last
+// (`kNotInListGroupIndex`), so the list status key moves `NotInList` to the end.
+int groupKey(const gui::AnimeListGroupBy groupBy, const Anime* anime, const ListEntry* entry) {
+  switch (groupBy) {
+    case gui::AnimeListGroupBy::AiringStatus:
+      return static_cast<int>(anime->status);
+    case gui::AnimeListGroupBy::ListStatus: {
+      const auto status = listStatus(entry);
+      return status == anime::list::Status::NotInList ? std::numeric_limits<int>::max()
+                                                      : static_cast<int>(status);
+    }
+    case gui::AnimeListGroupBy::Type:
+      return static_cast<int>(anime->type);
+    case gui::AnimeListGroupBy::None:
+      break;
+  }
+  return 0;
+}
+
+QString groupName(const gui::AnimeListGroupBy groupBy, const Anime* anime, const ListEntry* entry) {
+  switch (groupBy) {
+    case gui::AnimeListGroupBy::AiringStatus:
+      return gui::formatStatus(anime->status);
+    case gui::AnimeListGroupBy::ListStatus:
+      return gui::formatListStatus(listStatus(entry));
+    case gui::AnimeListGroupBy::Type:
+      return gui::formatType(anime->type);
+    case gui::AnimeListGroupBy::None:
+      break;
+  }
+  return {};
 }
 
 }  // namespace
@@ -60,6 +100,55 @@ void AnimeListProxyModel::setFilters(const AnimeListProxyModelFilter& filters) {
   beginFilterChange();
   m_filter = filters;
   endFilterChange(QSortFilterProxyModel::Direction::Rows);
+}
+
+AnimeListGroupBy AnimeListProxyModel::groupBy() const {
+  return m_groupBy;
+}
+
+void AnimeListProxyModel::setGroupBy(const AnimeListGroupBy groupBy) {
+  if (m_groupBy == groupBy) return;
+  m_groupBy = groupBy;
+  invalidate();
+  sort(sortColumn(), sortOrder());
+}
+
+// The status line reports how many items ended up in each group, in the order they are shown.
+QList<QPair<QString, int>> AnimeListProxyModel::groupCounts() const {
+  QList<QPair<QString, int>> counts;
+  if (m_groupBy == AnimeListGroupBy::None) return counts;
+  for (int row = 0; row < rowCount(); ++row) {
+    const auto name =
+        index(row, 0).data(static_cast<int>(AnimeListItemDataRole::GroupName)).toString();
+    if (name.isEmpty()) continue;
+    if (!counts.isEmpty() && counts.back().first == name) {
+      ++counts.back().second;
+    } else {
+      counts.emplace_back(name, 1);
+    }
+  }
+  return counts;
+}
+
+QVariant AnimeListProxyModel::data(const QModelIndex& index, const int role) const {
+  switch (static_cast<AnimeListItemDataRole>(role)) {
+    case AnimeListItemDataRole::GroupKey:
+    case AnimeListItemDataRole::GroupName: {
+      if (m_groupBy == AnimeListGroupBy::None) return {};
+      const auto sourceIndex = mapToSource(index);
+      const auto anime = getAnime(sourceIndex);
+      if (!anime) return {};
+      const auto entry = getListEntry(sourceIndex);
+      if (static_cast<AnimeListItemDataRole>(role) == AnimeListItemDataRole::GroupKey) {
+        return groupKey(m_groupBy, anime, entry);
+      }
+      return groupName(m_groupBy, anime, entry);
+    }
+    default:
+      break;
+  }
+
+  return QSortFilterProxyModel::data(index, role);
 }
 
 void AnimeListProxyModel::setYearFilter(std::optional<int> year) {
@@ -168,6 +257,16 @@ bool AnimeListProxyModel::lessThan(const QModelIndex& lhs, const QModelIndex& rh
 
   const auto lhs_entry = getListEntry(lhs);
   const auto rhs_entry = getListEntry(rhs);
+
+  // The group comes first, so that sorting orders the items within their group. The groups
+  // themselves always read in enum order, whichever way the sort order points.
+  if (m_groupBy != AnimeListGroupBy::None) {
+    const auto lhs_group = groupKey(m_groupBy, lhs_anime, lhs_entry);
+    const auto rhs_group = groupKey(m_groupBy, rhs_anime, rhs_entry);
+    if (lhs_group != rhs_group) {
+      return sortOrder() == Qt::AscendingOrder ? lhs_group < rhs_group : lhs_group > rhs_group;
+    }
+  }
 
   switch (lhs.column()) {
     case AnimeListModel::COLUMN_TITLE:

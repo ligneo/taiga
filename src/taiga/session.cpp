@@ -73,6 +73,11 @@ anime::Season Session::season() const {
   return anime::Season{static_cast<anime::SeasonName>(name), std::chrono::year{year}};
 }
 
+gui::AnimeListGroupBy Session::seasonsGroupBy() const {
+  return static_cast<gui::AnimeListGroupBy>(
+      value("seasons.groupBy", static_cast<int>(gui::AnimeListGroupBy::Type)).toInt());
+}
+
 int Session::seasonsSortColumn() const {
   return value("seasons.sortColumn", 0).toInt();
 }
@@ -156,6 +161,10 @@ void Session::setMediaDialogSplitterState(const QByteArray& state) const {
 void Session::setSeason(const anime::Season season) const {
   setValue("seasons.name", static_cast<int>(season.name));
   setValue("seasons.year", static_cast<int>(season.year));
+}
+
+void Session::setSeasonsGroupBy(const gui::AnimeListGroupBy groupBy) const {
+  setValue("seasons.groupBy", static_cast<int>(groupBy));
 }
 
 void Session::setSeasonsSortColumn(const int column) const {

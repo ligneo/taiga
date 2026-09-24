@@ -30,6 +30,8 @@ enum class AnimeListItemDataRole {
   Anime = Qt::UserRole,
   ListEntry,
   Poster,
+  GroupKey,
+  GroupName,
 };
 
 class AnimeListModel final : public QAbstractListModel {

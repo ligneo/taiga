@@ -28,6 +28,7 @@ class Season;
 }
 
 namespace gui {
+enum class AnimeListGroupBy;
 enum class ListViewMode;
 struct AnimeListProxyModelFilter;
 }  // namespace gui
@@ -43,6 +44,7 @@ public:
   QByteArray mediaDialogGeometry() const;
   QByteArray mediaDialogSplitterState() const;
   anime::Season season() const;
+  gui::AnimeListGroupBy seasonsGroupBy() const;
   int seasonsSortColumn() const;
   Qt::SortOrder seasonsSortOrder() const;
   gui::ListViewMode seasonsViewMode() const;
@@ -59,6 +61,7 @@ public:
   void setMediaDialogSplitterState(const QByteArray& state) const;
   void setSeason(const anime::Season season) const;
   void setSeasonsSortColumn(const int column) const;
+  void setSeasonsGroupBy(const gui::AnimeListGroupBy groupBy) const;
   void setSeasonsSortOrder(const Qt::SortOrder order) const;
   void setSeasonsViewMode(const gui::ListViewMode mode) const;
   void setSearchListFilters(const gui::AnimeListProxyModelFilter& filters) const;
