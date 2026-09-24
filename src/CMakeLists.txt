@@ -110,6 +110,8 @@ target_sources(taiga PRIVATE
 	taiga/path.hpp
 	taiga/session.cpp
 	taiga/session.hpp
+	taiga/script.cpp
+	taiga/script.hpp
 	taiga/settings.cpp
 	taiga/settings.hpp
 	taiga/version.cpp

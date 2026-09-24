@@ -18,12 +18,15 @@
 
 #pragma once
 
+#include <QString>
+
 #include "track/episode.hpp"
 
-namespace link::http {
+namespace taiga {
 
-// v1 posts what is playing to an address of the user's choosing, with a format string that names
-// the fields. The same variables and functions are understood here.
-void announce(const track::Episode& episode);
+// Fills in the variables a format string may name, then evaluates its functions. Values are
+// percent-encoded when the result is going into a request, and left alone otherwise.
+QString replaceVariables(const QString& format, const track::Episode& episode,
+                         const bool urlEncode = false);
 
-}  // namespace link::http
+}  // namespace taiga
