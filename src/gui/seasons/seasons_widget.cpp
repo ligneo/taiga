@@ -81,20 +81,17 @@ SeasonsWidget::SeasonsWidget(QWidget* parent)
     const auto actionSort = new QAction(theme.getIcon("sort"), tr("Sort by"), this);
     const auto actionView = new QAction(theme.getIcon("grid_view"), tr("View"), this);
 
-    // v1 keeps refreshing on its own between two separators, away from both the season it acts
-    // on and the three menus that only change how the season is displayed
-    // (`dlg_season.cpp:84-92`). Plain separators are used for the gap because not every style
-    // draws `QToolBar::separator`, and Taiga's own stylesheet only applies under Fusion.
-    const auto addGap = [this]() {
-      const auto spacer = new QWidget(m_toolbar);
-      spacer->setFixedWidth(12);
-      m_toolbar->addWidget(spacer);
-    };
+    // v1 puts refreshing between two separators (`dlg_season.cpp:84-92`), but here it ends up
+    // wedged between the season button and the three menus, with no separator to lean on: not
+    // every style draws `QToolBar::separator`, and Taiga's own stylesheet only applies under
+    // Fusion. It leads the toolbar instead, where nothing else has to make room for it.
+    m_toolbar->addAction(actionRefresh);
+
+    const auto spacer = new QWidget(m_toolbar);
+    spacer->setFixedWidth(12);
+    m_toolbar->addWidget(spacer);
 
     m_toolbar->addAction(m_actionSeason);
-    addGap();
-    m_toolbar->addAction(actionRefresh);
-    addGap();
     m_toolbar->addAction(m_actionGroup);
     m_toolbar->addAction(actionSort);
     m_toolbar->addAction(actionView);
