@@ -211,6 +211,33 @@ std::string Settings::httpShareFormat() const {
   return value("sharing.http.format", defaultFormat).toString().toStdString();
 }
 
+// v1's `announce/mirc/*`. Its "active channel" mode has no counterpart: Konversation does not
+// tell anyone which tab is in front, so the choice is between every joined channel and a list.
+bool Settings::ircShareEnabled() const {
+  return value("sharing.irc.enabled", false).toBool();
+}
+
+std::string Settings::ircShareFormat() const {
+  static const auto defaultFormat =
+      u"\00304$if($greater(%episode%,%watched%),Watching,Rewatching):\003 %title%"
+      u"$if(%episode%, \00303%episode%$if(%total%,/%total%))\003 "
+      u"$if(%score%,\00314[Score: %score%]\003) "
+      u"\00312%animeurl%"_s;
+  return value("sharing.irc.format", defaultFormat).toString().toStdString();
+}
+
+std::string Settings::ircShareChannels() const {
+  return value("sharing.irc.channels", u"#kitsu, #myanimelist, #taiga"_s).toString().toStdString();
+}
+
+bool Settings::ircShareAllChannels() const {
+  return value("sharing.irc.allChannels", false).toBool();
+}
+
+bool Settings::ircShareUseAction() const {
+  return value("sharing.irc.useAction", true).toBool();
+}
+
 bool Settings::discordEnabled() const {
   return value("sharing.discord.enabled", false).toBool();
 }
@@ -638,6 +665,26 @@ void Settings::setHttpShareUrl(const std::string& url) const {
 
 void Settings::setHttpShareFormat(const std::string& format) const {
   setValue("sharing.http.format", format);
+}
+
+void Settings::setIrcShareEnabled(const bool enabled) const {
+  setValue("sharing.irc.enabled", enabled);
+}
+
+void Settings::setIrcShareFormat(const std::string& format) const {
+  setValue("sharing.irc.format", format);
+}
+
+void Settings::setIrcShareChannels(const std::string& channels) const {
+  setValue("sharing.irc.channels", channels);
+}
+
+void Settings::setIrcShareAllChannels(const bool all) const {
+  setValue("sharing.irc.allChannels", all);
+}
+
+void Settings::setIrcShareUseAction(const bool use) const {
+  setValue("sharing.irc.useAction", use);
 }
 
 void Settings::setDiscordEnabled(const bool enabled) const {

@@ -200,6 +200,8 @@ endif()
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	find_package(Qt6 REQUIRED COMPONENTS DBus)
 	target_sources(taiga PRIVATE
+		link/irc.cpp
+		link/irc.hpp
 		track/media_focus.cpp
 		track/media_focus.hpp
 		track/media_mpris.cpp

@@ -158,3 +158,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_sources(taiga-gui PRIVATE platforms/windows.cpp)
 	target_link_libraries(taiga-gui Dwmapi.lib)
 endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	target_sources(taiga-gui PRIVATE
+		settings/settings_irc_page.cpp
+		settings/settings_irc_page.hpp
+	)
+endif()

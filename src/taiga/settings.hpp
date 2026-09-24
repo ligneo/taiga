@@ -92,6 +92,11 @@ public:
   bool httpShareEnabled() const;
   std::string httpShareUrl() const;
   std::string httpShareFormat() const;
+  bool ircShareEnabled() const;
+  std::string ircShareFormat() const;
+  std::string ircShareChannels() const;
+  bool ircShareAllChannels() const;
+  bool ircShareUseAction() const;
   bool discordEnabled() const;
   std::string discordApplicationId() const;
   bool discordTimeEnabled() const;
@@ -159,6 +164,11 @@ public:
   void setHttpShareEnabled(const bool enabled) const;
   void setHttpShareUrl(const std::string& url) const;
   void setHttpShareFormat(const std::string& format) const;
+  void setIrcShareEnabled(const bool enabled) const;
+  void setIrcShareFormat(const std::string& format) const;
+  void setIrcShareChannels(const std::string& channels) const;
+  void setIrcShareAllChannels(const bool all) const;
+  void setIrcShareUseAction(const bool use) const;
   void setDiscordEnabled(const bool enabled) const;
   void setDiscordApplicationId(const std::string& id) const;
   void setDiscordTimeEnabled(const bool enabled) const;

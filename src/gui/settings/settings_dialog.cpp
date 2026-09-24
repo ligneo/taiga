@@ -26,6 +26,7 @@
 #include "gui/settings/settings_cache_page.hpp"
 #include "gui/settings/settings_discord_page.hpp"
 #include "gui/settings/settings_http_page.hpp"
+#include "gui/settings/settings_irc_page.hpp"
 #include "gui/settings/settings_library_page.hpp"
 #include "gui/settings/settings_media_players_page.hpp"
 #include "gui/settings/settings_recognition_page.hpp"
@@ -71,6 +72,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   QTreeWidgetItem* streamingItem = nullptr;
   QTreeWidgetItem* discordItem = nullptr;
   QTreeWidgetItem* httpItem = nullptr;
+  QTreeWidgetItem* ircItem = nullptr;
   {
     recognitionItem = add_item("check_circle", "Recognition");
     mediaPlayersItem = add_child(recognitionItem, "Media players");
@@ -80,7 +82,13 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
     auto item = add_item("share", "Sharing");
     discordItem = add_child(item, "Discord");
     httpItem = add_child(item, "HTTP");
+#ifdef Q_OS_LINUX
+    // v1 drives mIRC over DDE. Konversation takes its place here, so the entry is named after the
+    // protocol rather than after the client.
+    ircItem = add_child(item, "IRC");
+#else
     add_child(item, "mIRC")->setDisabled(true);  // placeholder
+#endif
   }
   QTreeWidgetItem* torrentsItem = nullptr;
   QTreeWidgetItem* torrentDownloadsItem = nullptr;
@@ -108,6 +116,9 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   addPage(streamingItem, new StreamingPage(this));
   addPage(discordItem, new DiscordPage(this));
   addPage(httpItem, new HttpPage(this));
+#ifdef Q_OS_LINUX
+  addPage(ircItem, new IrcPage(this));
+#endif
   addPage(torrentsItem, new TorrentsPage(this));
   addPage(torrentDownloadsItem, new TorrentDownloadsPage(this));
   addPage(torrentFiltersItem, new TorrentFiltersPage(this));

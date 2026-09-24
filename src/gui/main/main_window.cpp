@@ -50,6 +50,9 @@
 #include "gui/utils/widgets.hpp"
 #include "link/discord.hpp"
 #include "link/http.hpp"
+#ifdef Q_OS_LINUX
+#include "link/irc.hpp"
+#endif
 #include "media/anime_db.hpp"
 #include "media/anime_list.hpp"
 #include "media/anime_list_export.hpp"
@@ -286,6 +289,9 @@ void MainWindow::initNowPlaying() {
                 QString::fromStdString(episode->element(anitomy::ElementKind::Episode));
 
             link::http::announce(*episode);
+#ifdef Q_OS_LINUX
+            link::irc::announce(*episode);
+#endif
 
             link::discord()->updatePresence(
                 title, number.isEmpty() ? QString{} : tr("Episode %1").arg(number),
