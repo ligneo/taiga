@@ -117,7 +117,8 @@ int Application::run() {
   window_->init();
 
   // v1's `program/startup/minimize`: Taiga starts in the tray and detects from there.
-  if (taiga::settings.appStartMinimized()) {
+  // `--minimized` does the same for one launch, e.g. from a compositor's startup list.
+  if (options_.minimized || taiga::settings.appStartMinimized()) {
     return QApplication::exec();
   }
 
@@ -200,6 +201,7 @@ void Application::onNewConnection() {
 void Application::parseCommandLine() {
   parser_.addOptions({
       {"debug", QCoreApplication::translate("main", "Enable debug mode")},
+      {"minimized", QCoreApplication::translate("main", "Start in the system tray")},
       {"verbose", QCoreApplication::translate("main", "Enable verbose output")},
   });
 
@@ -211,6 +213,7 @@ void Application::parseCommandLine() {
 #else
   options_.debug = parser_.isSet("debug");
 #endif
+  options_.minimized = parser_.isSet("minimized");
   options_.verbose = parser_.isSet("verbose");
 }
 

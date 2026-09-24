@@ -61,6 +61,7 @@ private:
 
   struct Options {
     bool debug = false;
+    bool minimized = false;
     bool verbose = false;
   } options_;
 
