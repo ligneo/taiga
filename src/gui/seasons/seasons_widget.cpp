@@ -20,7 +20,6 @@
 
 #include <QActionGroup>
 #include <QDate>
-#include <QHash>
 #include <QLabel>
 #include <QToolBar>
 #include <QToolButton>
@@ -82,12 +81,27 @@ SeasonsWidget::SeasonsWidget(QWidget* parent)
     const auto actionSort = new QAction(theme.getIcon("sort"), tr("Sort by"), this);
     const auto actionView = new QAction(theme.getIcon("grid_view"), tr("View"), this);
 
+    // v1 keeps refreshing on its own between two separators, away from both the season it acts
+    // on and the three menus that only change how the season is displayed
+    // (`dlg_season.cpp:84-92`). Plain separators are used for the gap because not every style
+    // draws `QToolBar::separator`, and Taiga's own stylesheet only applies under Fusion.
+    const auto addGap = [this]() {
+      const auto spacer = new QWidget(m_toolbar);
+      spacer->setFixedWidth(12);
+      m_toolbar->addWidget(spacer);
+    };
+
     m_toolbar->addAction(m_actionSeason);
+    addGap();
     m_toolbar->addAction(actionRefresh);
-    m_toolbar->addSeparator();
+    addGap();
     m_toolbar->addAction(m_actionGroup);
     m_toolbar->addAction(actionSort);
     m_toolbar->addAction(actionView);
+
+    // v1 labels this button "Refresh data", but here the three menus next to it already carry
+    // their current value in their text; adding a fourth label pushes Sort by and View into the
+    // toolbar's overflow menu (measured). The icon keeps its tooltip.
 
     for (const auto& [action, menu] : {std::pair{m_actionSeason, m_seasonMenu},
                                        {m_actionGroup, m_groupMenu},
@@ -194,15 +208,6 @@ void SeasonsWidget::initGroupMenu() {
 
 void SeasonsWidget::setGroupBy(const AnimeListGroupBy groupBy) {
   m_proxyModel->setGroupBy(groupBy);
-
-  static const QHash<AnimeListGroupBy, QString> names{
-      {AnimeListGroupBy::None, tr("None")},
-      {AnimeListGroupBy::AiringStatus, tr("Airing status")},
-      {AnimeListGroupBy::ListStatus, tr("List status")},
-      {AnimeListGroupBy::Type, tr("Type")},
-  };
-  m_actionGroup->setText(tr("Group by: %1").arg(names.value(groupBy)));
-
   updateStatus();
 }
 
