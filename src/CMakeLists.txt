@@ -182,6 +182,17 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set_target_properties(taiga PROPERTIES WIN32_EXECUTABLE ON)
 endif()
 
+# The Orange easter egg needs a way to play its notes; Windows has `Beep`, everywhere else it
+# takes an audio sink. Qt Multimedia pulls in a whole media backend, so it stays optional: without
+# it the easter egg is silent and nothing else changes.
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	find_package(Qt6 QUIET COMPONENTS Multimedia)
+	if (Qt6Multimedia_FOUND)
+		target_link_libraries(taiga PRIVATE Qt6::Multimedia)
+		target_compile_definitions(taiga PRIVATE TAIGA_HAS_MULTIMEDIA)
+	endif()
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	find_package(Qt6 REQUIRED COMPONENTS DBus)
 	target_sources(taiga PRIVATE
