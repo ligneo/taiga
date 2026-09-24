@@ -28,6 +28,8 @@
 #include "base/string.hpp"
 #include "gui/utils/format.hpp"
 #include "media/anime_list.hpp"
+#include "taiga/application.hpp"
+#include "taiga/session.hpp"
 
 namespace gui {
 
@@ -87,6 +89,22 @@ ProfileWidget::ProfileWidget(QWidget* parent) : PageWidget(parent) {
     containerLayout->addWidget(group);
   }
 
+  // Taiga
+  // v1's own statistics block also counts connections (`stats.connections_*`), which nothing in
+  // v2 keeps track of yet.
+  {
+    const auto group = new QGroupBox(tr("Taiga"), container);
+    const auto form = new QFormLayout(group);
+
+    m_uptime = new QLabel("-", group);
+    m_tigersHarmed = new QLabel("-", group);
+
+    form->addRow(tr("Uptime:"), m_uptime);
+    form->addRow(tr("Tigers harmed:"), m_tigersHarmed);
+
+    containerLayout->addWidget(group);
+  }
+
   containerLayout->addStretch();
   layout()->addWidget(container);
 
@@ -116,6 +134,9 @@ void ProfileWidget::refresh() {
     m_scoreBars[i]->setValue(count);
     m_scoreCounts[i]->setText(QString::number(count));
   }
+
+  m_uptime->setText(formatDuration(taiga::app()->uptime()));
+  m_tigersHarmed->setText(QString::number(taiga::session.tigersHarmed()));
 }
 
 void ProfileWidget::showEvent(QShowEvent* event) {

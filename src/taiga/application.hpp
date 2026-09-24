@@ -20,9 +20,12 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QElapsedTimer>
 #include <QLocalServer>
 #include <QLockFile>
 #include <QPointer>
+
+#include "base/chrono.hpp"
 
 namespace gui {
 class MainWindow;
@@ -42,6 +45,7 @@ public:
 
   bool isDebug() const;
   bool isVerbose() const;
+  base::Duration uptime() const;
 
   gui::MainWindow* mainWindow() const;
 
@@ -60,6 +64,7 @@ private:
     bool verbose = false;
   } options_;
 
+  QElapsedTimer uptime_;
   QCommandLineParser parser_;
   QLockFile lock_file_;
   QLocalServer local_server_;

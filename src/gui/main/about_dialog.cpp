@@ -27,6 +27,7 @@
 
 #include "base/string.hpp"
 #include "taiga/orange.hpp"
+#include "taiga/session.hpp"
 #include "taiga/version.hpp"
 
 namespace gui {
@@ -137,6 +138,7 @@ bool AboutDialogHandler::eventFilter(QObject* watched, QEvent* event) {
     if (!orange_->isRunning()) {
       previousWindowTitle_ = messageBox()->windowTitle();
       messageBox()->setWindowTitle("Orange");
+      taiga::session.setTigersHarmed(taiga::session.tigersHarmed() + 1);
       orange_->start();
     }
     return true;

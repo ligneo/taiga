@@ -59,6 +59,8 @@ Application::Application(int argc, char* argv[])
   setApplicationVersion(QString::fromStdString(taiga::version().to_string()));
   setOrganizationDomain("taiga.moe");
   setOrganizationName("erengy");
+
+  uptime_.start();
 }
 
 Application::~Application() {
@@ -133,6 +135,12 @@ int Application::run() {
 #endif
 
   return QApplication::exec();
+}
+
+// v1 shows this on its statistics page (`stats.uptime`).
+base::Duration Application::uptime() const {
+  return base::Duration{std::chrono::duration_cast<std::chrono::seconds>(
+      std::chrono::milliseconds{uptime_.elapsed()})};
 }
 
 bool Application::isDebug() const {

@@ -73,6 +73,12 @@ anime::Season Session::season() const {
   return anime::Season{static_cast<anime::SeasonName>(name), std::chrono::year{year}};
 }
 
+// v1 counts this in its statistics as well (`stats.tigers_harmed`), and the joke only works if
+// the number survives a restart.
+int Session::tigersHarmed() const {
+  return value("tigersHarmed", 0).toInt();
+}
+
 gui::AnimeListGroupBy Session::seasonsGroupBy() const {
   return static_cast<gui::AnimeListGroupBy>(
       value("seasons.groupBy", static_cast<int>(gui::AnimeListGroupBy::Type)).toInt());
@@ -161,6 +167,10 @@ void Session::setMediaDialogSplitterState(const QByteArray& state) const {
 void Session::setSeason(const anime::Season season) const {
   setValue("seasons.name", static_cast<int>(season.name));
   setValue("seasons.year", static_cast<int>(season.year));
+}
+
+void Session::setTigersHarmed(const int count) const {
+  setValue("tigersHarmed", count);
 }
 
 void Session::setSeasonsGroupBy(const gui::AnimeListGroupBy groupBy) const {

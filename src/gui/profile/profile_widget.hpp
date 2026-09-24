@@ -47,6 +47,8 @@ private:
   QLabel* m_timeToComplete = nullptr;
   QLabel* m_scoreMean = nullptr;
   QLabel* m_scoreDeviation = nullptr;
+  QLabel* m_uptime = nullptr;
+  QLabel* m_tigersHarmed = nullptr;
 
   QList<QProgressBar*> m_scoreBars;
   QList<QLabel*> m_scoreCounts;
