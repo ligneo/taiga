@@ -39,9 +39,23 @@ constexpr auto kObjectPath = "/org/mpris/MediaPlayer2";
 constexpr auto kPlayerInterface = "org.mpris.MediaPlayer2.Player";
 constexpr auto kPropertiesInterface = "org.freedesktop.DBus.Properties";
 
-QString getProcessName(const uint processId) {
-  const QFileInfo fileInfo{u"/proc/%1/exe"_s.arg(processId)};
-  return QFileInfo{fileInfo.symLinkTarget()}.fileName();
+QString getExecutablePath(const uint processId) {
+  return QFileInfo{u"/proc/%1/exe"_s.arg(processId)}.symLinkTarget();
+}
+
+// Tor Browser is Firefox, down to the process name and the MPRIS service, so the bundled Firefox
+// entry matches it and Taiga would read the title of whatever page is open. Only the path tells
+// the two apart: the bundle is extracted into a `tor-browser` directory with the browser under
+// `Browser/`, and torbrowser-launcher keeps that layout under `~/.local/share/torbrowser`.
+// Reporting what someone is doing in Tor Browser is the last thing this feature should do, so it
+// is left out rather than made an option.
+bool isTorBrowser(const QString& executablePath) {
+  const auto parts = executablePath.split(u'/', Qt::SkipEmptyParts);
+
+  return std::ranges::any_of(parts, [](const QString& part) {
+    return !part.compare(u"tor-browser", Qt::CaseInsensitive) ||
+           !part.compare(u"torbrowser", Qt::CaseInsensitive);
+  });
 }
 
 const anisthesia::Player* findWebBrowser(const std::vector<anisthesia::Player>& players,
@@ -92,7 +106,10 @@ std::vector<anisthesia::lin::Result> getMprisResults(
     const auto processId = bus.interface()->servicePid(service);
     if (!processId.isValid()) continue;
 
-    const auto processName = getProcessName(processId.value()).toStdString();
+    const auto executablePath = getExecutablePath(processId.value());
+    if (isTorBrowser(executablePath)) continue;
+
+    const auto processName = QFileInfo{executablePath}.fileName().toStdString();
     const auto player = findWebBrowser(players, processName);
     if (!player) continue;
 
