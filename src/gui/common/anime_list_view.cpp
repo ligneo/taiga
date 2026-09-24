@@ -45,7 +45,15 @@ ListView::ListView(QWidget* parent, AnimeListModel* model, AnimeListProxyModel* 
   setExpandsOnDoubleClick(false);
   setItemsExpandable(false);
   setRootIsDecorated(false);
-  setUniformRowHeights(true);
+
+  // Rows are all the same height until the list is grouped: then the first row of each group is
+  // taller, because the delegate draws the group header in the space it gains.
+  const auto applyGrouping = [this, proxyModel]() {
+    setUniformRowHeights(proxyModel->groupBy() == AnimeListGroupBy::None);
+    scheduleDelayedItemsLayout();
+  };
+  applyGrouping();
+  connect(proxyModel, &AnimeListProxyModel::groupByChanged, this, applyGrouping);
 
   header()->setFirstSectionMovable(true);
   header()->setStretchLastSection(false);

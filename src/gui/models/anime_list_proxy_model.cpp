@@ -111,6 +111,7 @@ void AnimeListProxyModel::setGroupBy(const AnimeListGroupBy groupBy) {
   m_groupBy = groupBy;
   invalidate();
   sort(sortColumn(), sortOrder());
+  emit groupByChanged();
 }
 
 // The status line reports how many items ended up in each group, in the order they are shown.

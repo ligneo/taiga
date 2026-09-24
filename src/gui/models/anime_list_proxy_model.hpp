@@ -72,6 +72,9 @@ public:
 
   QVariant data(const QModelIndex& index, int role) const override;
 
+signals:
+  void groupByChanged();
+
 protected:
   bool filterAcceptsRow(int row, const QModelIndex& parent) const override;
   bool lessThan(const QModelIndex& lhs, const QModelIndex& rhs) const override;

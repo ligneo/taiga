@@ -157,14 +157,17 @@ void SeasonsWidget::refresh() {
 }
 
 void SeasonsWidget::updateStatus() {
-  QStringList parts{tr("%1 · %2 titles").arg(formatSeason(m_season)).arg(m_proxyModel->rowCount())};
+  m_labelStatus->setText(
+      tr("%1 · %2 titles").arg(formatSeason(m_season)).arg(m_proxyModel->rowCount()));
 
-  // The cards cannot carry a group header, so the breakdown is spelled out here instead.
+  // The cards cannot carry a group header, so the breakdown goes in the tooltip. It does not go
+  // in the label itself: with five groups the text is long enough to squeeze the toolbar into its
+  // overflow menu.
+  QStringList groups;
   for (const auto& [name, count] : m_proxyModel->groupCounts()) {
-    parts.push_back(u"%1 %2"_s.arg(name).arg(count));
+    groups.push_back(u"%1 %2"_s.arg(name).arg(count));
   }
-
-  m_labelStatus->setText(parts.join(u" · "_s));
+  m_labelStatus->setToolTip(groups.join(u" · "_s));
 }
 
 void SeasonsWidget::initGroupMenu() {
