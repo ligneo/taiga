@@ -271,6 +271,13 @@ void MainWindow::initNowPlaying() {
               return;
             }
 
+            // v1 keeps entries marked private out of every sharing channel. Anything already
+            // shared is cleared first, so the previous episode is not left on display.
+            if (const auto entry = anime::db.entry(episode->animeId()); entry && entry->is_private) {
+              link::discord()->clearPresence();
+              return;
+            }
+
             const auto item = anime::db.item(episode->animeId());
             const auto title =
                 item ? QString::fromStdString(anime::preferredTitle(*item))
