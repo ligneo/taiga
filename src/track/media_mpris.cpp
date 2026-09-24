@@ -119,6 +119,10 @@ std::vector<anisthesia::lin::Result> getMprisResults(
     const auto title = metadata.value("xesam:title").toString().toStdString();
     const auto url = metadata.value("xesam:url").toString().toStdString();
 
+    // Only the URL tells which streaming provider is playing. Without it the title would skip the
+    // provider filter and be recognized as is, whatever the video is. Chromium leaves it out.
+    if (url.empty()) continue;
+
     anisthesia::lin::Result result;
     result.player = *player;
     result.process = {.id = static_cast<int>(processId.value()), .name = processName};
