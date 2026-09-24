@@ -121,7 +121,7 @@ void displayAboutDialog(QWidget* parent) {
 }
 
 AboutDialogHandler::AboutDialogHandler(QObject* parent)
-    : QObject(parent), orange_(new taiga::Orange(this)) {
+    : QObject(parent), orange_(taiga::orange()) {
   connect(orange_, &QThread::finished, this, &AboutDialogHandler::resetWindowTitle);
 }
 

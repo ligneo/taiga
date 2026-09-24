@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <QCoreApplication>
 #include <QThread>
 
 namespace taiga {
@@ -33,5 +34,12 @@ public:
 protected:
   void run() override;
 };
+
+// The melody outlives the About dialog it is started from. v1 keeps it in a global
+// (`taiga::orange`) for the same reason: closing the window should not cut the song off.
+inline Orange* orange() {
+  static auto orange = new Orange(qApp);
+  return orange;
+}
 
 }  // namespace taiga
