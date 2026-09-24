@@ -21,8 +21,10 @@
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QGroupBox>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <algorithm>
+#include <chrono>
 
 #include "base/chrono.hpp"
 #include "base/string.hpp"
@@ -105,6 +107,13 @@ ProfileWidget::ProfileWidget(QWidget* parent) : PageWidget(parent) {
     containerLayout->addWidget(group);
   }
 
+  // v1 counts the uptime in its one-second timer and refreshes the whole statistics dialog while
+  // it is visible (`timer.cpp:163`). Only this one line changes every second, so only it is
+  // redrawn; the rest still waits for the page to be opened again.
+  m_uptimeTimer = new QTimer(this);
+  m_uptimeTimer->setInterval(std::chrono::seconds{1});
+  connect(m_uptimeTimer, &QTimer::timeout, this, &ProfileWidget::refreshUptime);
+
   containerLayout->addStretch();
   layout()->addWidget(container);
 
@@ -135,12 +144,22 @@ void ProfileWidget::refresh() {
     m_scoreCounts[i]->setText(QString::number(count));
   }
 
-  m_uptime->setText(formatDuration(taiga::app()->uptime()));
+  refreshUptime();
   m_tigersHarmed->setText(QString::number(taiga::session.tigersHarmed()));
+}
+
+void ProfileWidget::refreshUptime() {
+  m_uptime->setText(formatDuration(taiga::app()->uptime()));
+}
+
+void ProfileWidget::hideEvent(QHideEvent* event) {
+  m_uptimeTimer->stop();
+  PageWidget::hideEvent(event);
 }
 
 void ProfileWidget::showEvent(QShowEvent* event) {
   refresh();
+  m_uptimeTimer->start();
   PageWidget::showEvent(event);
 }
 

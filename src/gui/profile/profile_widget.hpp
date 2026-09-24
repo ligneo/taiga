@@ -36,8 +36,10 @@ public:
   ~ProfileWidget() = default;
 
   void refresh();
+  void refreshUptime();
 
 protected:
+  void hideEvent(QHideEvent* event) override;
   void showEvent(QShowEvent* event) override;
 
 private:
@@ -47,6 +49,7 @@ private:
   QLabel* m_timeToComplete = nullptr;
   QLabel* m_scoreMean = nullptr;
   QLabel* m_scoreDeviation = nullptr;
+  QTimer* m_uptimeTimer = nullptr;
   QLabel* m_uptime = nullptr;
   QLabel* m_tigersHarmed = nullptr;
 
