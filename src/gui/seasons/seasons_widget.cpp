@@ -209,11 +209,11 @@ void SeasonsWidget::setGroupBy(const AnimeListGroupBy groupBy) {
 void SeasonsWidget::initSeasonMenu() {
   m_seasonMenu->clear();
 
+  // No check marks here: the toolbar button already reads "Fall 2026", and a column of empty
+  // checkboxes next to every season is noise. v1 keeps the radio marks for the menus that have
+  // no such label (`SeasonGroup`, `SeasonSort`), which is what the other menus below do.
   const auto addSeason = [this](QMenu* menu, const anime::Season season) {
-    const auto action =
-        menu->addAction(formatSeason(season), this, [this, season]() { setSeason(season); });
-    action->setCheckable(true);
-    action->setChecked(season == m_season);
+    menu->addAction(formatSeason(season), this, [this, season]() { setSeason(season); });
   };
 
   // Listing every season since 1960 in one menu would be hundreds of entries, so the recent ones
