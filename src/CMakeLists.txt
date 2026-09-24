@@ -5,6 +5,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(taiga)
 
 target_sources(taiga PRIVATE
+	base/atf.cpp
+	base/atf.hpp
 	base/chrono.cpp
 	base/chrono.hpp
 	base/file.cpp
