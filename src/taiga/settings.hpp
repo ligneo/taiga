@@ -106,6 +106,8 @@ public:
   bool discordGroupEnabled() const;
   bool syncEnabled() const;
   bool syncOnStartup() const;
+  bool syncGoToNowPlayingNotRecognized() const;
+  bool syncGoToNowPlayingRecognized() const;
   bool syncNotifyNotRecognized() const;
   bool syncNotifyRecognized() const;
   std::string syncNotifyFormat() const;
@@ -183,6 +185,8 @@ public:
   void setDiscordGroupEnabled(const bool enabled) const;
   void setSyncEnabled(const bool enabled) const;
   void setSyncOnStartup(const bool enabled) const;
+  void setSyncGoToNowPlayingNotRecognized(const bool enabled) const;
+  void setSyncGoToNowPlayingRecognized(const bool enabled) const;
   void setSyncNotifyNotRecognized(const bool enabled) const;
   void setSyncNotifyRecognized(const bool enabled) const;
   void setSyncNotifyFormat(const std::string& format) const;

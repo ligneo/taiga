@@ -277,6 +277,15 @@ bool Settings::syncOnStartup() const {
   return value("sync.onStartup", false).toBool();
 }
 
+// v1's `account/update/gotonowplaying` and `gotonowplayingnot`, with their defaults.
+bool Settings::syncGoToNowPlayingNotRecognized() const {
+  return value("sync.goToNowPlaying.notRecognized", false).toBool();
+}
+
+bool Settings::syncGoToNowPlayingRecognized() const {
+  return value("sync.goToNowPlaying.recognized", true).toBool();
+}
+
 bool Settings::syncNotifyNotRecognized() const {
   return value("sync.notify.notRecognized", true).toBool();
 }
@@ -749,6 +758,14 @@ void Settings::setSyncEnabled(const bool enabled) const {
 
 void Settings::setSyncOnStartup(const bool enabled) const {
   setValue("sync.onStartup", enabled);
+}
+
+void Settings::setSyncGoToNowPlayingNotRecognized(const bool enabled) const {
+  setValue("sync.goToNowPlaying.notRecognized", enabled);
+}
+
+void Settings::setSyncGoToNowPlayingRecognized(const bool enabled) const {
+  setValue("sync.goToNowPlaying.recognized", enabled);
 }
 
 void Settings::setSyncNotifyNotRecognized(const bool enabled) const {

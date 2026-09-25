@@ -20,7 +20,9 @@
 
 #include <QCheckBox>
 #include <QFormLayout>
+#include <QGridLayout>
 #include <QGroupBox>
+#include <QLabel>
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
@@ -43,9 +45,10 @@ RecognitionPage::RecognitionPage(QWidget* parent)
       m_radioAfterDelay(new QRadioButton(tr("Update after delay"), this)),
       m_radioOnPlayerClose(new QRadioButton(tr("Update when media is closed (after delay)"), this)),
       m_checkAskToConfirm(new QCheckBox(tr("Ask for confirmation"), this)),
-      m_checkNotifyRecognized(new QCheckBox(tr("Notify me when an episode is recognized"), this)),
-      m_checkNotifyNotRecognized(
-          new QCheckBox(tr("Notify me when an episode is not recognized"), this)) {
+      m_checkNotifyRecognized(new QCheckBox(tr("Notify me"), this)),
+      m_checkNotifyNotRecognized(new QCheckBox(tr("Notify me"), this)),
+      m_checkGoToRecognized(new QCheckBox(tr("Go to Now Playing"), this)),
+      m_checkGoToNotRecognized(new QCheckBox(tr("Go to Now Playing"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   layout->addWidget(m_checkDetectionEnabled);
@@ -63,6 +66,19 @@ RecognitionPage::RecognitionPage(QWidget* parent)
     const auto groupLayout = new QVBoxLayout(group);
     groupLayout->addWidget(m_checkOutOfRoot);
     groupLayout->addWidget(m_checkOutOfRange);
+    layout->addWidget(group);
+  }
+
+  // Behavior, laid out as in v1
+  {
+    const auto group = new QGroupBox(tr("Behavior"), this);
+    const auto grid = new QGridLayout(group);
+    grid->addWidget(new QLabel(tr("When an episode is recognized:"), group), 0, 0);
+    grid->addWidget(m_checkNotifyRecognized, 1, 0);
+    grid->addWidget(m_checkGoToRecognized, 2, 0);
+    grid->addWidget(new QLabel(tr("When an episode is not recognized:"), group), 0, 1);
+    grid->addWidget(m_checkNotifyNotRecognized, 1, 1);
+    grid->addWidget(m_checkGoToNotRecognized, 2, 1);
     layout->addWidget(group);
   }
 
@@ -84,15 +100,6 @@ RecognitionPage::RecognitionPage(QWidget* parent)
     layout->addWidget(group);
   }
 
-  // Notifications
-  {
-    const auto group = new QGroupBox(tr("Notifications"), this);
-    const auto groupLayout = new QVBoxLayout(group);
-    groupLayout->addWidget(m_checkNotifyRecognized);
-    groupLayout->addWidget(m_checkNotifyNotRecognized);
-    layout->addWidget(group);
-  }
-
   layout->addStretch();
 }
 
@@ -111,6 +118,8 @@ void RecognitionPage::load() {
   m_checkAskToConfirm->setChecked(taiga::settings.updateAskToConfirm());
   m_checkNotifyRecognized->setChecked(taiga::settings.syncNotifyRecognized());
   m_checkNotifyNotRecognized->setChecked(taiga::settings.syncNotifyNotRecognized());
+  m_checkGoToRecognized->setChecked(taiga::settings.syncGoToNowPlayingRecognized());
+  m_checkGoToNotRecognized->setChecked(taiga::settings.syncGoToNowPlayingNotRecognized());
 }
 
 void RecognitionPage::save() {
@@ -125,6 +134,8 @@ void RecognitionPage::save() {
   taiga::settings.setUpdateAskToConfirm(m_checkAskToConfirm->isChecked());
   taiga::settings.setSyncNotifyRecognized(m_checkNotifyRecognized->isChecked());
   taiga::settings.setSyncNotifyNotRecognized(m_checkNotifyNotRecognized->isChecked());
+  taiga::settings.setSyncGoToNowPlayingRecognized(m_checkGoToRecognized->isChecked());
+  taiga::settings.setSyncGoToNowPlayingNotRecognized(m_checkGoToNotRecognized->isChecked());
 
   // Must come after the interval is saved, since it restarts polling with the new interval.
   const auto enabled = m_checkDetectionEnabled->isChecked();

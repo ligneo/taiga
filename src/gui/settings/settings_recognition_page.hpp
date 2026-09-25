@@ -49,6 +49,8 @@ private:
   QCheckBox* m_checkAskToConfirm = nullptr;
   QCheckBox* m_checkNotifyRecognized = nullptr;
   QCheckBox* m_checkNotifyNotRecognized = nullptr;
+  QCheckBox* m_checkGoToRecognized = nullptr;
+  QCheckBox* m_checkGoToNotRecognized = nullptr;
 };
 
 }  // namespace gui

@@ -37,6 +37,7 @@
 #include "gui/main/about_dialog.hpp"
 #include "gui/main/navigation_controller.hpp"
 #include "gui/main/navigation_widget.hpp"
+#include "gui/main/now_playing_page.hpp"
 #include "gui/main/now_playing_widget.hpp"
 #include "gui/main/status_bar.hpp"
 #include "gui/main/status_bar_controller.hpp"
@@ -426,6 +427,7 @@ void MainWindow::initPage(MainWindowPage page) {
 
   switch (page) {
     case MainWindowPage::Home:
+      init_page(ui_->homePage, new NowPlayingPage(ui_->homePage));
       break;
 
     case MainWindowPage::Search:
@@ -961,6 +963,11 @@ void MainWindow::notifyEpisodeDetected(std::optional<track::Episode> episode) {
   if (!episode || !m_trayIcon) return;
 
   const auto item = anime::db.item(episode->animeId());
+
+  if (item ? taiga::settings.syncGoToNowPlayingRecognized()
+           : taiga::settings.syncGoToNowPlayingNotRecognized()) {
+    navigateTo(MainWindowPage::Home);
+  }
 
   if (item) {
     if (!taiga::settings.syncNotifyRecognized()) return;
