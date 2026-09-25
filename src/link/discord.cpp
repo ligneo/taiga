@@ -106,9 +106,15 @@ void Discord::applySettings() {
   if (!taiga::settings.discordEnabled()) clearPresence();
 }
 
-void Discord::updatePresence(const QString& details, const QString& state,
-                             const QString& largeImage, const std::time_t timestamp) {
+void Discord::updatePresence(QString details, QString state, const QString& largeImage,
+                             const std::time_t timestamp) {
   if (!taiga::settings.discordEnabled()) return;
+
+  // v1 cuts both lines at 64 characters; Discord turns down an activity with longer ones.
+  constexpr qsizetype kLimit = 64;
+  for (auto text : {&details, &state}) {
+    if (text->size() > kLimit) *text = text->left(kLimit - 3) + u"..."_s;
+  }
   if (!connectToDiscord()) return;
 
   const auto service = sync::currentServiceId();

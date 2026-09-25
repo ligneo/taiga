@@ -259,6 +259,10 @@ bool Settings::discordUsernameEnabled() const {
   return value("sharing.discord.showUsername", true).toBool();
 }
 
+bool Settings::discordGroupEnabled() const {
+  return value("sharing.discord.showGroup", true).toBool();
+}
+
 bool Settings::syncEnabled() const {
   return value("sync.enabled", true).toBool();
 }
@@ -719,6 +723,10 @@ void Settings::setDiscordTimeEnabled(const bool enabled) const {
 
 void Settings::setDiscordUsernameEnabled(const bool enabled) const {
   setValue("sharing.discord.showUsername", enabled);
+}
+
+void Settings::setDiscordGroupEnabled(const bool enabled) const {
+  setValue("sharing.discord.showGroup", enabled);
 }
 
 void Settings::setSyncEnabled(const bool enabled) const {

@@ -36,7 +36,7 @@ public:
   Discord(QObject* parent);
 
   void applySettings();
-  void updatePresence(const QString& details, const QString& state, const QString& largeImage,
+  void updatePresence(QString details, QString state, const QString& largeImage,
                       const std::time_t timestamp);
   void clearPresence();
 

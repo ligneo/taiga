@@ -102,6 +102,7 @@ public:
   std::string discordApplicationId() const;
   bool discordTimeEnabled() const;
   bool discordUsernameEnabled() const;
+  bool discordGroupEnabled() const;
   bool syncEnabled() const;
   bool syncNotifyNotRecognized() const;
   bool syncNotifyRecognized() const;
@@ -176,6 +177,7 @@ public:
   void setDiscordApplicationId(const std::string& id) const;
   void setDiscordTimeEnabled(const bool enabled) const;
   void setDiscordUsernameEnabled(const bool enabled) const;
+  void setDiscordGroupEnabled(const bool enabled) const;
   void setSyncEnabled(const bool enabled) const;
   void setSyncNotifyNotRecognized(const bool enabled) const;
   void setSyncNotifyRecognized(const bool enabled) const;

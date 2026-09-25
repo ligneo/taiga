@@ -39,6 +39,7 @@ private:
   QCheckBox* m_checkEnabled = nullptr;
   QCheckBox* m_checkTime = nullptr;
   QCheckBox* m_checkUsername = nullptr;
+  QCheckBox* m_checkGroup = nullptr;
 };
 
 }  // namespace gui

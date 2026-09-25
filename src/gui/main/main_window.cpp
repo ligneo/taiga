@@ -292,7 +292,6 @@ void MainWindow::shareEpisode(const std::optional<track::Episode>& episode) cons
   const auto item = anime::db.item(episode->animeId());
   const auto title = item ? QString::fromStdString(anime::preferredTitle(*item))
                           : QString::fromStdString(episode->element(anitomy::ElementKind::Title));
-  const auto number = QString::fromStdString(episode->element(anitomy::ElementKind::Episode));
 
   link::http::announce(*episode);
 #ifdef Q_OS_LINUX
@@ -300,9 +299,13 @@ void MainWindow::shareEpisode(const std::optional<track::Episode>& episode) cons
 #endif
 
   // v1 shares what is playing over Discord's rich presence.
-  link::discord()->updatePresence(
-      title, number.isEmpty() ? QString{} : tr("Episode %1").arg(number),
-      item ? QString::fromStdString(item->image_url) : QString{}, std::time(nullptr));
+  // The same lines as v1: "Episode 5/12 by Group", the group being optional.
+  auto state = u"$if(%episode%,Episode %episode%$if(%total%,/%total%) )"_s;
+  if (taiga::settings.discordGroupEnabled()) state += u"$if(%group%,by %group%)"_s;
+
+  link::discord()->updatePresence(title, taiga::replaceVariables(state, *episode),
+                                  item ? QString::fromStdString(item->image_url) : QString{},
+                                  std::time(nullptr));
 }
 
 void MainWindow::initPage(MainWindowPage page) {

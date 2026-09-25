@@ -32,7 +32,8 @@ DiscordPage::DiscordPage(QWidget* parent)
     : SettingsPage(parent),
       m_checkEnabled(new QCheckBox(tr("Share what you are watching on Discord"), this)),
       m_checkTime(new QCheckBox(tr("Show elapsed time"), this)),
-      m_checkUsername(new QCheckBox(tr("Show your username"), this)) {
+      m_checkUsername(new QCheckBox(tr("Show your username"), this)),
+      m_checkGroup(new QCheckBox(tr("Show the release group"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   const auto group = new QGroupBox(tr("Rich presence"), this);
@@ -41,6 +42,7 @@ DiscordPage::DiscordPage(QWidget* parent)
   groupLayout->addWidget(m_checkEnabled);
   groupLayout->addWidget(m_checkTime);
   groupLayout->addWidget(m_checkUsername);
+  groupLayout->addWidget(m_checkGroup);
 
   const auto note =
       new QLabel(tr("Discord has to be running on the same machine. v1 links against Discord's "
@@ -54,20 +56,24 @@ DiscordPage::DiscordPage(QWidget* parent)
 
   connect(m_checkEnabled, &QCheckBox::toggled, m_checkTime, &QWidget::setEnabled);
   connect(m_checkEnabled, &QCheckBox::toggled, m_checkUsername, &QWidget::setEnabled);
+  connect(m_checkEnabled, &QCheckBox::toggled, m_checkGroup, &QWidget::setEnabled);
 }
 
 void DiscordPage::load() {
   m_checkEnabled->setChecked(taiga::settings.discordEnabled());
   m_checkTime->setChecked(taiga::settings.discordTimeEnabled());
   m_checkUsername->setChecked(taiga::settings.discordUsernameEnabled());
+  m_checkGroup->setChecked(taiga::settings.discordGroupEnabled());
   m_checkTime->setEnabled(m_checkEnabled->isChecked());
   m_checkUsername->setEnabled(m_checkEnabled->isChecked());
+  m_checkGroup->setEnabled(m_checkEnabled->isChecked());
 }
 
 void DiscordPage::save() {
   taiga::settings.setDiscordEnabled(m_checkEnabled->isChecked());
   taiga::settings.setDiscordTimeEnabled(m_checkTime->isChecked());
   taiga::settings.setDiscordUsernameEnabled(m_checkUsername->isChecked());
+  taiga::settings.setDiscordGroupEnabled(m_checkGroup->isChecked());
 
   link::discord()->applySettings();
 }
