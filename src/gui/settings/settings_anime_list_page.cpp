@@ -44,25 +44,6 @@ AnimeListPage::AnimeListPage(QWidget* parent)
           new QCheckBox(tr("Display available episodes in library folders"), this)) {
   const auto layout = new QVBoxLayout(this);
 
-  // Appearance
-  {
-    const auto group = new QGroupBox(tr("Appearance"), this);
-    const auto form = new QFormLayout(group);
-
-    m_comboTitleLanguage->addItem(tr("Romaji"), static_cast<int>(anime::TitleLanguage::Romaji));
-    m_comboTitleLanguage->addItem(tr("English"), static_cast<int>(anime::TitleLanguage::English));
-    m_comboTitleLanguage->addItem(tr("Native"), static_cast<int>(anime::TitleLanguage::Native));
-    form->addRow(tr("Title language preference:"), m_comboTitleLanguage);
-
-    form->addRow(tr("Progress bar:"), m_checkShowAired);
-    form->addRow(QString{}, m_checkShowAvailable);
-    form->addRow(QString{}, m_checkHighlight);
-    form->addRow(QString{}, m_checkHighlightedOnTop);
-    connect(m_checkHighlight, &QCheckBox::toggled, m_checkHighlightedOnTop, &QWidget::setEnabled);
-
-    layout->addWidget(group);
-  }
-
   // Actions
   {
     const auto group = new QGroupBox(tr("Actions"), this);
@@ -83,6 +64,33 @@ AnimeListPage::AnimeListPage(QWidget* parent)
     form->addRow(tr("Double click:"), m_comboDoubleClick);
     form->addRow(tr("Middle click:"), m_comboMiddleClick);
 
+    layout->addWidget(group);
+  }
+
+  // Appearance
+  {
+    const auto group = new QGroupBox(tr("Appearance"), this);
+    const auto form = new QFormLayout(group);
+
+    m_comboTitleLanguage->addItem(tr("Romaji"), static_cast<int>(anime::TitleLanguage::Romaji));
+    m_comboTitleLanguage->addItem(tr("English"), static_cast<int>(anime::TitleLanguage::English));
+    m_comboTitleLanguage->addItem(tr("Native"), static_cast<int>(anime::TitleLanguage::Native));
+    form->addRow(tr("Title language preference:"), m_comboTitleLanguage);
+
+    form->addRow(m_checkHighlight);
+    form->addRow(m_checkHighlightedOnTop);
+    m_checkHighlightedOnTop->setContentsMargins(20, 0, 0, 0);
+    connect(m_checkHighlight, &QCheckBox::toggled, m_checkHighlightedOnTop, &QWidget::setEnabled);
+
+    layout->addWidget(group);
+  }
+
+  // Progress
+  {
+    const auto group = new QGroupBox(tr("Progress"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+    groupLayout->addWidget(m_checkShowAired);
+    groupLayout->addWidget(m_checkShowAvailable);
     layout->addWidget(group);
   }
 
