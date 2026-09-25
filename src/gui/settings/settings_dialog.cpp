@@ -55,17 +55,25 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   ui_->treeWidget->setIndentation(0);
 
   // As in v1: a short list of sections, and the pages of a section as tabs.
-  const auto add_section = [this](QString icon, QString text) {
+  const auto add_item = [this](QString icon, QString text, QWidget* widget) {
     auto item = new QTreeWidgetItem(ui_->treeWidget, QStringList(text));
     item->setIcon(0, theme.getIcon(icon));
     item->setSizeHint(0, QSize{0, 32});
+    item->setData(0, Qt::UserRole, ui_->stackedWidget->addWidget(widget));
+  };
+
+  const auto add_section = [this, add_item](QString icon, QString text) {
     auto tabs = new QTabWidget(this);
     tabs->setStyleSheet(u"QTabWidget::tab-bar { alignment: left; }"_s);  // some styles center them
-    item->setData(0, Qt::UserRole, ui_->stackedWidget->addWidget(tabs));
+    add_item(icon, text, tabs);
     return tabs;
   };
 
-  const auto services = add_section("account_circle", "Services");
+  // The accounts page brings its own tabs, one per service.
+  const auto accountsPage = new AccountsPage(this);
+  add_item("account_circle", "Services", accountsPage);
+  accountsPage->load();
+  pages_.push_back(accountsPage);
   const auto library = add_section("folder", "Library");
   const auto application = add_section("web_asset", "Application");
   const auto recognition = add_section("check_circle", "Recognition");
@@ -73,7 +81,6 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   const auto torrents = add_section("rss_feed", "Torrents");
   const auto advanced = add_section("warning", "Advanced");
 
-  addPage(services, "Accounts", new AccountsPage(this));
   addPage(library, "Folders", new LibraryPage(this));
   addPage(application, "Anime list", new AnimeListPage(this));
   addPage(application, "General", new ApplicationPage(this));

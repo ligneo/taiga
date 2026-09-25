@@ -27,6 +27,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QTabWidget>
 #include <QUrl>
 #include <QUrlQuery>
 #include <QVBoxLayout>
@@ -96,48 +97,48 @@ AccountsPage::AccountsPage(QWidget* parent)
       m_myanimelistButton(new QPushButton(this)),
       m_kitsuEmail(new QLineEdit(this)),
       m_kitsuPassword(new QLineEdit(this)) {
+  // v1's Services section: the synchronization settings, then one tab per service.
+  const auto tabs = new QTabWidget(this);
+  tabs->setStyleSheet(u"QTabWidget::tab-bar { alignment: left; }"_s);
   const auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->addWidget(tabs);
 
-  // Synchronization
+  const auto add_tab = [tabs](const QString& title, QGroupBox* group) {
+    const auto page = new QWidget(tabs);
+    const auto pageLayout = new QVBoxLayout(page);
+    pageLayout->addWidget(group);
+    pageLayout->addStretch();
+    tabs->addTab(page, title);
+  };
+
+  // Main
   {
     const auto group = new QGroupBox(tr("Synchronization"), this);
-    const auto form = new QFormLayout(group);
+    const auto groupLayout = new QVBoxLayout(group);
 
     for (const auto id :
          {sync::ServiceId::AniList, sync::ServiceId::Kitsu, sync::ServiceId::MyAnimeList}) {
       m_comboService->addItem(sync::serviceName(id), sync::serviceSlug(id));
     }
-    form->addRow(tr("Active service and metadata provider:"), m_comboService);
-
-    m_checkSyncOnStartup = new QCheckBox(tr("Synchronize automatically at startup"), group);
-    form->addRow(m_checkSyncOnStartup);
+    groupLayout->addWidget(new QLabel(tr("Active service and metadata provider:"), group));
+    groupLayout->addWidget(m_comboService);
 
     const auto note = new QLabel(
         tr("Note: Taiga is unable to synchronize multiple services at the same time."), group);
     note->setWordWrap(true);
-    form->addRow(note);
+    note->setForegroundRole(QPalette::PlaceholderText);
+    groupLayout->addWidget(note);
 
-    layout->addWidget(group);
-  }
+    m_checkSyncOnStartup = new QCheckBox(tr("Synchronize automatically at startup"), group);
+    groupLayout->addWidget(m_checkSyncOnStartup);
 
-  // AniList
-  {
-    const auto group = new QGroupBox(u"AniList"_s, this);
-    const auto form = new QFormLayout(group);
-
-    form->addRow(tr("Account:"), m_anilistStatus);
-    form->addRow(createButtonRow(
-        m_anilistButton,
-        createLink("https://anilist.co", tr("Create a new AniList account"), group)));
-
-    connect(m_anilistButton, &QPushButton::clicked, this, &AccountsPage::authorizeAnilist);
-
-    layout->addWidget(group);
+    add_tab(tr("Main"), group);
   }
 
   // MyAnimeList
   {
-    const auto group = new QGroupBox(u"MyAnimeList"_s, this);
+    const auto group = new QGroupBox(tr("Account"), this);
     const auto form = new QFormLayout(group);
 
     form->addRow(tr("Account:"), m_myanimelistStatus);
@@ -147,12 +148,12 @@ AccountsPage::AccountsPage(QWidget* parent)
 
     connect(m_myanimelistButton, &QPushButton::clicked, this, &AccountsPage::authorizeMyanimelist);
 
-    layout->addWidget(group);
+    add_tab(u"MyAnimeList"_s, group);
   }
 
   // Kitsu
   {
-    const auto group = new QGroupBox(u"Kitsu"_s, this);
+    const auto group = new QGroupBox(tr("Account"), this);
     const auto form = new QFormLayout(group);
 
     m_kitsuPassword->setEchoMode(QLineEdit::Password);
@@ -161,10 +162,23 @@ AccountsPage::AccountsPage(QWidget* parent)
     form->addRow(tr("Password:"), m_kitsuPassword);
     form->addRow(createLink("https://kitsu.app", tr("Create a new Kitsu account"), group));
 
-    layout->addWidget(group);
+    add_tab(u"Kitsu"_s, group);
   }
 
-  layout->addStretch();
+  // AniList
+  {
+    const auto group = new QGroupBox(tr("Account"), this);
+    const auto form = new QFormLayout(group);
+
+    form->addRow(tr("Account:"), m_anilistStatus);
+    form->addRow(createButtonRow(
+        m_anilistButton,
+        createLink("https://anilist.co", tr("Create a new AniList account"), group)));
+
+    connect(m_anilistButton, &QPushButton::clicked, this, &AccountsPage::authorizeAnilist);
+
+    add_tab(u"AniList"_s, group);
+  }
 
   connect(&taiga::accounts, &taiga::Accounts::authenticationChanged, this,
           &AccountsPage::updateStatus);
