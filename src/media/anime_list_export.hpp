@@ -18,11 +18,15 @@
 
 #pragma once
 
+#include <QMap>
 #include <string>
 
 namespace anime::list {
 
 bool exportAsMarkdown(const std::string& path);
-bool exportAsXml(const std::string& path);
+// `malIds` maps the list's IDs to MyAnimeList's, when they are not the same service. Anime without
+// one are left out, since MyAnimeList would turn the whole entry down anyway.
+bool exportAsXml(const std::string& path, const QMap<int, int>* malIds = nullptr,
+                 int* skipped = nullptr);
 
 }  // namespace anime::list

@@ -19,8 +19,6 @@
 #include "list_widget.hpp"
 
 #include <QActionGroup>
-#include <QDateTime>
-#include <QFileDialog>
 #include <QListView>
 #include <QMenu>
 #include <QToolBar>
@@ -33,12 +31,11 @@
 #include "gui/common/anime_list_view_cards.hpp"
 #include "gui/main/main_window.hpp"
 #include "gui/main/navigation_widget.hpp"
-#include "gui/main/status_bar_controller.hpp"
 #include "gui/models/anime_list_model.hpp"
 #include "gui/models/anime_list_proxy_model.hpp"
 #include "gui/utils/theme.hpp"
-#include "media/anime_list_export.hpp"
 #include "taiga/session.hpp"
+#include "ui_main_window.h"
 
 namespace gui {
 
@@ -191,31 +188,12 @@ void ListWidget::initViewMenu() {
 void ListWidget::initMoreMenu() {
   m_moreMenu->clear();
 
-  static constexpr auto export_as = [](QWidget* parent, const QString& extension,
-                                       auto export_function) {
-    const auto directory = QFileDialog::getExistingDirectory(
-        parent, tr("Select Export Location"), {},
-        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
-
-    if (directory.isEmpty()) return;
-
-    const auto timestamp = QDateTime::currentDateTime().toSecsSinceEpoch();
-    const auto path = u"%1/animelist_%2.%3"_s.arg(directory).arg(timestamp).arg(extension);
-    const auto success = export_function(path.toStdString());
-
-    mainWindow()->statusBarController()->showMessage({
-        .source = StatusBarController::Source::Export,
-        .text = success ? tr("Exported list to %1.").arg(path)
-                        : tr("Could not export list to %1.").arg(path),
-        .spin = false,
-    });
-  };
-
+  // The same exports as the List menu, so the MyAnimeList IDs are looked up here too
   m_moreMenu->addAction(tr("Export as Markdown..."), this,
-                        [this]() { export_as(this, "md", &anime::list::exportAsMarkdown); });
+                        []() { mainWindow()->ui()->actionExportListAsMarkdown->trigger(); });
 
   m_moreMenu->addAction(tr("Export as XML..."), this,
-                        [this]() { export_as(this, "xml", &anime::list::exportAsXml); });
+                        []() { mainWindow()->ui()->actionExportListAsMyAnimeListXML->trigger(); });
 }
 
 }  // namespace gui

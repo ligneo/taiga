@@ -18,6 +18,10 @@
 
 #pragma once
 
+#include <QMap>
+#include <functional>
+#include <optional>
+
 #include "sync/service.hpp"
 
 namespace sync::anilist {
@@ -32,6 +36,8 @@ public:
   void setAccessToken(const QString& token);
   void authenticateUser();
   void fetchAnime(const int id);
+  void fetchMalIds(const QList<int>& ids,
+                   const std::function<void(std::optional<QMap<int, int>>)>& done);
   void search(const SearchParams& params, const int page = 1);
   void fetchListEntries();
   void addListEntry(const int id, const anime::list::Fields dirty);

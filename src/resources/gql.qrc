@@ -3,6 +3,7 @@
     <file>gql/anilist/DeleteMediaListEntry.gql</file>
     <file>gql/anilist/Media.gql</file>
     <file>gql/anilist/MediaFragment.gql</file>
+    <file>gql/anilist/MediaIds.gql</file>
     <file>gql/anilist/MediaListCollection.gql</file>
     <file>gql/anilist/MediaListFragment.gql</file>
     <file>gql/anilist/MediaSearch.gql</file>

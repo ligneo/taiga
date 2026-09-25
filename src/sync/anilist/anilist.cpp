@@ -84,6 +84,53 @@ void Service::fetchAnime(const int id) {
   manager_.post(api_.createRequest(), data, this, callback);
 }
 
+// AniList keeps each anime's MyAnimeList ID as `idMal`. Nothing else here stores it, and the export
+// to MyAnimeList's format needs it. A page holds 50, so the IDs go in batches, one after another.
+void Service::fetchMalIds(const QList<int>& ids,
+                          const std::function<void(std::optional<QMap<int, int>>)>& done) {
+  const auto next = [this, done](this auto const& next, QList<int> remaining,
+                                 QMap<int, int> found) -> void {
+    if (remaining.isEmpty()) {
+      done(found);
+      return;
+    }
+
+    const auto batch = remaining.first(std::min<qsizetype>(remaining.size(), 50));
+    remaining.remove(0, batch.size());
+
+    QJsonArray variables;
+    for (const auto id : batch) variables.append(id);
+
+    const QJsonDocument data{{
+        {"query", gql("MediaIds")},
+        {"variables", QJsonObject{{"ids", variables}}},
+    }};
+
+    manager_.post(api_.createRequest(), data, this,
+                  [this, next, remaining, found, done](QRestReply& reply) mutable {
+                    if (isError(reply)) {
+                      handleError(*this, reply);
+                      done(std::nullopt);
+                      return;
+                    }
+                    const auto json = reply.readJson();
+                    if (!json) {
+                      handleError(*this, reply, "Could not parse media IDs.");
+                      done(std::nullopt);
+                      return;
+                    }
+                    for (const auto& value : (*json)["data"]["Page"]["media"].toArray()) {
+                      const auto media = value.toObject();
+                      const auto malId = media["idMal"].toInt();
+                      if (malId > 0) found[media["id"].toInt()] = malId;
+                    }
+                    next(remaining, found);
+                  });
+  };
+
+  next(ids, {});
+}
+
 void Service::search(const SearchParams& params, const int page) {
   QJsonObject variables{{"page", page}};
   if (!params.text.isEmpty()) variables["query"] = params.text;

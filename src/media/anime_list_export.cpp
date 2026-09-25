@@ -73,7 +73,7 @@ bool exportAsMarkdown(const std::string& path) {
   return true;
 }
 
-bool exportAsXml(const std::string& path) {
+bool exportAsXml(const std::string& path, const QMap<int, int>* malIds, int* skipped) {
   constexpr auto format_series_type = [](anime::Type type) {
     // clang-format off
     switch (type) {
@@ -119,8 +119,15 @@ bool exportAsXml(const std::string& path) {
 
   xml.writeStartElement("myanimelist");
 
-  std::map<anime::list::Status, int> status_counts;
+  QList<std::pair<anime::list::Entry, int>> exported;
   for (const auto& entry : anime::db.entries()) {
+    const int id = malIds ? malIds->value(entry.anime_id, 0) : entry.anime_id;
+    if (id > 0) exported.append({entry, id});
+  }
+  if (skipped) *skipped = static_cast<int>(anime::db.entries().count() - exported.size());
+
+  std::map<anime::list::Status, int> status_counts;
+  for (const auto& [entry, id] : exported) {
     ++status_counts[entry.status];
   }
 
@@ -128,7 +135,7 @@ bool exportAsXml(const std::string& path) {
   xml.writeNumberElement("user_id", 0);
   xml.writeTextElement("user_name", taiga::accounts.myanimelistUsername());
   xml.writeNumberElement("user_export_type", 1);  // anime
-  xml.writeNumberElement("user_total_anime", anime::db.entries().count());
+  xml.writeNumberElement("user_total_anime", exported.size());
   xml.writeNumberElement("user_total_watching", status_counts[anime::list::Status::Watching]);
   xml.writeNumberElement("user_total_completed", status_counts[anime::list::Status::Completed]);
   xml.writeNumberElement("user_total_onhold", status_counts[anime::list::Status::OnHold]);
@@ -136,10 +143,10 @@ bool exportAsXml(const std::string& path) {
   xml.writeNumberElement("user_total_plantowatch", status_counts[anime::list::Status::PlanToWatch]);
   xml.writeEndElement();  // myinfo
 
-  for (const auto& entry : anime::db.entries()) {
+  for (const auto& [entry, id] : exported) {
     const auto item = anime::db.item(entry.anime_id);
     xml.writeStartElement("anime");
-    xml.writeNumberElement("series_animedb_id", item->id);  // @TODO: pass actual MAL ID
+    xml.writeNumberElement("series_animedb_id", id);
     xml.writeTextElement("series_title", item->titles.romaji);
     xml.writeTextElement("series_type", format_series_type(item->type));
     xml.writeNumberElement("series_episodes", item->episode_count);

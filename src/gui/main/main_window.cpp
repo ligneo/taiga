@@ -558,26 +558,61 @@ void MainWindow::exportList(const ExportFormat format) {
 
   if (path.isEmpty()) return;
 
-  const auto exported = markdown ? anime::list::exportAsMarkdown(path.toStdString())
-                                 : anime::list::exportAsXml(path.toStdString());
+  const auto report = [this](const QString& text, const bool spin = false) {
+    m_statusBarController->showMessage({
+        .source = StatusBarController::Source::Export,
+        .text = text,
+        .spin = spin,
+    });
+  };
+
+  if (markdown) {
+    report(anime::list::exportAsMarkdown(path.toStdString())
+               ? tr("Exported list to: %1").arg(path)
+               : tr("Could not export list to: %1").arg(path));
+    return;
+  }
+
+  const auto service = sync::currentServiceId();
+
+  // An AniList list knows its MyAnimeList IDs only by asking AniList, so they are looked up first.
+  if (service == sync::ServiceId::AniList) {
+    report(tr("Looking up MyAnimeList IDs..."), true);
+    const auto ids = anime::db.entries() |
+                     std::views::transform([](const auto& entry) { return entry.anime_id; }) |
+                     std::ranges::to<QList>();
+    sync::anilist::Service::instance()->fetchMalIds(
+        ids, [report, path](const std::optional<QMap<int, int>>& malIds) {
+          if (!malIds) {
+            report(tr("Could not look up MyAnimeList IDs, so the list was not exported."));
+            return;
+          }
+          int skipped = 0;
+          if (!anime::list::exportAsXml(path.toStdString(), &*malIds, &skipped)) {
+            report(tr("Could not export list to: %1").arg(path));
+            return;
+          }
+          auto text = tr("Exported list to: %1").arg(path);
+          if (skipped > 0) {
+            text += u" "_s + tr("(%1 anime left out, MyAnimeList does not have them)").arg(skipped);
+          }
+          report(text);
+        });
+    return;
+  }
+
+  const auto exported = anime::list::exportAsXml(path.toStdString());
 
   auto text = exported ? tr("Exported list to: %1").arg(path)
                        : tr("Could not export list to: %1").arg(path);
 
-  // The XML puts the active service's IDs in a MyAnimeList field. Saying so beats handing over a
-  // file that looks importable. See the `@TODO` in `anime_list_export.cpp`.
-  if (exported && !markdown) {
-    if (const auto service = sync::currentServiceId(); service != sync::ServiceId::MyAnimeList) {
-      text +=
-          u" "_s + tr("(anime IDs are %1's, not MyAnimeList's)").arg(sync::serviceName(service));
-    }
+  // Kitsu's IDs would end up in a MyAnimeList field. Saying so beats handing over a file that looks
+  // importable.
+  if (exported && service != sync::ServiceId::MyAnimeList) {
+    text += u" "_s + tr("(anime IDs are %1's, not MyAnimeList's)").arg(sync::serviceName(service));
   }
 
-  m_statusBarController->showMessage({
-      .source = StatusBarController::Source::Export,
-      .text = text,
-      .spin = false,
-  });
+  report(text);
 }
 
 // v1 downloads its NSIS installer and runs it silently (`/S /D=<folder>`) to replace itself. That
