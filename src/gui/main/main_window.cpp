@@ -88,7 +88,8 @@ namespace gui {
 MainWindow::MainWindow() : QMainWindow(), ui_(new Ui::MainWindow) {
   ui_->setupUi(this);
 
-  ui_->menubar->hide();
+  // v1 has a menu bar, so the menu button that stands in for it is not needed.
+  ui_->actionMenu->setVisible(false);
 
 #ifdef Q_OS_WINDOWS
   enableMicaBackground(this);
@@ -840,9 +841,9 @@ void MainWindow::initToolbar() {
       }());
     };
 
+    // v1 keeps the search box at the right end
     insertSpacer(before);
     ui_->toolbar->insertWidget(before, m_searchBox);
-    insertSpacer(before);
   }
 }
 
