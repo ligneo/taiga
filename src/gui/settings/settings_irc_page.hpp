@@ -18,12 +18,14 @@
 
 #pragma once
 
+#include <QString>
+
 #include "gui/settings/settings_page.hpp"
 
 class QCheckBox;
 class QLabel;
 class QLineEdit;
-class QPlainTextEdit;
+class QPushButton;
 class QRadioButton;
 
 namespace gui {
@@ -47,7 +49,8 @@ private:
   QRadioButton* m_radioCustomChannels = nullptr;
   QLineEdit* m_editChannels = nullptr;
   QCheckBox* m_checkUseAction = nullptr;
-  QPlainTextEdit* m_editFormat = nullptr;
+  QPushButton* m_buttonFormat = nullptr;
+  QString m_format;
   QLabel* m_labelStatus = nullptr;
 };
 

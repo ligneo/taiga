@@ -18,11 +18,13 @@
 
 #pragma once
 
+#include <QString>
+
 #include "gui/settings/settings_page.hpp"
 
 class QCheckBox;
 class QLineEdit;
-class QPlainTextEdit;
+class QPushButton;
 
 namespace gui {
 
@@ -40,7 +42,8 @@ public:
 private:
   QCheckBox* m_checkEnabled = nullptr;
   QLineEdit* m_editUrl = nullptr;
-  QPlainTextEdit* m_editFormat = nullptr;
+  QPushButton* m_buttonFormat = nullptr;
+  QString m_format;
 };
 
 }  // namespace gui

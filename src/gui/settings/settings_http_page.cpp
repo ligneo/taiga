@@ -20,9 +20,11 @@
 
 #include <QCheckBox>
 #include <QGroupBox>
+#include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
-#include <QPlainTextEdit>
+#include <QPushButton>
 #include <QVBoxLayout>
 
 #include "taiga/settings.hpp"
@@ -33,48 +35,58 @@ HttpPage::HttpPage(QWidget* parent)
     : SettingsPage(parent),
       m_checkEnabled(new QCheckBox(tr("Send HTTP request"), this)),
       m_editUrl(new QLineEdit(this)),
-      m_editFormat(new QPlainTextEdit(this)) {
+      m_buttonFormat(new QPushButton(tr("Edit format string..."), this)) {
   const auto layout = new QVBoxLayout(this);
 
   const auto group = new QGroupBox(tr("Options"), this);
   const auto groupLayout = new QVBoxLayout(group);
 
   m_editUrl->setPlaceholderText(tr("https://example.com/taiga"));
-  m_editFormat->setMaximumHeight(80);
 
   layout->addWidget(m_checkEnabled);
   groupLayout->addWidget(new QLabel(tr("URL:"), group));
   groupLayout->addWidget(m_editUrl);
-  groupLayout->addWidget(new QLabel(tr("Format string:"), group));
-  groupLayout->addWidget(m_editFormat);
-
-  // v1 runs the body through its script language; only the plain variables are read here.
-  const auto note = new QLabel(
-      tr("Tip: Formatted string will be sent as the body data of a POST request. Variables: "
-         "%title%, %episode%, %total%, %watched%, %score%, %image%, %group%."),
-      group);
-  note->setWordWrap(true);
-  groupLayout->addWidget(note);
+  const auto buttonLayout = new QHBoxLayout();
+  buttonLayout->addWidget(m_buttonFormat);
+  buttonLayout->addStretch();
+  groupLayout->addLayout(buttonLayout);
 
   layout->addWidget(group);
+
+  const auto note = new QLabel(
+      tr("Tip: Formatted string will be sent as the body data of a POST request."), this);
+  note->setWordWrap(true);
+  note->setForegroundRole(QPalette::PlaceholderText);
+  layout->addWidget(note);
   layout->addStretch();
 
+  // v1 runs the body through its script language; only the plain variables are read here.
+  connect(m_buttonFormat, &QPushButton::clicked, this, [this]() {
+    bool ok = false;
+    const auto text = QInputDialog::getMultiLineText(
+        this, tr("Format string"),
+        tr("Variables: %title%, %episode%, %total%, %watched%, %score%, %image%, %group%. Each "
+           "value is percent-encoded."),
+        m_format, &ok);
+    if (ok) m_format = text.trimmed();
+  });
+
   connect(m_checkEnabled, &QCheckBox::toggled, m_editUrl, &QWidget::setEnabled);
-  connect(m_checkEnabled, &QCheckBox::toggled, m_editFormat, &QWidget::setEnabled);
+  connect(m_checkEnabled, &QCheckBox::toggled, m_buttonFormat, &QWidget::setEnabled);
 }
 
 void HttpPage::load() {
   m_checkEnabled->setChecked(taiga::settings.httpShareEnabled());
   m_editUrl->setText(QString::fromStdString(taiga::settings.httpShareUrl()));
-  m_editFormat->setPlainText(QString::fromStdString(taiga::settings.httpShareFormat()));
+  m_format = QString::fromStdString(taiga::settings.httpShareFormat());
   m_editUrl->setEnabled(m_checkEnabled->isChecked());
-  m_editFormat->setEnabled(m_checkEnabled->isChecked());
+  m_buttonFormat->setEnabled(m_checkEnabled->isChecked());
 }
 
 void HttpPage::save() {
   taiga::settings.setHttpShareEnabled(m_checkEnabled->isChecked());
   taiga::settings.setHttpShareUrl(m_editUrl->text().trimmed().toStdString());
-  taiga::settings.setHttpShareFormat(m_editFormat->toPlainText().trimmed().toStdString());
+  taiga::settings.setHttpShareFormat(m_format.toStdString());
 }
 
 }  // namespace gui

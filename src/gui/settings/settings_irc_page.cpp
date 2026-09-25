@@ -20,9 +20,11 @@
 
 #include <QCheckBox>
 #include <QGroupBox>
+#include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
-#include <QPlainTextEdit>
+#include <QPushButton>
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <initializer_list>
@@ -41,37 +43,64 @@ IrcPage::IrcPage(QWidget* parent)
       m_radioCustomChannels(new QRadioButton(tr("Custom: (separate by a comma)"), this)),
       m_editChannels(new QLineEdit(this)),
       m_checkUseAction(new QCheckBox(tr("Use \"/me\" action"), this)),
-      m_editFormat(new QPlainTextEdit(this)),
+      m_buttonFormat(new QPushButton(tr("Edit format string..."), this)),
       m_labelStatus(new QLabel(this)) {
   const auto layout = new QVBoxLayout(this);
-
-  const auto group = new QGroupBox(tr("Options"), this);
-  const auto groupLayout = new QVBoxLayout(group);
-
-  m_editChannels->setPlaceholderText(tr("#kitsu, #myanimelist, #taiga"));
-  m_editFormat->setMaximumHeight(80);
-  m_labelStatus->setWordWrap(true);
-
   layout->addWidget(m_checkEnabled);
-  groupLayout->addWidget(m_labelStatus);
-  groupLayout->addWidget(m_radioAllChannels);
-  groupLayout->addWidget(m_radioCustomChannels);
-  groupLayout->addWidget(m_editChannels);
-  groupLayout->addWidget(m_checkUseAction);
-  groupLayout->addWidget(new QLabel(tr("Format string:"), group));
-  groupLayout->addWidget(m_editFormat);
+
+  // Laid out as v1's mIRC page: options, the client, then where to send
+  {
+    const auto group = new QGroupBox(tr("Options"), this);
+    const auto groupLayout = new QHBoxLayout(group);
+    groupLayout->addWidget(m_buttonFormat);
+    groupLayout->addStretch();
+    groupLayout->addWidget(m_checkUseAction);
+    layout->addWidget(group);
+  }
+
+  {
+    const auto group = new QGroupBox(tr("Service"), this);
+    const auto groupLayout = new QHBoxLayout(group);
+    m_labelStatus->setWordWrap(true);
+    groupLayout->addWidget(m_labelStatus, 1);
+    const auto buttonTest = new QPushButton(tr("Test connection"), group);
+    groupLayout->addWidget(buttonTest, 0, Qt::AlignTop);
+    connect(buttonTest, &QPushButton::clicked, this, &IrcPage::updateStatus);
+    layout->addWidget(group);
+  }
+
+  {
+    const auto group = new QGroupBox(tr("Channels to send message"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+    m_editChannels->setPlaceholderText(tr("#kitsu, #myanimelist, #taiga"));
+    groupLayout->addWidget(m_radioAllChannels);
+    groupLayout->addWidget(m_radioCustomChannels);
+    const auto nested = new QVBoxLayout();
+    nested->setContentsMargins(20, 0, 0, 0);
+    nested->addWidget(m_editChannels);
+    groupLayout->addLayout(nested);
+    layout->addWidget(group);
+  }
 
   // The colour codes in the default message are the ones v1 uses, and mIRC before it.
   const auto note = new QLabel(
-      tr("Note: Messages are sent through Konversation, to channels you have joined."), group);
+      tr("Note: Messages are sent through Konversation, to channels you have joined."), this);
   note->setWordWrap(true);
-  groupLayout->addWidget(note);
-
-  layout->addWidget(group);
+  note->setForegroundRole(QPalette::PlaceholderText);
+  layout->addWidget(note);
   layout->addStretch();
 
+  connect(m_buttonFormat, &QPushButton::clicked, this, [this]() {
+    bool ok = false;
+    const auto text = QInputDialog::getMultiLineText(
+        this, tr("Format string"),
+        tr("The message understands the same variables and functions as the notification."),
+        m_format, &ok);
+    if (ok) m_format = text.trimmed();
+  });
+
   const std::initializer_list<QWidget*> dependents{m_radioAllChannels, m_radioCustomChannels,
-                                                   m_checkUseAction, m_editFormat};
+                                                   m_checkUseAction, m_buttonFormat};
   for (const auto widget : dependents) {
     connect(m_checkEnabled, &QCheckBox::toggled, widget, &QWidget::setEnabled);
   }
@@ -86,7 +115,7 @@ void IrcPage::load() {
   m_checkEnabled->setChecked(taiga::settings.ircShareEnabled());
   m_editChannels->setText(QString::fromStdString(taiga::settings.ircShareChannels()));
   m_checkUseAction->setChecked(taiga::settings.ircShareUseAction());
-  m_editFormat->setPlainText(QString::fromStdString(taiga::settings.ircShareFormat()));
+  m_format = QString::fromStdString(taiga::settings.ircShareFormat());
 
   if (taiga::settings.ircShareAllChannels()) {
     m_radioAllChannels->setChecked(true);
@@ -101,7 +130,7 @@ void IrcPage::load() {
   m_radioCustomChannels->setEnabled(enabled);
   m_editChannels->setEnabled(enabled && m_radioCustomChannels->isChecked());
   m_checkUseAction->setEnabled(enabled);
-  m_editFormat->setEnabled(enabled);
+  m_buttonFormat->setEnabled(enabled);
 }
 
 void IrcPage::save() {
@@ -109,7 +138,7 @@ void IrcPage::save() {
   taiga::settings.setIrcShareAllChannels(m_radioAllChannels->isChecked());
   taiga::settings.setIrcShareChannels(m_editChannels->text().trimmed().toStdString());
   taiga::settings.setIrcShareUseAction(m_checkUseAction->isChecked());
-  taiga::settings.setIrcShareFormat(m_editFormat->toPlainText().trimmed().toStdString());
+  taiga::settings.setIrcShareFormat(m_format.toStdString());
 }
 
 // Nothing is sent to a client that is not running, so the page says whether one was found.
