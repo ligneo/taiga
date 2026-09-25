@@ -19,10 +19,12 @@
 #include "anime_list_view_base.hpp"
 
 #include <QDesktopServices>
+#include <QKeyEvent>
 #include <QLineEdit>
 #include <QListView>
 #include <QTreeView>
 #include <QUrl>
+#include <memory>
 
 #include "gui/main/main_window.hpp"
 #include "gui/main/navigation_item_delegate.hpp"
@@ -36,6 +38,7 @@
 #include "gui/utils/format.hpp"
 #include "media/anime.hpp"
 #include "media/anime_list.hpp"
+#include "media/anime_list_utils.hpp"
 #include "media/anime_utils.hpp"
 #include "sync/service.hpp"
 #include "taiga/settings.hpp"
@@ -106,9 +109,9 @@ void ListViewBase::showMediaDialog(const QModelIndex& index) {
   MediaDialog::show(mainWindow(), MediaDialogPage::Details, *anime);
 }
 
-void ListViewBase::showMediaMenu() {
+MediaMenu* ListViewBase::createMediaMenu() {
   const auto indexes = selectedIndexes();
-  if (indexes.isEmpty()) return;
+  if (indexes.isEmpty()) return nullptr;
 
   QList<Anime> items;
   QMap<int, ListEntry> entries;
@@ -123,8 +126,79 @@ void ListViewBase::showMediaMenu() {
     }
   }
 
-  auto* menu = new MediaMenu(m_view, items, entries, m_view->selectionModel(), m_context);
-  menu->popup();
+  return new MediaMenu(m_view, items, entries, m_view->selectionModel(), m_context);
+}
+
+void ListViewBase::showMediaMenu() {
+  if (const auto menu = createMediaMenu()) menu->popup();
+}
+
+// v1's keys on the anime list. Each one does what the matching menu entry does, confirmation
+// included, so the keyboard cannot reach anything the menu would not.
+bool ListViewBase::handleKeyPress(const QKeyEvent* event) {
+  const auto current = m_view->currentIndex();
+  const auto key = event->key();
+  const bool control = event->modifiers() & Qt::ControlModifier;
+
+  // Enter acts like a double click
+  if ((key == Qt::Key_Return || key == Qt::Key_Enter) && !control) {
+    if (current.isValid()) triggerClickAction(current, taiga::settings.listDoubleClickAction());
+    return true;
+  }
+
+  const auto withMenu = [this](auto&& action) {
+    const std::unique_ptr<MediaMenu> menu{createMediaMenu()};
+    if (menu) action(*menu);
+    return true;
+  };
+
+  if (key == Qt::Key_Delete && !control && m_context == AnimeListContext::List) {
+    return withMenu([](const MediaMenu& menu) { menu.removeFromList(); });
+  }
+
+  if (!control) return false;
+
+  switch (key) {
+    case Qt::Key_C:
+      return withMenu([](const MediaMenu& menu) { menu.copyTitles(); });
+    case Qt::Key_O:
+      return withMenu([](const MediaMenu& menu) { menu.openFolder(); });
+    case Qt::Key_Plus:
+    case Qt::Key_Equal:
+      changeEpisode(current, 1);
+      return true;
+    case Qt::Key_Minus:
+      changeEpisode(current, -1);
+      return true;
+  }
+
+  if (key >= Qt::Key_0 && key <= Qt::Key_9 && m_context == AnimeListContext::List) {
+    const int score = (key - Qt::Key_0) * 10;
+    return withMenu([score](const MediaMenu& menu) { menu.editScore(score); });
+  }
+
+  return false;
+}
+
+// v1's `IncrementEpisode` and `DecrementEpisode`, for the item that has the focus
+void ListViewBase::changeEpisode(const QModelIndex& index, const int step) {
+  if (!index.isValid() || m_context != AnimeListContext::List) return;
+
+  const auto sourceIndex = m_proxyModel->mapToSource(index);
+  const auto item = m_model->getAnime(sourceIndex);
+  const auto entry = m_model->getListEntry(sourceIndex);
+  if (!item || !anime::list::isInList(entry)) return;
+
+  const int number = entry->watched_episodes + step;
+  if (number < 0 || (item->episode_count > 0 && number > item->episode_count)) return;
+
+  if (step > 0) {
+    anime::list::save(anime::list::entryWithEpisodeWatched(*item, entry, number));
+  } else {
+    auto updated = *entry;
+    updated.watched_episodes = number;
+    anime::list::save(updated);
+  }
 }
 
 void ListViewBase::updateSelectionStatus(const QItemSelection&, const QItemSelection&) {

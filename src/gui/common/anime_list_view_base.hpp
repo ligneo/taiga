@@ -29,6 +29,7 @@ namespace gui {
 
 class AnimeListModel;
 class AnimeListProxyModel;
+class MediaMenu;
 
 enum class ListViewMode {
   List,
@@ -48,6 +49,8 @@ public:
     return m_context;
   }
 
+  bool handleKeyPress(const QKeyEvent* event);
+
 public slots:
   void filterByText(const QString& text);
   void openAnimePage(const QModelIndex& index);
@@ -58,6 +61,8 @@ public slots:
   void updateSelectionStatus(const QItemSelection& selected, const QItemSelection& deselected);
 
 private:
+  MediaMenu* createMediaMenu();
+  void changeEpisode(const QModelIndex& index, const int step);
   QModelIndexList selectedIndexes();
 
   AnimeListModel* m_model = nullptr;

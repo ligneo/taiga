@@ -134,13 +134,7 @@ ListView::ListView(QWidget* parent, AnimeListModel* model, AnimeListProxyModel* 
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
-  if (event->key() == Qt::Key::Key_Return || event->key() == Qt::Key::Key_Enter) {
-    const auto indexes = selectionModel()->selectedRows();
-    for (const auto& index : indexes) {
-      m_base->showMediaDialog(index);
-    }
-    return;
-  }
+  if (m_base->handleKeyPress(event)) return;
 
   QTreeView::keyPressEvent(event);
 }

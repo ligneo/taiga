@@ -46,13 +46,7 @@ ListViewCards::ListViewCards(QWidget* parent, AnimeListModel* model,
 }
 
 void ListViewCards::keyPressEvent(QKeyEvent* event) {
-  if (event->key() == Qt::Key::Key_Return || event->key() == Qt::Key::Key_Enter) {
-    const auto indexes = selectionModel()->selectedIndexes();
-    for (const auto& index : indexes) {
-      m_base->showMediaDialog(index);
-    }
-    return;
-  }
+  if (m_base->handleKeyPress(event)) return;
 
   QListView::keyPressEvent(event);
 }

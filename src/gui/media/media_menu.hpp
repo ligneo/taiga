@@ -40,18 +40,19 @@ public:
   ~MediaMenu() = default;
 
   void popup();
+  void copyTitles() const;
+  void editScore(int value) const;
   void openFolder() const;
+  void removeFromList() const;
 
 private slots:
   void addToList(const anime::list::Status status) const;
   void clearDateCompleted() const;
   void clearDateStarted() const;
   void copyLinks() const;
-  void copyTitles() const;
   void edit() const;
   void editEpisode() const;
   void editNotes() const;
-  void editScore(int value) const;
   void editStatus(const anime::list::Status status) const;
   void matchNowPlaying() const;
 
@@ -59,7 +60,6 @@ private slots:
   void playRandomEpisode() const;
   void refresh() const;
   void scanEpisodes() const;
-  void removeFromList() const;
   void search() const;
   void searchAniDB() const;
   void searchAniList() const;
