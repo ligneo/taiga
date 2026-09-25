@@ -60,6 +60,12 @@ class MainWindow final : public QMainWindow {
   friend class NavigationController;
 
 public:
+  enum class ShareChannel {
+    Discord,
+    Http,
+    Irc,
+  };
+
   MainWindow();
   ~MainWindow() = default;
 
@@ -70,6 +76,7 @@ public:
   Ui::MainWindow* ui() const;
 
   void init();
+  void announceCurrentEpisode(const ShareChannel channel);
 
 public slots:
   void addNewFolder();
@@ -82,6 +89,7 @@ private slots:
   void about();
   void notifyEpisodeDetected(std::optional<track::Episode> episode);
   void shareEpisode(const std::optional<track::Episode>& episode) const;
+  void updateDiscordPresence(const track::Episode& episode, const bool force) const;
   void donate() const;
   void support() const;
   void synchronize();
@@ -94,6 +102,7 @@ protected:
 private:
   void initActions();
   void initShortcuts();
+  void initShareMenu();
   void initIcons();
   void initNavigation();
   void initNowPlaying();

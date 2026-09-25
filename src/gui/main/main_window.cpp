@@ -130,6 +130,7 @@ Ui::MainWindow* MainWindow::ui() const {
 void MainWindow::init() {
   initActions();
   initShortcuts();
+  initShareMenu();
   initIcons();
   initTrayIcon();
   initToolbar();
@@ -154,6 +155,25 @@ void MainWindow::initShortcuts() {
           [this]() { m_navigationController->cycleListStatus(1); });
   connect(new QShortcut(QKeySequence{Qt::CTRL | Qt::SHIFT | Qt::Key_Backtab}, this),
           &QShortcut::activated, this, [this]() { m_navigationController->cycleListStatus(-1); });
+}
+
+// v1's "Announce current episode" submenu, in the same List menu
+void MainWindow::initShareMenu() {
+  const auto menu = new QMenu(tr("Share current episode"), this);
+  menu->addAction(u"Discord"_s, this, [this]() { announceCurrentEpisode(ShareChannel::Discord); });
+  menu->addAction(u"HTTP"_s, this, [this]() { announceCurrentEpisode(ShareChannel::Http); });
+#ifdef Q_OS_LINUX
+  menu->addAction(u"IRC"_s, this, [this]() { announceCurrentEpisode(ShareChannel::Irc); });
+#endif
+
+  ui_->menuList->insertMenu(ui_->menuExport->menuAction(), menu);
+  ui_->menuList->insertSeparator(ui_->menuExport->menuAction());
+
+  // Only something recognized can be shared, as in v1
+  connect(ui_->menuList, &QMenu::aboutToShow, this, [menu]() {
+    const auto episode = track::media::detection()->getCurrentEpisode();
+    menu->setEnabled(episode && episode->animeId() != anime::kUnknownId);
+  });
 }
 
 void MainWindow::initActions() {
@@ -308,23 +328,56 @@ void MainWindow::shareEpisode(const std::optional<track::Episode>& episode) cons
     return;
   }
 
-  const auto item = anime::db.item(episode->animeId());
-  const auto title = item ? QString::fromStdString(anime::preferredTitle(*item))
-                          : QString::fromStdString(episode->element(anitomy::ElementKind::Title));
-
   link::http::announce(*episode);
 #ifdef Q_OS_LINUX
   link::irc::announce(*episode);
 #endif
+  updateDiscordPresence(*episode, false);
+}
 
-  // v1 shares what is playing over Discord's rich presence.
+void MainWindow::updateDiscordPresence(const track::Episode& episode, const bool force) const {
+  const auto item = anime::db.item(episode.animeId());
+  const auto title = item ? QString::fromStdString(anime::preferredTitle(*item))
+                          : QString::fromStdString(episode.element(anitomy::ElementKind::Title));
+
   // The same lines as v1: "Episode 5/12 by Group", the group being optional.
   auto state = u"$if(%episode%,Episode %episode%$if(%total%,/%total%) )"_s;
   if (taiga::settings.discordGroupEnabled()) state += u"$if(%group%,by %group%)"_s;
 
-  link::discord()->updatePresence(title, taiga::replaceVariables(state, *episode),
+  // v1 shares what is playing over Discord's rich presence.
+  link::discord()->updatePresence(title, taiga::replaceVariables(state, episode),
                                   item ? QString::fromStdString(item->image_url) : QString{},
-                                  std::time(nullptr));
+                                  std::time(nullptr), force);
+}
+
+// v1's "Announce current episode" menu: shares on one channel on request, even when that channel
+// or sharing as a whole is turned off. Unlike v1 it still keeps private entries to itself.
+void MainWindow::announceCurrentEpisode(const ShareChannel channel) {
+  const auto episode = track::media::detection()->getCurrentEpisode();
+  if (!episode || episode->animeId() == anime::kUnknownId) return;
+
+  if (const auto entry = anime::db.entry(episode->animeId()); entry && entry->is_private) {
+    m_statusBarController->showMessage({
+        .source = StatusBarController::Source::Playback,
+        .text = tr("This anime is private on your list, so it is not shared."),
+        .spin = false,
+    });
+    return;
+  }
+
+  switch (channel) {
+    case ShareChannel::Discord:
+      updateDiscordPresence(*episode, true);
+      break;
+    case ShareChannel::Http:
+      link::http::announce(*episode, true);
+      break;
+    case ShareChannel::Irc:
+#ifdef Q_OS_LINUX
+      link::irc::announce(*episode, true);
+#endif
+      break;
+  }
 }
 
 void MainWindow::initPage(MainWindowPage page) {

@@ -37,7 +37,7 @@ public:
 
   void applySettings();
   void updatePresence(QString details, QString state, const QString& largeImage,
-                      const std::time_t timestamp);
+                      const std::time_t timestamp, const bool force = false);
   void clearPresence();
 
 private:

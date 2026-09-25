@@ -34,6 +34,7 @@ bool isRunning();
 QStringList connections();
 QStringList joinedChannels(const QString& connection);
 
-void announce(const track::Episode& episode);
+// `force` shares even when the channel is turned off: v1 does that when asked from the menu.
+void announce(const track::Episode& episode, const bool force = false);
 
 }  // namespace link::irc

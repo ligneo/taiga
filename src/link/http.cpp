@@ -31,8 +31,8 @@ namespace link::http {
 
 using namespace Qt::StringLiterals;
 
-void announce(const track::Episode& episode) {
-  if (!taiga::settings.httpShareEnabled()) return;
+void announce(const track::Episode& episode, const bool force) {
+  if (!force && !taiga::settings.httpShareEnabled()) return;
 
   const auto url = QString::fromStdString(taiga::settings.httpShareUrl());
 

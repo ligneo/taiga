@@ -102,8 +102,8 @@ QStringList joinedChannels(const QString& connection) {
   return callForList(u"listJoinedChannels"_s, {connection});
 }
 
-void announce(const track::Episode& episode) {
-  if (!taiga::settings.ircShareEnabled()) return;
+void announce(const track::Episode& episode, const bool force) {
+  if (!force && !taiga::settings.ircShareEnabled()) return;
   if (!isRunning()) return;
 
   const auto message =
