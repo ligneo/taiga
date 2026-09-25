@@ -43,6 +43,7 @@ public:
   void scan(const int animeId);
   void applyWatchSettings();
 
+  bool hasScanned() const;
   int availableEpisodeCount(const int animeId) const;
   int lastAvailableEpisode(const int animeId) const;
   bool isEpisodeAvailable(const int animeId, const int number) const;
@@ -61,6 +62,7 @@ private:
   std::unordered_map<int, std::map<int, QString>> episodes_;
   QFileSystemWatcher* watcher_ = nullptr;
   QTimer* rescanTimer_ = nullptr;
+  bool scanned_ = false;
 };
 
 inline Library* library() {

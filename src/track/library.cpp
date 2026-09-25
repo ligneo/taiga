@@ -81,6 +81,7 @@ void Library::scan() {
   }
 
   episodes_ = std::move(episodes);
+  scanned_ = true;
 
   qInfo() << "Found" << episodeCount << "episodes of" << episodes_.size() << "anime";
 
@@ -125,6 +126,11 @@ void Library::scan(const int animeId) {
 int Library::availableEpisodeCount(const int animeId) const {
   const auto it = episodes_.find(animeId);
   return it != episodes_.end() ? static_cast<int>(it->second.size()) : 0;
+}
+
+// Until the library folders have been scanned once, nothing is known to be missing either.
+bool Library::hasScanned() const {
+  return scanned_;
 }
 
 int Library::lastAvailableEpisode(const int animeId) const {

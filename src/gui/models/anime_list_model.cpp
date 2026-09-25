@@ -98,7 +98,7 @@ QString progressTooltip(const Anime& item, const ListEntry* entry) {
     }
   }
 
-  if (count > 0) {
+  if (count > 0 && library->hasScanned()) {
     if (missing.size() == 1 && missing.front() == std::pair{1, count}) {
       lines.append(QCoreApplication::translate("gui", "All episodes are missing"));
     } else if (missing.isEmpty()) {
