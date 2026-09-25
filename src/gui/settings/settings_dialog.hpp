@@ -36,6 +36,7 @@ class SettingsPage;
 enum class SettingsPageId {
   Accounts,
   Library,
+  TorrentFilters,
 };
 
 class SettingsDialog final : public QDialog {

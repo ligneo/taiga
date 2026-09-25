@@ -160,6 +160,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   items_ = {
       {SettingsPageId::Accounts, accountsItem},
       {SettingsPageId::Library, libraryItem},
+      {SettingsPageId::TorrentFilters, torrentFiltersItem},
   };
 
   setCurrentPage(SettingsPageId::Accounts);

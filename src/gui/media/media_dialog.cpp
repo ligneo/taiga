@@ -20,12 +20,16 @@
 
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QInputDialog>
+#include <QLabel>
+#include <QLineEdit>
 #include <QResizeEvent>
 #include <QUrl>
 #include <algorithm>
 
 #include "base/string.hpp"
 #include "gui/common/poster_widget.hpp"
+#include "gui/settings/settings_dialog.hpp"
 #include "gui/utils/format.hpp"
 #include "gui/utils/image_provider.hpp"
 #include "gui/utils/rating.hpp"
@@ -37,6 +41,7 @@
 #include "media/anime_utils.hpp"
 #include "sync/service.hpp"
 #include "taiga/session.hpp"
+#include "track/feed_filter_manager.hpp"
 #include "ui_media_dialog.h"
 
 #ifdef Q_OS_WINDOWS
@@ -391,6 +396,44 @@ void MediaDialog::initSettings() {
   ui_->recognitionTitles->setPlainText(synonyms.join("\n"));
 
   ui_->libraryFolder->setText(QString::fromStdString(m_settings.folder));
+
+  refreshFansubPreference();
+}
+
+// v1's "Fansub group preference" line, shortened to fit the page. A single group is edited in
+// place; several of them can only be told apart on the filters page, so that is where the link goes
+// then, as in v1.
+void MediaDialog::refreshFansubPreference() {
+  if (!m_labelFansub) {
+    m_labelFansub = new QLabel(this);
+    m_labelFansub->setTextFormat(Qt::RichText);
+    m_labelFansub->setWordWrap(true);
+    ui_->libraryFolder->parentWidget()->layout()->addWidget(m_labelFansub);
+    connect(m_labelFansub, &QLabel::linkActivated, this, [this]() {
+      const auto groups = track::filterManager.fansubFilter(m_anime.id);
+      if (groups.size() > 1) {
+        SettingsDialog::show(this, SettingsPageId::TorrentFilters);
+        return;
+      }
+      const auto current = groups.empty() ? QString{} : QString::fromStdString(groups.front());
+      bool ok = false;
+      const auto text =
+          QInputDialog::getText(this, QString::fromStdString(anime::preferredTitle(m_anime)),
+                                tr("Please enter your fansub group preference for this title:"),
+                                QLineEdit::Normal, current, &ok);
+      if (!ok || text.trimmed() == current) return;
+      track::filterManager.setFansubFilter(m_anime.id, text.trimmed().toStdString(), {});
+      refreshFansubPreference();
+    });
+  }
+
+  QStringList groups;
+  for (const auto& group : track::filterManager.fansubFilter(m_anime.id)) {
+    groups.append(u"\"%1\""_s.arg(QString::fromStdString(group).toHtmlEscaped()));
+  }
+
+  m_labelFansub->setText(tr("Fansub group: %1 <a href=\"#\">(Change)</a>")
+                             .arg(groups.isEmpty() ? tr("None") : groups.join(tr(" or "))));
 }
 
 void MediaDialog::loadPosterImage() {

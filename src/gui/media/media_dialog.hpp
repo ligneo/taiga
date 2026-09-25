@@ -28,6 +28,8 @@
 class QResizeEvent;
 class QShowEvent;
 
+class QLabel;
+
 namespace Ui {
 class MediaDialog;
 }
@@ -65,10 +67,12 @@ private:
   void initDetails();
   void initList();
   void initSettings();
+  void refreshFansubPreference();
   void loadPosterImage();
   void resizePosterImage();
 
   Ui::MediaDialog* ui_ = nullptr;
+  QLabel* m_labelFansub = nullptr;
 
   Anime m_anime;
   std::optional<ListEntry> m_entry;
