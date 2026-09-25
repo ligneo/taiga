@@ -48,7 +48,7 @@ void paintEmptyListText(QAbstractScrollArea* area, const QString& text) {
 }
 
 void paintProgressBar(QPainter* painter, const QStyleOption& option, const Anime* anime,
-                      const ListEntry* entry) {
+                      const ListEntry* entry, const bool textOutside) {
   if (!anime || !entry) return;
 
   const int episodes = anime->episode_count;
@@ -56,10 +56,23 @@ void paintProgressBar(QPainter* painter, const QStyleOption& option, const Anime
                                  episodes > 0 ? episodes : std::numeric_limits<int>::max());
   const auto text = u"%1/%2"_s.arg(watched).arg(formatNumber(episodes, "?"));
 
+  auto barRect = option.rect;
+  if (textOutside) {
+    const auto textWidth = option.fontMetrics.horizontalAdvance(u"000/000"_s) + 8;
+    auto textRect = option.rect;
+    textRect.setLeft(option.rect.right() - textWidth);
+    painter->setPen(option.palette.color(QPalette::ColorRole::Text));
+    painter->drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, text);
+    barRect.setRight(textRect.left() - 4);
+    const auto height = std::max(8, option.rect.height() * 3 / 5);
+    barRect.setTop(option.rect.center().y() - height / 2);
+    barRect.setHeight(height);
+  }
+
   QStyleOptionProgressBar styleOption{};
   styleOption.state = option.state | QStyle::State_Horizontal;
   styleOption.direction = option.direction;
-  styleOption.rect = option.rect;
+  styleOption.rect = barRect;
   styleOption.palette = option.palette;
   styleOption.palette.setCurrentColorGroup(QPalette::ColorGroup::Active);
   styleOption.palette.setColor(QPalette::ColorRole::Highlight, theme.isDark()
@@ -71,7 +84,7 @@ void paintProgressBar(QPainter* painter, const QStyleOption& option, const Anime
   styleOption.progress = static_cast<int>(anime::list::getProgressRatio(anime, entry) * 100);
   styleOption.text = text;
   styleOption.textAlignment = Qt::AlignCenter;
-  styleOption.textVisible = true;
+  styleOption.textVisible = !textOutside;
 
   static const auto proxyStyle{new QProxyStyle{"fusion"}};
   proxyStyle->drawControl(QStyle::CE_ProgressBar, &styleOption, painter);
@@ -82,9 +95,9 @@ void paintProgressBar(QPainter* painter, const QStyleOption& option, const Anime
 
   const auto band = [&](const int from, const int to, const QColor& color) {
     if (to <= from) return;
-    const auto width = static_cast<double>(option.rect.width()) / episodes;
-    QRectF rect{option.rect};
-    rect.setLeft(option.rect.left() + width * from);
+    const auto width = static_cast<double>(barRect.width()) / episodes;
+    QRectF rect{barRect};
+    rect.setLeft(barRect.left() + width * from);
     rect.setWidth(width * (to - from));
     painter->fillRect(rect, color);
   };

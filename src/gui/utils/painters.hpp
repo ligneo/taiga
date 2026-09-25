@@ -39,8 +39,9 @@ constexpr qreal kSpinnerDegreesPerTick = 12.0;
 
 void paintEmptyListText(QAbstractScrollArea* widget, const QString& text);
 
+// With `textOutside`, the numbers sit to the right of a thinner bar, as in v1's list.
 void paintProgressBar(QPainter* painter, const QStyleOption& option, const anime::Details* anime,
-                      const anime::list::Entry* entry);
+                      const anime::list::Entry* entry, const bool textOutside = false);
 
 // Draws `pixmap` rotated by `angle` degrees around `center`.
 void paintSpinner(QPainter* painter, const QPixmap& pixmap, const QPointF& center, qreal angle);

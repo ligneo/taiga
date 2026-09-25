@@ -133,7 +133,7 @@ void ListItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opti
           index.data(static_cast<int>(AnimeListItemDataRole::ListEntry)).value<const ListEntry*>();
       QStyleOptionViewItem progressOption = opt;
       progressOption.rect.adjust(2, 2, -2, -2);
-      paintProgressBar(painter, progressOption, anime, entry);
+      paintProgressBar(painter, progressOption, anime, entry, /*textOutside=*/true);
       return;
     }
   }
