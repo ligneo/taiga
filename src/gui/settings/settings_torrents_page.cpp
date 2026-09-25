@@ -98,14 +98,6 @@ TorrentsPage::TorrentsPage(QWidget* parent)
     groupLayout->addWidget(m_radioNotify);
     groupLayout->addWidget(m_radioDownload);
 
-    const auto note = new QLabel(
-        tr("An episode counts as new when it belongs to an anime on your list and goes beyond what "
-           "you have watched. Downloading takes the torrents your filters marked, so it does "
-           "nothing while filters are turned off."),
-        group);
-    note->setWordWrap(true);
-    groupLayout->addWidget(note);
-
     layout->addWidget(group);
   }
 

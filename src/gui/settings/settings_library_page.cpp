@@ -41,8 +41,9 @@ LibraryPage::LibraryPage(QWidget* parent)
     : SettingsPage(parent),
       m_listFolders(new QListWidget(this)),
       m_buttonRemove(new QPushButton(tr("Remove"), this)),
-      m_checkWatch(new QCheckBox(tr("Watch library folders for changes"), this)),
-      m_checkScanOnStartup(new QCheckBox(tr("Scan available episodes on startup"), this)) {
+      m_checkWatch(new QCheckBox(tr("Detect new files and folders under library folders"), this)),
+      m_checkScanOnStartup(
+          new QCheckBox(tr("Scan library folders for available episodes at startup"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Library folders
@@ -50,10 +51,8 @@ LibraryPage::LibraryPage(QWidget* parent)
     const auto group = new QGroupBox(tr("Library folders"), this);
     const auto groupLayout = new QVBoxLayout(group);
 
-    groupLayout->addWidget(new QLabel(
-        tr("These folders will be scanned for available episodes. You can drag and drop folders "
-           "here."),
-        group));
+    groupLayout->addWidget(
+        new QLabel(tr("These folders will be scanned and monitored for new episodes."), group));
 
     m_listFolders->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_listFolders->setAcceptDrops(true);
@@ -62,10 +61,12 @@ LibraryPage::LibraryPage(QWidget* parent)
 
     const auto buttonLayout = new QHBoxLayout();
     const auto buttonAdd = new QPushButton(tr("Add new..."), group);
+    buttonLayout->addWidget(new QLabel(tr("Tip: You can drag and drop folders here."), group));
+    buttonLayout->addStretch();
     buttonLayout->addWidget(buttonAdd);
     buttonLayout->addWidget(m_buttonRemove);
-    buttonLayout->addStretch();
     groupLayout->addLayout(buttonLayout);
+    groupLayout->addWidget(m_checkScanOnStartup);
 
     connect(buttonAdd, &QPushButton::clicked, this, &LibraryPage::addFolder);
     connect(m_buttonRemove, &QPushButton::clicked, this, &LibraryPage::removeFolder);
@@ -75,20 +76,12 @@ LibraryPage::LibraryPage(QWidget* parent)
     layout->addWidget(group);
   }
 
-  // Behavior
+  // Real-time monitor
   {
-    const auto group = new QGroupBox(tr("Behavior"), this);
+    const auto group = new QGroupBox(tr("Real-time monitor"), this);
     const auto groupLayout = new QVBoxLayout(group);
 
-    groupLayout->addWidget(m_checkScanOnStartup);
     groupLayout->addWidget(m_checkWatch);
-
-    const auto note = new QLabel(
-        tr("Taiga is told which folder changed, not which file, so it scans the library again "
-           "after a change."),
-        group);
-    note->setWordWrap(true);
-    groupLayout->addWidget(note);
 
     layout->addWidget(group);
   }

@@ -30,24 +30,21 @@ namespace gui {
 
 DiscordPage::DiscordPage(QWidget* parent)
     : SettingsPage(parent),
-      m_checkEnabled(new QCheckBox(tr("Share what you are watching on Discord"), this)),
-      m_checkTime(new QCheckBox(tr("Show elapsed time"), this)),
-      m_checkUsername(new QCheckBox(tr("Show your username"), this)),
-      m_checkGroup(new QCheckBox(tr("Show the release group"), this)) {
+      m_checkEnabled(new QCheckBox(tr("Update rich presence"), this)),
+      m_checkTime(new QCheckBox(tr("Display elapsed time"), this)),
+      m_checkUsername(new QCheckBox(tr("Display username in tooltip"), this)),
+      m_checkGroup(new QCheckBox(tr("Display episode release group"), this)) {
   const auto layout = new QVBoxLayout(this);
 
-  const auto group = new QGroupBox(tr("Rich presence"), this);
+  const auto group = new QGroupBox(tr("Options"), this);
   const auto groupLayout = new QVBoxLayout(group);
 
-  groupLayout->addWidget(m_checkEnabled);
+  layout->addWidget(m_checkEnabled);
   groupLayout->addWidget(m_checkTime);
   groupLayout->addWidget(m_checkUsername);
   groupLayout->addWidget(m_checkGroup);
 
-  const auto note =
-      new QLabel(tr("Discord has to be running on the same machine. v1 links against Discord's "
-                    "library; here Taiga speaks to it over its local socket directly."),
-                 group);
+  const auto note = new QLabel(tr("Note: Requires using the Discord desktop client."), group);
   note->setWordWrap(true);
   groupLayout->addWidget(note);
 

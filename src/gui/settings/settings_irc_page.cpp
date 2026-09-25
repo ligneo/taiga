@@ -36,36 +36,34 @@ using namespace Qt::StringLiterals;
 
 IrcPage::IrcPage(QWidget* parent)
     : SettingsPage(parent),
-      m_checkEnabled(new QCheckBox(tr("Announce what you are watching to IRC"), this)),
-      m_radioAllChannels(new QRadioButton(tr("Every channel you have joined"), this)),
-      m_radioCustomChannels(new QRadioButton(tr("These channels only:"), this)),
+      m_checkEnabled(new QCheckBox(tr("Send message"), this)),
+      m_radioAllChannels(new QRadioButton(tr("All open channels"), this)),
+      m_radioCustomChannels(new QRadioButton(tr("Custom: (separate by a comma)"), this)),
       m_editChannels(new QLineEdit(this)),
-      m_checkUseAction(new QCheckBox(tr("Send as an action (/me)"), this)),
+      m_checkUseAction(new QCheckBox(tr("Use \"/me\" action"), this)),
       m_editFormat(new QPlainTextEdit(this)),
       m_labelStatus(new QLabel(this)) {
   const auto layout = new QVBoxLayout(this);
 
-  const auto group = new QGroupBox(tr("IRC"), this);
+  const auto group = new QGroupBox(tr("Options"), this);
   const auto groupLayout = new QVBoxLayout(group);
 
   m_editChannels->setPlaceholderText(tr("#kitsu, #myanimelist, #taiga"));
   m_editFormat->setMaximumHeight(80);
   m_labelStatus->setWordWrap(true);
 
-  groupLayout->addWidget(m_checkEnabled);
+  layout->addWidget(m_checkEnabled);
   groupLayout->addWidget(m_labelStatus);
   groupLayout->addWidget(m_radioAllChannels);
   groupLayout->addWidget(m_radioCustomChannels);
   groupLayout->addWidget(m_editChannels);
   groupLayout->addWidget(m_checkUseAction);
-  groupLayout->addWidget(new QLabel(tr("Message:"), group));
+  groupLayout->addWidget(new QLabel(tr("Format string:"), group));
   groupLayout->addWidget(m_editFormat);
 
   // The colour codes in the default message are the ones v1 uses, and mIRC before it.
   const auto note = new QLabel(
-      tr("The message understands the same variables and functions as v1, and a channel is only "
-         "written to while you are in it."),
-      group);
+      tr("Note: Messages are sent through Konversation, to channels you have joined."), group);
   note->setWordWrap(true);
   groupLayout->addWidget(note);
 

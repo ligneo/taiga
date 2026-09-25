@@ -109,7 +109,7 @@ AccountsPage::AccountsPage(QWidget* parent)
     }
     form->addRow(tr("Active service and metadata provider:"), m_comboService);
 
-    m_checkSyncOnStartup = new QCheckBox(tr("Synchronize the list when Taiga starts"), group);
+    m_checkSyncOnStartup = new QCheckBox(tr("Synchronize automatically at startup"), group);
     form->addRow(m_checkSyncOnStartup);
 
     const auto note = new QLabel(

@@ -50,10 +50,10 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
     : SettingsPage(parent),
       m_comboSortBy(new QComboBox(this)),
       m_comboSortOrder(new QComboBox(this)),
-      m_checkUseAnimeFolder(
-          new QCheckBox(tr("Use the anime's folder as the download location"), this)),
+      m_checkUseAnimeFolder(new QCheckBox(tr("Use anime folders as the download folder"), this)),
       m_editLocation(new QLineEdit(this)),
-      m_checkCreateSubfolder(new QCheckBox(tr("Create a subfolder named after the anime"), this)),
+      m_checkCreateSubfolder(
+          new QCheckBox(tr("Create a subfolder using the anime title as its name"), this)),
       m_checkOpen(new QCheckBox(tr("Open downloaded .torrent files"), this)),
       m_radioDefaultApp(
           new QRadioButton(tr("Use the default application associated with .torrent files"), this)),
@@ -90,7 +90,7 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
     pathLayout->addWidget(m_editLocation);
     pathLayout->addWidget(m_buttonBrowseLocation);
 
-    m_labelLocation = new QLabel(tr("If the anime has no folder, save downloads to:"), group);
+    m_labelLocation = new QLabel(tr("If no anime folder is set, use this folder instead:"), group);
 
     groupLayout->addWidget(m_checkUseAnimeFolder);
     groupLayout->addWidget(m_labelLocation);
@@ -98,7 +98,8 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
     groupLayout->addWidget(m_checkCreateSubfolder);
 
     const auto note = new QLabel(
-        tr("Note: This is only supported by %1.").arg(QString::fromUtf8(kSupportedClients)), group);
+        tr("Note: This feature is only supported by %1.").arg(QString::fromUtf8(kSupportedClients)),
+        group);
     note->setWordWrap(true);
     groupLayout->addWidget(note);
 

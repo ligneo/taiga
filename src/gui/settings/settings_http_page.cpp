@@ -31,27 +31,27 @@ namespace gui {
 
 HttpPage::HttpPage(QWidget* parent)
     : SettingsPage(parent),
-      m_checkEnabled(new QCheckBox(tr("Announce what you are watching over HTTP"), this)),
+      m_checkEnabled(new QCheckBox(tr("Send HTTP request"), this)),
       m_editUrl(new QLineEdit(this)),
       m_editFormat(new QPlainTextEdit(this)) {
   const auto layout = new QVBoxLayout(this);
 
-  const auto group = new QGroupBox(tr("HTTP"), this);
+  const auto group = new QGroupBox(tr("Options"), this);
   const auto groupLayout = new QVBoxLayout(group);
 
   m_editUrl->setPlaceholderText(tr("https://example.com/taiga"));
   m_editFormat->setMaximumHeight(80);
 
-  groupLayout->addWidget(m_checkEnabled);
-  groupLayout->addWidget(new QLabel(tr("Address:"), group));
+  layout->addWidget(m_checkEnabled);
+  groupLayout->addWidget(new QLabel(tr("URL:"), group));
   groupLayout->addWidget(m_editUrl);
-  groupLayout->addWidget(new QLabel(tr("Body:"), group));
+  groupLayout->addWidget(new QLabel(tr("Format string:"), group));
   groupLayout->addWidget(m_editFormat);
 
   // v1 runs the body through its script language; only the plain variables are read here.
   const auto note = new QLabel(
-      tr("Understood variables: %title%, %episode%, %total%, %watched%, %score%, %image%, "
-         "%group%. Each value is percent-encoded."),
+      tr("Tip: Formatted string will be sent as the body data of a POST request. Variables: "
+         "%title%, %episode%, %total%, %watched%, %score%, %image%, %group%."),
       group);
   note->setWordWrap(true);
   groupLayout->addWidget(note);
