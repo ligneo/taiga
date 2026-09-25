@@ -76,9 +76,10 @@ void NavigationWidget::refresh() {
   setUpdatesEnabled(false);
   clear();
 
-  // v1's order: the list and what is made of it, then everything that looks further afield.
-  // Home stays out of sight until it has something to show.
-  addItem("Home", "home", MainWindowPage::Home)->setHidden(true);
+  // v1's order: what is playing, the list and what is made of it, then everything that looks
+  // further afield.
+  addItem("Now Playing", "play_arrow", MainWindowPage::Home);
+  addSeparator();
 
   auto listItem = addItem("Anime List", "list_alt", MainWindowPage::List);
   listItem->setExpanded(true);
