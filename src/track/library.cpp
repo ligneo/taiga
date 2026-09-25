@@ -127,6 +127,11 @@ int Library::availableEpisodeCount(const int animeId) const {
   return it != episodes_.end() ? static_cast<int>(it->second.size()) : 0;
 }
 
+int Library::lastAvailableEpisode(const int animeId) const {
+  const auto it = episodes_.find(animeId);
+  return it != episodes_.end() && !it->second.empty() ? it->second.rbegin()->first : 0;
+}
+
 bool Library::isEpisodeAvailable(const int animeId, const int number) const {
   const auto it = episodes_.find(animeId);
   return it != episodes_.end() && it->second.contains(number);

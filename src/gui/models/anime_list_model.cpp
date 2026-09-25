@@ -23,8 +23,10 @@
 #include <QColor>
 #include <QDateTime>
 #include <QFont>
+#include <QLocale>
 #include <QPalette>
 #include <QSize>
+#include <algorithm>
 
 #include "gui/utils/format.hpp"
 #include "gui/utils/image_provider.hpp"
@@ -34,6 +36,7 @@
 #include "media/anime_season.hpp"
 #include "media/anime_utils.hpp"
 #include "taiga/settings.hpp"
+#include "track/library.hpp"
 
 namespace gui {
 
@@ -68,6 +71,61 @@ QString posterHtml(const int id) {
 
 // The title column is narrow and elides most names, so the tooltip carries the whole title plus
 // the few things worth knowing before clicking.
+// v1's `GetAvailableEpisodesTooltip`: which episodes are missing from the library folders, and
+// where the airing has got to.
+QString progressTooltip(const Anime& item, const ListEntry* entry) {
+  const auto library = track::library();
+  const int watched = entry ? entry->watched_episodes : 0;
+  const int lastAvailable = library->lastAvailableEpisode(item.id);
+
+  // v1's `GetLastEpisodeNumber`: the best guess at how many episodes there are by now
+  int lastEpisode = item.episode_count;
+  if (!anime::isFinishedAiring(item)) {
+    lastEpisode = std::max({watched, lastAvailable, item.last_aired_episode,
+                            anime::estimateLastAiredEpisodeNumber(item)});
+  }
+  const int count = std::max(lastEpisode, lastAvailable);
+
+  QStringList lines;
+
+  QList<std::pair<int, int>> missing;
+  for (int number = 1; number <= count; ++number) {
+    if (library->isEpisodeAvailable(item.id, number)) continue;
+    if (!missing.isEmpty() && missing.back().second == number - 1) {
+      missing.back().second = number;
+    } else {
+      missing.append({number, number});
+    }
+  }
+
+  if (count > 0) {
+    if (missing.size() == 1 && missing.front() == std::pair{1, count}) {
+      lines.append(QCoreApplication::translate("gui", "All episodes are missing"));
+    } else if (missing.isEmpty()) {
+      lines.append(QCoreApplication::translate("gui", "All episodes are in library folders"));
+    } else {
+      QStringList ranges;
+      for (const auto& [first, last] : missing) {
+        ranges.append(first == last ? u"#%1"_s.arg(first) : u"#%1-%2"_s.arg(first).arg(last));
+      }
+      lines.append(QCoreApplication::translate("gui", "Missing: %1").arg(ranges.join(u", "_s)));
+    }
+  }
+
+  if (!anime::isFinishedAiring(item)) {
+    if (item.next_episode_time) {
+      const auto time = QDateTime::fromSecsSinceEpoch(item.next_episode_time);
+      lines.append(QCoreApplication::translate("gui", "Episode #%1 airing %2")
+                       .arg(item.last_aired_episode + 1)
+                       .arg(QLocale{}.toString(time, u"dddd HH:mm"_s)));
+    } else if (const auto aired = anime::estimateLastAiredEpisodeNumber(item); aired > watched) {
+      lines.append(QCoreApplication::translate("gui", "Aired: #%1 (estimated)").arg(aired));
+    }
+  }
+
+  return lines.join(u'\n');
+}
+
 QString titleTooltip(const Anime& item) {
   QStringList lines;
 
@@ -212,6 +270,11 @@ QVariant AnimeListModel::data(const QModelIndex& index, int role) const {
       switch (index.column()) {
         case COLUMN_TITLE:
           return titleTooltip(*anime);
+        case COLUMN_PROGRESS: {
+          const auto text = progressTooltip(*anime, entry);
+          if (!text.isEmpty()) return text;
+          break;
+        }
         case COLUMN_SEASON:
           return formatFuzzyDate(anime->date_started);
         case COLUMN_LAST_UPDATED:

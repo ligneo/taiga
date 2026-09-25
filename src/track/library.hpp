@@ -44,6 +44,7 @@ public:
   void applyWatchSettings();
 
   int availableEpisodeCount(const int animeId) const;
+  int lastAvailableEpisode(const int animeId) const;
   bool isEpisodeAvailable(const int animeId, const int number) const;
   QString episodePath(const int animeId, const int number) const;
 
