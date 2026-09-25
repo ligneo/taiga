@@ -68,6 +68,8 @@ ListViewBase::ListViewBase(QWidget* parent, QAbstractItemView* view, AnimeListMo
 }
 
 void ListViewBase::filterByText(const QString& text) {
+  // The search box is shared, and each page keeps its own text for it.
+  if (!m_view->isVisible()) return;
   m_proxyModel->setTextFilter(text);
 }
 

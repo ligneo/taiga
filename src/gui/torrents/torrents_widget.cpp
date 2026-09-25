@@ -147,6 +147,7 @@ void TorrentsWidget::initToolbar() {
 }
 
 void TorrentsWidget::setFilterText(const QString& text) {
+  if (!isVisible()) return;  // the text belongs to another page
   m_proxyModel->setFilterFixedString(text);
 }
 

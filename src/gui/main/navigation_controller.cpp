@@ -88,7 +88,10 @@ void NavigationController::cycleListStatus(const int step) {
 void NavigationController::applyPage(MainWindowPage page, bool addToHistory) {
   m_mainWindow->initPage(page);
   m_mainWindow->statusBarController()->clearMessage(StatusBarController::Source::Selection);
+  const auto previous =
+      static_cast<MainWindowPage>(m_mainWindow->ui()->stackedWidget->currentIndex());
   m_mainWindow->ui()->stackedWidget->setCurrentIndex(static_cast<int>(page));
+  m_mainWindow->switchSearchText(previous, page);
 
   if (addToHistory) recordPageHistory(page);
 }

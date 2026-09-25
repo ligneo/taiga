@@ -190,8 +190,9 @@ SearchWidget::SearchWidget(QWidget* parent)
   setViewMode(taiga::session.searchListViewMode());
 
   // Search
-  connect(mainWindow()->searchBox(), &QLineEdit::returnPressed, this,
-          [this]() { performSearch(); });
+  connect(mainWindow()->searchBox(), &QLineEdit::returnPressed, this, [this]() {
+    if (isVisible()) performSearch();  // Enter on another page is not a search
+  });
 
   const QList<sync::Service*> services{
       sync::anilist::Service::instance(),

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <map>
 #include <optional>
 
 #include "gui/main/navigation_controller.hpp"
@@ -107,6 +108,7 @@ private:
   void initNavigation();
   void initNowPlaying();
   void initPage(MainWindowPage page);
+  void switchSearchText(MainWindowPage from, MainWindowPage to);
   void initStatusbar();
   void exportList(const ExportFormat format);
   void checkForUpdates();
@@ -126,6 +128,7 @@ private:
   NowPlayingWidget* m_nowPlayingWidget = nullptr;
   ProfileWidget* m_profileWidget = nullptr;
   QLineEdit* m_searchBox = nullptr;
+  std::map<MainWindowPage, QString> m_searchTexts;
   SearchWidget* m_searchWidget = nullptr;
   SeasonsWidget* m_seasonsWidget = nullptr;
   TorrentsWidget* m_torrentsWidget = nullptr;

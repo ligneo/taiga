@@ -383,6 +383,35 @@ void MainWindow::announceCurrentEpisode(const ShareChannel channel) {
   }
 }
 
+// v1's `RefreshSearchText`: every page keeps its own text, and the box says what it does there.
+void MainWindow::switchSearchText(MainWindowPage from, MainWindowPage to) {
+  if (!m_searchBox || from == to) return;
+
+  m_searchTexts[from] = m_searchBox->text();
+
+  const auto service = sync::serviceName(sync::currentServiceId());
+  QString placeholder;
+  switch (to) {
+    case MainWindowPage::List:
+    case MainWindowPage::Seasons:
+      placeholder = tr("Filter list");
+      break;
+    case MainWindowPage::Search:
+      placeholder = tr("Search %1 for anime").arg(service);
+      break;
+    case MainWindowPage::Torrents:
+      placeholder = tr("Filter torrents");
+      break;
+    default:
+      break;
+  }
+
+  // Pages that do nothing with the text get an empty, disabled box rather than a stale one.
+  m_searchBox->setEnabled(!placeholder.isEmpty());
+  m_searchBox->setPlaceholderText(placeholder);
+  m_searchBox->setText(placeholder.isEmpty() ? QString{} : m_searchTexts[to]);
+}
+
 void MainWindow::initPage(MainWindowPage page) {
   static QSet<MainWindowPage> initializedPages;
 
