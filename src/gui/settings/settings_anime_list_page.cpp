@@ -36,11 +36,12 @@ AnimeListPage::AnimeListPage(QWidget* parent)
       m_comboTitleLanguage(new QComboBox(this)),
       m_comboDoubleClick(new QComboBox(this)),
       m_comboMiddleClick(new QComboBox(this)),
-      m_checkHighlight(
-          new QCheckBox(tr("Highlight anime if the next episode is in library folders"), this)),
-      m_checkHighlightedOnTop(new QCheckBox(tr("Show highlighted anime at the top"), this)),
-      m_checkShowAired(new QCheckBox(tr("Show aired episodes on the progress bar"), this)),
-      m_checkShowAvailable(new QCheckBox(tr("Show available episodes on the progress bar"), this)) {
+      m_checkHighlight(new QCheckBox(
+          tr("Highlight anime if next episode is available in library folders"), this)),
+      m_checkHighlightedOnTop(new QCheckBox(tr("Display highlighted anime above others"), this)),
+      m_checkShowAired(new QCheckBox(tr("Display aired episodes (estimated)"), this)),
+      m_checkShowAvailable(
+          new QCheckBox(tr("Display available episodes in library folders"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Appearance
@@ -69,9 +70,9 @@ AnimeListPage::AnimeListPage(QWidget* parent)
 
     // v1 offers six; its "edit details" and "view anime info" open the same dialog here.
     const QList<QPair<QString, QString>> actions{
-        {tr("Do nothing"), u"none"_s},           {tr("Open details"), u"details"_s},
+        {tr("Do nothing"), u"none"_s},           {tr("View anime info"), u"details"_s},
         {tr("Open folder"), u"openFolder"_s},    {tr("Play next episode"), u"playNextEpisode"_s},
-        {tr("Open anime page"), u"animePage"_s},
+        {tr("View anime page"), u"animePage"_s},
     };
 
     for (const auto& [text, value] : actions) {

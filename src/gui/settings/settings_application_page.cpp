@@ -36,15 +36,15 @@ ApplicationPage::ApplicationPage(QWidget* parent)
     : SettingsPage(parent),
       m_comboStyle(new QComboBox(this)),
       m_comboColorScheme(new QComboBox(this)),
-      m_checkAutoStart(new QCheckBox(tr("Start Taiga when the session begins"), this)),
-      m_checkStartMinimized(new QCheckBox(tr("Start minimized to the tray"), this)),
-      m_checkCloseToTray(new QCheckBox(tr("Minimize to tray when closed"), this)),
-      m_checkMinimizeToTray(new QCheckBox(tr("Minimize to tray when minimized"), this)) {
+      m_checkAutoStart(new QCheckBox(tr("Start automatically at login"), this)),
+      m_checkStartMinimized(new QCheckBox(tr("Start minimized"), this)),
+      m_checkCloseToTray(new QCheckBox(tr("Close to tray"), this)),
+      m_checkMinimizeToTray(new QCheckBox(tr("Minimize to tray"), this)) {
   const auto layout = new QVBoxLayout(this);
 
-  // Appearance
+  // Interface
   {
-    const auto group = new QGroupBox(tr("Appearance"), this);
+    const auto group = new QGroupBox(tr("Interface"), this);
     const auto form = new QFormLayout(group);
 
     {
@@ -80,7 +80,7 @@ ApplicationPage::ApplicationPage(QWidget* parent)
 
   // System tray
   {
-    const auto group = new QGroupBox(tr("System tray"), this);
+    const auto group = new QGroupBox(tr("System tray use"), this);
     const auto groupLayout = new QVBoxLayout(group);
     groupLayout->addWidget(m_checkCloseToTray);
     groupLayout->addWidget(m_checkMinimizeToTray);
