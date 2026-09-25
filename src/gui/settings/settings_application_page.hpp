@@ -22,6 +22,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QPlainTextEdit;
 
 namespace gui {
 
@@ -42,6 +43,7 @@ private:
   QCheckBox* m_checkAutoStart = nullptr;
   QCheckBox* m_checkStartMinimized = nullptr;
   QCheckBox* m_checkScanOnStartup = nullptr;
+  QPlainTextEdit* m_editExternalLinks = nullptr;
   QCheckBox* m_checkCloseToTray = nullptr;
   QCheckBox* m_checkMinimizeToTray = nullptr;
 };

@@ -22,6 +22,7 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QPlainTextEdit>
 #include <QStyleFactory>
 #include <QVBoxLayout>
 #include <algorithm>
@@ -89,6 +90,17 @@ ApplicationPage::ApplicationPage(QWidget* parent)
     layout->addWidget(group);
   }
 
+  // v1's External links: one "Title|URL" per line, "-" for a separator, shown under Tools
+  {
+    const auto group = new QGroupBox(tr("External links"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+    m_editExternalLinks = new QPlainTextEdit(group);
+    m_editExternalLinks->setLineWrapMode(QPlainTextEdit::NoWrap);
+    m_editExternalLinks->setMinimumHeight(120);
+    groupLayout->addWidget(m_editExternalLinks);
+    layout->addWidget(group);
+  }
+
   layout->addStretch();
 }
 
@@ -102,6 +114,11 @@ void ApplicationPage::load() {
   m_checkAutoStart->setChecked(taiga::settings.appAutoStart());
   m_checkStartMinimized->setChecked(taiga::settings.appStartMinimized());
   m_checkScanOnStartup->setChecked(taiga::settings.libraryScanOnStartup());
+
+  QStringList links;
+  for (const auto& link : taiga::settings.externalLinks())
+    links.append(QString::fromStdString(link));
+  m_editExternalLinks->setPlainText(links.join(u'\n'));
   m_checkCloseToTray->setChecked(taiga::settings.appCloseToTray());
   m_checkMinimizeToTray->setChecked(taiga::settings.appMinimizeToTray());
 }
@@ -110,6 +127,12 @@ void ApplicationPage::save() {
   taiga::settings.setAppAutoStart(m_checkAutoStart->isChecked());
   taiga::settings.setAppStartMinimized(m_checkStartMinimized->isChecked());
   taiga::settings.setLibraryScanOnStartup(m_checkScanOnStartup->isChecked());
+
+  std::vector<std::string> links;
+  for (const auto& line : m_editExternalLinks->toPlainText().split(u'\n')) {
+    if (!line.trimmed().isEmpty()) links.push_back(line.trimmed().toStdString());
+  }
+  taiga::settings.setExternalLinks(links);
   taiga::settings.setAppCloseToTray(m_checkCloseToTray->isChecked());
   taiga::settings.setAppMinimizeToTray(m_checkMinimizeToTray->isChecked());
   taiga::applyAutoStart();
