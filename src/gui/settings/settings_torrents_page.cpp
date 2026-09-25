@@ -20,8 +20,8 @@
 
 #include <QCheckBox>
 #include <QComboBox>
-#include <QFormLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QRadioButton>
 #include <QSpinBox>
@@ -35,16 +35,18 @@ namespace gui {
 
 namespace {
 
-// The addresses v1 offers, so that a working feed is a click away.
+// The addresses v1 offers, so that a working feed is a click away. AniDex and NyaaPantsu are left
+// out: both answered with a server error on 2026-09-25.
 const QStringList kSourceUrls{
-    u"https://www.tokyotosho.info/rss.php?filter=1,11&zwnj=0"_s,
     u"https://nyaa.si/?page=rss&c=1_2&f=0"_s,
-    u"https://subsplease.org/rss/?r=1080"_s,
+    u"http://tracker.minglong.org/rss.xml"_s,
+    u"https://www.shanaproject.com/feeds/site/"_s,
+    u"https://subsplease.org/rss/?t&r=1080"_s,
+    u"https://www.tokyotosho.info/rss.php?filter=1,11&zwnj=0"_s,
 };
 
 const QStringList kSearchUrls{
     u"https://nyaa.si/?page=rss&c=1_2&f=0&q=%title%"_s,
-    u"https://anidex.info/rss/?cat=1&lang_id=1&q=%title%"_s,
 };
 
 }  // namespace
@@ -85,18 +87,25 @@ TorrentsPage::TorrentsPage(QWidget* parent)
   {
     const auto group = new QGroupBox(tr("Automation"), this);
     const auto groupLayout = new QVBoxLayout(group);
-    const auto form = new QFormLayout();
+
+    // Everything below depends on the check box, so it sits indented under it, as in v1.
+    const auto nested = new QVBoxLayout();
+    nested->setContentsMargins(20, 0, 0, 0);
 
     m_spinInterval->setRange(1, 1440);
     m_spinInterval->setSuffix(tr(" minutes"));
-    form->addRow(tr("Interval:"), m_spinInterval);
+    const auto intervalLayout = new QHBoxLayout();
+    intervalLayout->addWidget(new QLabel(tr("Interval:"), group));
+    intervalLayout->addWidget(m_spinInterval);
+    intervalLayout->addStretch();
+    nested->addLayout(intervalLayout);
+
+    nested->addWidget(new QLabel(tr("When there are new torrents:"), group));
+    nested->addWidget(m_radioNotify);
+    nested->addWidget(m_radioDownload);
 
     groupLayout->addWidget(m_checkAutoCheck);
-    groupLayout->addLayout(form);
-
-    groupLayout->addWidget(new QLabel(tr("When there are new torrents:"), group));
-    groupLayout->addWidget(m_radioNotify);
-    groupLayout->addWidget(m_radioDownload);
+    groupLayout->addLayout(nested);
     m_radioDownload->setToolTip(
         tr("Downloads the torrents your filters marked, so it does nothing while filters are "
            "turned off."));
