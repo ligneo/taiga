@@ -55,6 +55,7 @@ public slots:
   void goForward();
   void navigateTo(MainWindowPage page, bool addToHistory = true);
   void navigateToListStatus(anime::list::Status status);
+  void cycleListStatus(const int step);
 
 protected:
   bool eventFilter(QObject* watched, QEvent* event) override;

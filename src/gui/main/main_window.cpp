@@ -24,6 +24,7 @@
 #include <QJsonObject>
 #include <QMessageBox>
 #include <QNetworkReply>
+#include <QShortcut>
 #include <QtWidgets>
 #include <algorithm>
 #include <optional>
@@ -128,6 +129,7 @@ Ui::MainWindow* MainWindow::ui() const {
 
 void MainWindow::init() {
   initActions();
+  initShortcuts();
   initIcons();
   initTrayIcon();
   initToolbar();
@@ -135,6 +137,23 @@ void MainWindow::init() {
   initNavigation();
   initNowPlaying();
   updateTitle();
+}
+
+void MainWindow::initShortcuts() {
+  // v1's keys for the main window. They work wherever the focus is, like v1's accelerators.
+  const auto focusSearch = [this]() {
+    if (!m_searchBox) return;
+    m_searchBox->setFocus(Qt::ShortcutFocusReason);
+    m_searchBox->selectAll();
+  };
+  for (const auto& key : {QKeySequence{QKeySequence::Find}, QKeySequence{Qt::Key_F3}}) {
+    connect(new QShortcut(key, this), &QShortcut::activated, this, focusSearch);
+  }
+
+  connect(new QShortcut(QKeySequence{Qt::CTRL | Qt::Key_Tab}, this), &QShortcut::activated, this,
+          [this]() { m_navigationController->cycleListStatus(1); });
+  connect(new QShortcut(QKeySequence{Qt::CTRL | Qt::SHIFT | Qt::Key_Backtab}, this),
+          &QShortcut::activated, this, [this]() { m_navigationController->cycleListStatus(-1); });
 }
 
 void MainWindow::initActions() {

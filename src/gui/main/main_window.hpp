@@ -93,6 +93,7 @@ protected:
 
 private:
   void initActions();
+  void initShortcuts();
   void initIcons();
   void initNavigation();
   void initNowPlaying();

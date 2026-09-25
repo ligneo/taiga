@@ -67,6 +67,24 @@ void NavigationController::navigateToListStatus(anime::list::Status status) {
   }
 }
 
+// v1's Ctrl+Tab on the anime list: the next (or previous) status, wrapping around. The list page
+// itself counts as the first stop, like v1's tab bar has no "all" tab but starts at the top.
+void NavigationController::cycleListStatus(const int step) {
+  const auto navigation = m_mainWindow->navigation();
+  const auto listItem = navigation->findItemByPage(MainWindowPage::List);
+  const auto current = navigation->currentItem();
+  if (!listItem || !current || listItem->childCount() == 0) return;
+
+  // Only while the anime list is showing, as in v1
+  if (current != listItem && current->parent() != listItem) return;
+
+  const int count = listItem->childCount();
+  int index = current == listItem ? (step > 0 ? -1 : 0) : listItem->indexOfChild(current);
+  index = ((index + step) % count + count) % count;
+
+  navigation->setCurrentItem(listItem->child(index));
+}
+
 void NavigationController::applyPage(MainWindowPage page, bool addToHistory) {
   m_mainWindow->initPage(page);
   m_mainWindow->statusBarController()->clearMessage(StatusBarController::Source::Selection);

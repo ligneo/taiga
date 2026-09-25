@@ -206,6 +206,9 @@
    <property name="text">
     <string>Scan available episodes</string>
    </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
   </action>
   <action name="actionPlayNextEpisode">
    <property name="text">
