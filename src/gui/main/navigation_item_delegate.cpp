@@ -18,6 +18,7 @@
 
 #include "navigation_item_delegate.hpp"
 
+#include <QAbstractItemView>
 #include <QPainter>
 #include <QPainterPath>
 
@@ -39,7 +40,13 @@ void NavigationItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem
     return;
   }
 
-  QStyledItemDelegate::paint(painter, option, index);
+  // A hidden status item stands for its parent, which is what the user sees.
+  auto opt = option;
+  if (const auto view = qobject_cast<const QAbstractItemView*>(option.widget)) {
+    if (view->currentIndex().parent() == index) opt.state |= QStyle::State_Selected;
+  }
+
+  QStyledItemDelegate::paint(painter, opt, index);
 
   // Branch
   if (index.data(static_cast<int>(NavigationItemDataRole::IsChild)).toBool()) {

@@ -82,7 +82,6 @@ void NavigationWidget::refresh() {
 
   auto listItem = addItem("Anime List", "list_alt", MainWindowPage::List);
   listItem->setExpanded(true);
-  setItemData(listItem, NavigationItemDataRole::HasChildren, true);
 
   const auto statusCounts = []() {
     QMap<anime::list::Status, int> statuses;
@@ -98,6 +97,8 @@ void NavigationWidget::refresh() {
                 status == anime::list::Status::PlanToWatch);
     setItemData(item, NavigationItemDataRole::ListStatus, static_cast<int>(status));
     setItemData(item, NavigationItemDataRole::Counter, statusCounts[status]);
+    // Like v1, the statuses are tabs above the list; the items stay for navigating to them.
+    item->setHidden(true);
   }
 
   auto historyItem = addItem("History", "history", MainWindowPage::History);
@@ -109,6 +110,8 @@ void NavigationWidget::refresh() {
   addItem("Torrents", "rss_feed", MainWindowPage::Torrents);
 
   setUpdatesEnabled(true);
+
+  emit refreshed();
 }
 
 void NavigationWidget::mouseMoveEvent(QMouseEvent* event) {

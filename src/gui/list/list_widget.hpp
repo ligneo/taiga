@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QMenu>
+#include <QTabBar>
 
 #include "gui/common/anime_list_view_base.hpp"
 #include "gui/common/page_widget.hpp"
@@ -48,6 +49,8 @@ private:
   void initSortMenu();
   void initViewMenu();
   void initMoreMenu();
+  void initTabs();
+  void refreshTabs();
 
   AnimeListModel* m_model = nullptr;
   AnimeListProxyModel* m_proxyModel = nullptr;
@@ -57,6 +60,7 @@ private:
   QMenu* m_sortMenu = nullptr;
   QMenu* m_viewMenu = nullptr;
   QMenu* m_moreMenu = nullptr;
+  QTabBar* m_tabs = nullptr;
 };
 
 }  // namespace gui

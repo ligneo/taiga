@@ -21,8 +21,10 @@
 #include <QActionGroup>
 #include <QListView>
 #include <QMenu>
+#include <QSignalBlocker>
 #include <QToolBar>
 #include <QToolButton>
+#include <algorithm>
 #include <format>
 
 #include "base/string.hpp"
@@ -30,14 +32,18 @@
 #include "gui/common/anime_list_view.hpp"
 #include "gui/common/anime_list_view_cards.hpp"
 #include "gui/main/main_window.hpp"
+#include "gui/main/navigation_item_delegate.hpp"
 #include "gui/main/navigation_widget.hpp"
 #include "gui/models/anime_list_model.hpp"
 #include "gui/models/anime_list_proxy_model.hpp"
+#include "gui/utils/format.hpp"
 #include "gui/utils/theme.hpp"
 #include "taiga/session.hpp"
 #include "ui_main_window.h"
 
 namespace gui {
+
+using namespace Qt::StringLiterals;
 
 ListWidget::ListWidget(QWidget* parent)
     : PageWidget(parent),
@@ -49,6 +55,7 @@ ListWidget::ListWidget(QWidget* parent)
   m_proxyModel->sort(taiga::session.animeListSortColumn(), taiga::session.animeListSortOrder());
 
   initToolbar();
+  initTabs();
   setViewMode(taiga::session.animeListViewMode());
 
   connect(m_sortMenu, &QMenu::aboutToShow, this, &ListWidget::initSortMenu);
@@ -57,11 +64,67 @@ ListWidget::ListWidget(QWidget* parent)
 
   connect(mainWindow()->navigation(), &NavigationWidget::currentListStatusChanged, this,
           [this](anime::list::Status status) {
+            // The "Anime List" item itself opens the tab that was last shown, as in v1.
+            if (!static_cast<int>(status)) {
+              const auto navigation = mainWindow()->navigation();
+              const auto tabStatus =
+                  m_tabs->tabData(std::max(0, m_tabs->currentIndex())).value<anime::list::Status>();
+              if (const auto item = navigation->findListStatusItem(tabStatus)) {
+                navigation->setCurrentItem(item);
+              }
+              return;
+            }
+            {
+              const QSignalBlocker blocker(m_tabs);
+              for (int i = 0; i < m_tabs->count(); ++i) {
+                if (m_tabs->tabData(i).value<anime::list::Status>() == status) {
+                  m_tabs->setCurrentIndex(i);
+                }
+              }
+            }
             m_proxyModel->setListStatusFilter({
                 .status = static_cast<int>(status),
-                .anyStatus = !static_cast<int>(status),
+                .anyStatus = false,
             });
           });
+}
+
+// v1's tabs above the list, one per status with its count
+void ListWidget::initTabs() {
+  m_tabs = new QTabBar(this);
+  m_tabs->setDrawBase(false);
+  m_tabs->setExpanding(false);
+  m_tabs->setDocumentMode(true);
+
+  for (const auto status : anime::list::kStatuses) {
+    const auto index = m_tabs->addTab(formatListStatus(status));
+    m_tabs->setTabData(index, QVariant::fromValue(status));
+  }
+
+  m_toolbarLayout->insertWidget(0, m_tabs);
+
+  connect(m_tabs, &QTabBar::currentChanged, this, [this](int index) {
+    const auto status = m_tabs->tabData(index).value<anime::list::Status>();
+    const auto navigation = mainWindow()->navigation();
+    if (const auto item = navigation->findListStatusItem(status)) {
+      navigation->setCurrentItem(item);
+    }
+  });
+
+  connect(mainWindow()->navigation(), &NavigationWidget::refreshed, this, &ListWidget::refreshTabs);
+  refreshTabs();
+}
+
+void ListWidget::refreshTabs() {
+  const auto navigation = mainWindow()->navigation();
+
+  for (int i = 0; i < m_tabs->count(); ++i) {
+    const auto status = m_tabs->tabData(i).value<anime::list::Status>();
+    const auto item = navigation->findListStatusItem(status);
+    const auto count =
+        item ? item->data(0, static_cast<int>(NavigationItemDataRole::Counter)).toInt() : 0;
+    m_tabs->setTabText(i, u"%1 (%2)"_s.arg(formatListStatus(status)).arg(count));
+  }
 }
 
 ListViewMode ListWidget::viewMode() const {
