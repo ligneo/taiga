@@ -22,6 +22,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QScrollBar>
+#include <algorithm>
 
 #include "base/string.hpp"
 #include "gui/models/anime_list_model.hpp"
@@ -147,52 +148,48 @@ void ListItemDelegateCards::paint(QPainter* painter, const QStyleOptionViewItem&
     rect.adjust(12, 32 + 8, -12, -12);
   }
 
-  // Summary
+  // Details, one labelled row each as in v1's season tiles
   {
-    QStringList parts{
-        formatType(item->type),
-        formatSeason(anime::Season{item->date_started}),
-        formatScore(item->score),
-    };
-    if (item->episode_count != 1) {
-      parts.insert(1, tr("%1 episodes").arg(formatNumber(item->episode_count, "?")));
-    }
-    const QString summary = parts.join(" · ");
-
-    auto summaryFont = font;
-    summaryFont.setWeight(QFont::Weight::DemiBold);
-    painter->setFont(summaryFont);
-
+    auto detailsFont = font;
+    detailsFont.setPointSize(9);
+    painter->setFont(detailsFont);
     const QFontMetrics metrics(painter->font());
-    QRect summaryRect = rect;
-    summaryRect.setHeight(metrics.height());
 
-    painter->drawText(summaryRect, Qt::AlignVCenter | Qt::TextSingleLine, summary);
-
-    rect.adjust(0, summaryRect.height() + 8, 0, 0);
-  }
-
-  // Details
-  {
-    const QStringList lines{
-        u"%1 (%2)"_s.arg(formatFuzzyDateRange(item->date_started, item->date_finished))
-            .arg(formatStatus(item->status)),
-        joinStrings(item->genres),
-        joinStrings(!item->studios.empty() ? item->studios : item->producers),
+    const bool hasStudios = !item->studios.empty();
+    const QList<QPair<QString, QString>> rows{
+        {tr("Aired:"),
+         u"%1 (%2)"_s.arg(formatFuzzyDateRange(item->date_started, item->date_finished))
+             .arg(formatStatus(item->status))},
+        {tr("Type:"), formatType(item->type)},
+        {tr("Episodes:"), formatNumber(item->episode_count, "?")},
+        {tr("Genres:"), joinStrings(item->genres)},
+        {hasStudios ? tr("Studios:") : tr("Producers:"),
+         joinStrings(hasStudios ? item->studios : item->producers)},
+        {tr("Score:"), item->score > 0 ? formatScore(item->score) : u"?"_s},
     };
 
-    painter->setFont(font);
+    int labelWidth = 0;
+    for (const auto& row : rows) {
+      labelWidth = std::max(labelWidth, metrics.horizontalAdvance(row.first));
+    }
+    labelWidth += 8;
 
-    const QFontMetrics metrics(painter->font());
-    QRect linesRect = rect;
+    QRect rowRect = rect;
+    rowRect.setHeight(metrics.height());
 
-    for (const auto& line : lines) {
-      const QString elidedLine = metrics.elidedText(line, Qt::ElideRight, linesRect.width());
-      painter->drawText(linesRect, Qt::TextSingleLine, elidedLine);
-      linesRect.adjust(0, metrics.height(), 0, 0);
+    for (const auto& [label, value] : rows) {
+      painter->setPen(opt.palette.placeholderText().color());
+      painter->drawText(rowRect, Qt::AlignVCenter | Qt::TextSingleLine, label);
+
+      painter->setPen(opt.palette.text().color());
+      QRect valueRect = rowRect.adjusted(labelWidth, 0, 0, 0);
+      painter->drawText(valueRect, Qt::AlignVCenter | Qt::TextSingleLine,
+                        metrics.elidedText(value, Qt::ElideRight, valueRect.width()));
+
+      rowRect.translate(0, metrics.height());
     }
 
-    rect.adjust(0, (metrics.height() * lines.size()) + 8, 0, 0);
+    rect.adjust(0, (metrics.height() * rows.size()) + 6, 0, 0);
   }
 
   // Synopsis
