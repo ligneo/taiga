@@ -206,7 +206,7 @@ void MainWindow::initActions() {
   });
   connect(ui_->actionPlayRandomAnime, &QAction::triggered, this, [playbackFailed]() {
     if (!track::playRandomAnime()) {
-      playbackFailed(tr("Could not find an available episode to play."));
+      playbackFailed(tr("Could not find any episode to play."));
     }
   });
   connect(ui_->actionExportListAsMarkdown, &QAction::triggered, this,
@@ -587,7 +587,7 @@ void MainWindow::exportList(const ExportFormat format) {
   const auto filter = markdown ? tr("Markdown (*.md)") : tr("MyAnimeList XML (*.xml)");
 
   const auto path = QFileDialog::getSaveFileName(
-      this, tr("Export List"), u"%1/%2"_s.arg(QDir::homePath()).arg(name), filter);
+      this, tr("Select Export Location"), u"%1/%2"_s.arg(QDir::homePath()).arg(name), filter);
 
   if (path.isEmpty()) return;
 
