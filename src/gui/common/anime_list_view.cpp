@@ -20,16 +20,49 @@
 
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QMenu>
 
 #include "gui/common/anime_list_item_delegate.hpp"
 #include "gui/common/anime_list_view_base.hpp"
 #include "gui/models/anime_list_model.hpp"
 #include "gui/models/anime_list_proxy_model.hpp"
 #include "gui/utils/painters.hpp"
+#include "taiga/session.hpp"
 #include "taiga/settings.hpp"
 #include "track/play.hpp"
 
 namespace gui {
+
+namespace {
+
+QList<int> defaultHiddenColumns(const AnimeListContext context) {
+  QList<int> columns{
+      AnimeListModel::COLUMN_DURATION, AnimeListModel::COLUMN_REWATCHES,
+      AnimeListModel::COLUMN_STARTED,  AnimeListModel::COLUMN_COMPLETED,
+      AnimeListModel::COLUMN_NOTES,
+  };
+  if (context == AnimeListContext::Search) {
+    columns.append({AnimeListModel::COLUMN_SCORE, AnimeListModel::COLUMN_LAST_UPDATED});
+  } else {
+    columns.append(AnimeListModel::COLUMN_AVERAGE);
+  }
+  return columns;
+}
+
+std::optional<QList<int>> savedHiddenColumns(const AnimeListContext context) {
+  return context == AnimeListContext::Search ? taiga::session.searchListHiddenColumns()
+                                             : taiga::session.animeListHiddenColumns();
+}
+
+void saveHiddenColumns(const AnimeListContext context, const QList<int>& columns) {
+  if (context == AnimeListContext::Search) {
+    taiga::session.setSearchListHiddenColumns(columns);
+  } else {
+    taiga::session.setAnimeListHiddenColumns(columns);
+  }
+}
+
+}  // namespace
 
 ListView::ListView(QWidget* parent, AnimeListModel* model, AnimeListProxyModel* proxyModel,
                    AnimeListContext context)
@@ -58,17 +91,31 @@ ListView::ListView(QWidget* parent, AnimeListModel* model, AnimeListProxyModel* 
   header()->setFirstSectionMovable(true);
   header()->setStretchLastSection(false);
   header()->setTextElideMode(Qt::ElideRight);
-  header()->hideSection(AnimeListModel::COLUMN_DURATION);
-  header()->hideSection(AnimeListModel::COLUMN_REWATCHES);
-  header()->hideSection(AnimeListModel::COLUMN_STARTED);
-  header()->hideSection(AnimeListModel::COLUMN_COMPLETED);
-  header()->hideSection(AnimeListModel::COLUMN_NOTES);
-  if (context == AnimeListContext::Search) {
-    header()->hideSection(AnimeListModel::COLUMN_SCORE);
-    header()->hideSection(AnimeListModel::COLUMN_LAST_UPDATED);
-  } else {
-    header()->hideSection(AnimeListModel::COLUMN_AVERAGE);
-  }
+  setHiddenColumns(savedHiddenColumns(context).value_or(defaultHiddenColumns(context)));
+
+  // v1's `AnimeListHeaders` menu: pick the columns to show, or go back to the defaults.
+  header()->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(header(), &QWidget::customContextMenuRequested, this, [this, context](const QPoint& pos) {
+    QMenu menu(this);
+    for (int column = 0; column < header()->count(); ++column) {
+      const auto action = menu.addAction(
+          this->model()->headerData(column, Qt::Horizontal, Qt::DisplayRole).toString());
+      action->setCheckable(true);
+      action->setChecked(!header()->isSectionHidden(column));
+      // The title is what the rest of the row hangs on, so it always stays
+      action->setEnabled(column != AnimeListModel::COLUMN_TITLE);
+      connect(action, &QAction::toggled, this, [this, context, column](const bool checked) {
+        header()->setSectionHidden(column, !checked);
+        saveHiddenColumns(context, hiddenColumns());
+      });
+    }
+    menu.addSeparator();
+    menu.addAction(tr("Reset to defaults"), this, [this, context]() {
+      setHiddenColumns(defaultHiddenColumns(context));
+      saveHiddenColumns(context, hiddenColumns());
+    });
+    menu.exec(header()->viewport()->mapToGlobal(pos));
+  });
   header()->resizeSection(AnimeListModel::COLUMN_TITLE, 295);
   header()->resizeSection(AnimeListModel::COLUMN_PROGRESS, 150);
   header()->resizeSection(AnimeListModel::COLUMN_DURATION, 75);
@@ -123,6 +170,20 @@ void ListView::paintEvent(QPaintEvent* event) {
   }
 
   QTreeView::paintEvent(event);
+}
+
+QList<int> ListView::hiddenColumns() const {
+  QList<int> columns;
+  for (int column = 0; column < header()->count(); ++column) {
+    if (header()->isSectionHidden(column)) columns.append(column);
+  }
+  return columns;
+}
+
+void ListView::setHiddenColumns(const QList<int>& columns) {
+  for (int column = 0; column < header()->count(); ++column) {
+    header()->setSectionHidden(column, columns.contains(column));
+  }
 }
 
 }  // namespace gui

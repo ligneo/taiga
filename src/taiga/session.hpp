@@ -19,7 +19,9 @@
 #pragma once
 
 #include <QByteArray>
+#include <QList>
 #include <QString>
+#include <optional>
 
 #include "base/settings.hpp"
 
@@ -37,6 +39,7 @@ namespace taiga {
 
 class Session final : public base::Settings {
 public:
+  std::optional<QList<int>> animeListHiddenColumns() const;
   int animeListSortColumn() const;
   Qt::SortOrder animeListSortOrder() const;
   gui::ListViewMode animeListViewMode() const;
@@ -49,11 +52,13 @@ public:
   Qt::SortOrder seasonsSortOrder() const;
   gui::ListViewMode seasonsViewMode() const;
   gui::AnimeListProxyModelFilter searchListFilters() const;
+  std::optional<QList<int>> searchListHiddenColumns() const;
   int searchListSortColumn() const;
   Qt::SortOrder searchListSortOrder() const;
   gui::ListViewMode searchListViewMode() const;
   int tigersHarmed() const;
 
+  void setAnimeListHiddenColumns(const QList<int>& columns) const;
   void setAnimeListSortColumn(const int column) const;
   void setAnimeListSortOrder(const Qt::SortOrder order) const;
   void setAnimeListViewMode(const gui::ListViewMode mode) const;
@@ -67,6 +72,7 @@ public:
   void setSeasonsSortOrder(const Qt::SortOrder order) const;
   void setSeasonsViewMode(const gui::ListViewMode mode) const;
   void setSearchListFilters(const gui::AnimeListProxyModelFilter& filters) const;
+  void setSearchListHiddenColumns(const QList<int>& columns) const;
   void setSearchListSortColumn(const int column) const;
   void setSearchListSortOrder(const Qt::SortOrder order) const;
   void setSearchListViewMode(const gui::ListViewMode mode) const;

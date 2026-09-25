@@ -37,6 +37,28 @@ QString Session::fileName() const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+namespace {
+
+// Columns are kept as a list of numbers; an absent key means the view keeps its own defaults.
+std::optional<QList<int>> toColumns(const QVariant& value) {
+  if (!value.isValid()) return std::nullopt;
+  QList<int> columns;
+  for (const auto& column : value.toList()) columns.append(column.toInt());
+  return columns;
+}
+
+QVariantList fromColumns(const QList<int>& columns) {
+  QVariantList list;
+  for (const auto column : columns) list.append(column);
+  return list;
+}
+
+}  // namespace
+
+std::optional<QList<int>> Session::animeListHiddenColumns() const {
+  return toColumns(value("animeList.hiddenColumns"));
+}
+
 int Session::animeListSortColumn() const {
   return value("animeList.sortColumn", gui::AnimeListModel::COLUMN_TITLE).toInt();
 }
@@ -125,6 +147,10 @@ gui::AnimeListProxyModelFilter Session::searchListFilters() const {
   // clang-format on
 }
 
+std::optional<QList<int>> Session::searchListHiddenColumns() const {
+  return toColumns(value("searchList.hiddenColumns"));
+}
+
 int Session::searchListSortColumn() const {
   return value("searchList.sortColumn", gui::AnimeListModel::COLUMN_AVERAGE).toInt();
 }
@@ -139,6 +165,10 @@ gui::ListViewMode Session::searchListViewMode() const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+void Session::setAnimeListHiddenColumns(const QList<int>& columns) const {
+  setValue("animeList.hiddenColumns", fromColumns(columns));
+}
 
 void Session::setAnimeListSortColumn(const int column) const {
   setValue("animeList.sortColumn", column);
@@ -203,6 +233,10 @@ void Session::setSearchListFilters(const gui::AnimeListProxyModelFilter& filters
   }
   setValue("searchList.filters",
            QJsonDocument{object}.toJson(QJsonDocument::Compact).toBase64().toStdString());
+}
+
+void Session::setSearchListHiddenColumns(const QList<int>& columns) const {
+  setValue("searchList.hiddenColumns", fromColumns(columns));
 }
 
 void Session::setSearchListSortColumn(const int column) const {

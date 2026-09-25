@@ -41,6 +41,9 @@ public:
     return m_base;
   }
 
+  QList<int> hiddenColumns() const;
+  void setHiddenColumns(const QList<int>& columns);
+
 protected:
   void keyPressEvent(QKeyEvent* event) override;
   void mousePressEvent(QMouseEvent* event) override;
