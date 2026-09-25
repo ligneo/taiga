@@ -438,6 +438,12 @@ bool Settings::torrentDownloadCreateSubfolder() const {
   return value("torrents.download.createSubfolder", false).toBool();
 }
 
+// v1's `rss/torrent/options/autousefolder`. Before it existed here, a location being set meant
+// the same thing, which is what the default keeps.
+bool Settings::torrentDownloadFallbackOnFolder() const {
+  return value("torrents.download.fallbackOnFolder", !torrentDownloadLocation().empty()).toBool();
+}
+
 std::string Settings::torrentDownloadLocation() const {
   return value("torrents.download.location").toString().toStdString();
 }
@@ -541,6 +547,10 @@ void Settings::setTorrentDownloadSortBy(const std::string& sortBy) const {
 void Settings::setTorrentDownloadSortOrder(const Qt::SortOrder order) const {
   setValue("torrents.download.sortOrder",
            order == Qt::SortOrder::DescendingOrder ? u"descending"_s : u"ascending"_s);
+}
+
+void Settings::setTorrentDownloadFallbackOnFolder(const bool enabled) const {
+  setValue("torrents.download.fallbackOnFolder", enabled);
 }
 
 void Settings::setTorrentDownloadCreateSubfolder(const bool enabled) const {

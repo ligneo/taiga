@@ -22,7 +22,6 @@
 #include <QComboBox>
 #include <QDir>
 #include <QFileDialog>
-#include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -64,17 +63,17 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
   // Download queue
   {
     const auto group = new QGroupBox(tr("Download queue"), this);
-    const auto form = new QFormLayout(group);
+    const auto rowLayout = new QHBoxLayout(group);
 
-    m_comboSortBy->addItem(tr("Episode number"), u"episodeNumber"_s);
-    m_comboSortBy->addItem(tr("Release date"), u"releaseDate"_s);
+    m_comboSortBy->addItem(tr("Sort by episode number"), u"episodeNumber"_s);
+    m_comboSortBy->addItem(tr("Sort by release date"), u"releaseDate"_s);
     m_comboSortOrder->addItem(tr("In ascending order"),
                               static_cast<int>(Qt::SortOrder::AscendingOrder));
     m_comboSortOrder->addItem(tr("In descending order"),
                               static_cast<int>(Qt::SortOrder::DescendingOrder));
 
-    form->addRow(tr("Sort by:"), m_comboSortBy);
-    form->addRow(tr("Order:"), m_comboSortOrder);
+    rowLayout->addWidget(m_comboSortBy, 1);
+    rowLayout->addWidget(m_comboSortOrder, 1);
 
     layout->addWidget(group);
   }
@@ -90,17 +89,28 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
     pathLayout->addWidget(m_editLocation);
     pathLayout->addWidget(m_buttonBrowseLocation);
 
-    m_labelLocation = new QLabel(tr("If no anime folder is set, use this folder instead:"), group);
+    m_checkFallback =
+        new QCheckBox(tr("If no anime folder is set, use this folder instead:"), group);
+
+    // Each option only matters with the one above it, so they step in as in v1.
+    const auto nested = new QVBoxLayout();
+    nested->setContentsMargins(20, 0, 0, 0);
+    nested->addWidget(m_checkFallback);
+    const auto pathNested = new QVBoxLayout();
+    pathNested->setContentsMargins(20, 0, 0, 0);
+    pathNested->addLayout(pathLayout);
+    pathNested->addWidget(m_checkCreateSubfolder);
+    nested->addLayout(pathNested);
 
     groupLayout->addWidget(m_checkUseAnimeFolder);
-    groupLayout->addWidget(m_labelLocation);
-    groupLayout->addLayout(pathLayout);
-    groupLayout->addWidget(m_checkCreateSubfolder);
+    groupLayout->addLayout(nested);
 
     const auto note = new QLabel(
         tr("Note: This feature is only supported by %1.").arg(QString::fromUtf8(kSupportedClients)),
         group);
     note->setWordWrap(true);
+    note->setForegroundRole(QPalette::PlaceholderText);
+    note->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
     groupLayout->addWidget(note);
 
     connect(m_buttonBrowseLocation, &QPushButton::clicked, this, [this]() {
@@ -125,10 +135,17 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
     pathLayout->addWidget(m_editAppPath);
     pathLayout->addWidget(buttonBrowse);
 
+    const auto nested = new QVBoxLayout();
+    nested->setContentsMargins(20, 0, 0, 0);
+    nested->addWidget(m_radioDefaultApp);
+    nested->addWidget(m_radioCustomApp);
+    const auto pathNested = new QVBoxLayout();
+    pathNested->setContentsMargins(20, 0, 0, 0);
+    pathNested->addLayout(pathLayout);
+    nested->addLayout(pathNested);
+
     groupLayout->addWidget(m_checkOpen);
-    groupLayout->addWidget(m_radioDefaultApp);
-    groupLayout->addWidget(m_radioCustomApp);
-    groupLayout->addLayout(pathLayout);
+    groupLayout->addLayout(nested);
 
     connect(buttonBrowse, &QPushButton::clicked, this, [this]() {
       const auto path = QFileDialog::getOpenFileName(
@@ -144,6 +161,7 @@ TorrentDownloadsPage::TorrentDownloadsPage(QWidget* parent)
 
   connect(m_checkUseAnimeFolder, &QCheckBox::toggled, this, &TorrentDownloadsPage::refreshState);
   connect(m_editLocation, &QLineEdit::textChanged, this, &TorrentDownloadsPage::refreshState);
+  connect(m_checkFallback, &QCheckBox::toggled, this, &TorrentDownloadsPage::refreshState);
   connect(m_checkOpen, &QCheckBox::toggled, this, &TorrentDownloadsPage::refreshState);
   connect(m_radioCustomApp, &QRadioButton::toggled, this, &TorrentDownloadsPage::refreshState);
 }
@@ -155,6 +173,7 @@ void TorrentDownloadsPage::load() {
       m_comboSortOrder->findData(static_cast<int>(taiga::settings.torrentDownloadSortOrder())), 0));
 
   m_checkUseAnimeFolder->setChecked(taiga::settings.torrentDownloadUseAnimeFolder());
+  m_checkFallback->setChecked(taiga::settings.torrentDownloadFallbackOnFolder());
   m_editLocation->setText(QString::fromStdString(taiga::settings.torrentDownloadLocation()));
   m_checkCreateSubfolder->setChecked(taiga::settings.torrentDownloadCreateSubfolder());
 
@@ -173,6 +192,7 @@ void TorrentDownloadsPage::save() {
   taiga::settings.setTorrentDownloadSortOrder(
       static_cast<Qt::SortOrder>(m_comboSortOrder->currentData().toInt()));
   taiga::settings.setTorrentDownloadUseAnimeFolder(m_checkUseAnimeFolder->isChecked());
+  taiga::settings.setTorrentDownloadFallbackOnFolder(m_checkFallback->isChecked());
   taiga::settings.setTorrentDownloadLocation(m_editLocation->text().trimmed().toStdString());
   taiga::settings.setTorrentDownloadCreateSubfolder(m_checkCreateSubfolder->isChecked());
   taiga::settings.setTorrentDownloadOpen(m_checkOpen->isChecked());
@@ -183,10 +203,11 @@ void TorrentDownloadsPage::save() {
 void TorrentDownloadsPage::refreshState() {
   // As in v1, a folder is only handed to the client with the first option on.
   const bool useFolder = m_checkUseAnimeFolder->isChecked();
-  m_labelLocation->setEnabled(useFolder);
-  m_editLocation->setEnabled(useFolder);
-  m_buttonBrowseLocation->setEnabled(useFolder);
-  m_checkCreateSubfolder->setEnabled(useFolder && !m_editLocation->text().trimmed().isEmpty());
+  const bool fallback = useFolder && m_checkFallback->isChecked();
+  m_checkFallback->setEnabled(useFolder);
+  m_editLocation->setEnabled(fallback);
+  m_buttonBrowseLocation->setEnabled(fallback);
+  m_checkCreateSubfolder->setEnabled(fallback && !m_editLocation->text().trimmed().isEmpty());
 
   const bool open = m_checkOpen->isChecked();
 

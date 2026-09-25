@@ -185,6 +185,8 @@ QString downloadFolder(const track::Episode& episode) {
     if (!folder.isEmpty() && QFileInfo(folder).isDir()) return folder;
   }
 
+  if (!taiga::settings.torrentDownloadFallbackOnFolder()) return {};
+
   auto folder = QString::fromStdString(taiga::settings.torrentDownloadLocation());
   if (folder.isEmpty() || !taiga::settings.torrentDownloadCreateSubfolder()) return folder;
 
