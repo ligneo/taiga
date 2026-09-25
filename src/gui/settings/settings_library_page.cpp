@@ -41,9 +41,7 @@ LibraryPage::LibraryPage(QWidget* parent)
     : SettingsPage(parent),
       m_listFolders(new QListWidget(this)),
       m_buttonRemove(new QPushButton(tr("Remove"), this)),
-      m_checkWatch(new QCheckBox(tr("Detect new files and folders under library folders"), this)),
-      m_checkScanOnStartup(
-          new QCheckBox(tr("Scan library folders for available episodes at startup"), this)) {
+      m_checkWatch(new QCheckBox(tr("Detect new files and folders under library folders"), this)) {
   const auto layout = new QVBoxLayout(this);
 
   // Library folders
@@ -66,7 +64,6 @@ LibraryPage::LibraryPage(QWidget* parent)
     buttonLayout->addWidget(buttonAdd);
     buttonLayout->addWidget(m_buttonRemove);
     groupLayout->addLayout(buttonLayout);
-    groupLayout->addWidget(m_checkScanOnStartup);
 
     connect(buttonAdd, &QPushButton::clicked, this, &LibraryPage::addFolder);
     connect(m_buttonRemove, &QPushButton::clicked, this, &LibraryPage::removeFolder);
@@ -127,7 +124,6 @@ void LibraryPage::load() {
   }
   m_buttonRemove->setEnabled(false);
   m_checkWatch->setChecked(taiga::settings.libraryWatchFolders());
-  m_checkScanOnStartup->setChecked(taiga::settings.libraryScanOnStartup());
 }
 
 void LibraryPage::save() {
@@ -137,7 +133,6 @@ void LibraryPage::save() {
   }
   taiga::settings.setLibraryFolders(folders);
   taiga::settings.setLibraryWatchFolders(m_checkWatch->isChecked());
-  taiga::settings.setLibraryScanOnStartup(m_checkScanOnStartup->isChecked());
 
   track::library()->applyWatchSettings();
 }

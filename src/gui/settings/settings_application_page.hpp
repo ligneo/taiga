@@ -41,6 +41,7 @@ private:
   QComboBox* m_comboColorScheme = nullptr;
   QCheckBox* m_checkAutoStart = nullptr;
   QCheckBox* m_checkStartMinimized = nullptr;
+  QCheckBox* m_checkScanOnStartup = nullptr;
   QCheckBox* m_checkCloseToTray = nullptr;
   QCheckBox* m_checkMinimizeToTray = nullptr;
 };

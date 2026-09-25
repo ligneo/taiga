@@ -22,6 +22,7 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 
 #include "media/anime.hpp"
@@ -78,8 +79,11 @@ AnimeListPage::AnimeListPage(QWidget* parent)
     form->addRow(tr("Title language preference:"), m_comboTitleLanguage);
 
     form->addRow(m_checkHighlight);
-    form->addRow(m_checkHighlightedOnTop);
-    m_checkHighlightedOnTop->setContentsMargins(20, 0, 0, 0);
+    // Indented under the option it depends on, as in v1
+    const auto indented = new QHBoxLayout();
+    indented->addSpacing(20);
+    indented->addWidget(m_checkHighlightedOnTop);
+    form->addRow(indented);
     connect(m_checkHighlight, &QCheckBox::toggled, m_checkHighlightedOnTop, &QWidget::setEnabled);
 
     layout->addWidget(group);

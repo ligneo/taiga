@@ -38,6 +38,7 @@ ApplicationPage::ApplicationPage(QWidget* parent)
       m_comboColorScheme(new QComboBox(this)),
       m_checkAutoStart(new QCheckBox(tr("Start automatically at login"), this)),
       m_checkStartMinimized(new QCheckBox(tr("Start minimized"), this)),
+      m_checkScanOnStartup(new QCheckBox(tr("Scan library folders for available episodes"), this)),
       m_checkCloseToTray(new QCheckBox(tr("Close to tray"), this)),
       m_checkMinimizeToTray(new QCheckBox(tr("Minimize to tray"), this)) {
   const auto layout = new QVBoxLayout(this);
@@ -75,6 +76,7 @@ ApplicationPage::ApplicationPage(QWidget* parent)
     const auto groupLayout = new QVBoxLayout(group);
     groupLayout->addWidget(m_checkAutoStart);
     groupLayout->addWidget(m_checkStartMinimized);
+    groupLayout->addWidget(m_checkScanOnStartup);
     layout->addWidget(group);
   }
 
@@ -99,6 +101,7 @@ void ApplicationPage::load() {
 
   m_checkAutoStart->setChecked(taiga::settings.appAutoStart());
   m_checkStartMinimized->setChecked(taiga::settings.appStartMinimized());
+  m_checkScanOnStartup->setChecked(taiga::settings.libraryScanOnStartup());
   m_checkCloseToTray->setChecked(taiga::settings.appCloseToTray());
   m_checkMinimizeToTray->setChecked(taiga::settings.appMinimizeToTray());
 }
@@ -106,6 +109,7 @@ void ApplicationPage::load() {
 void ApplicationPage::save() {
   taiga::settings.setAppAutoStart(m_checkAutoStart->isChecked());
   taiga::settings.setAppStartMinimized(m_checkStartMinimized->isChecked());
+  taiga::settings.setLibraryScanOnStartup(m_checkScanOnStartup->isChecked());
   taiga::settings.setAppCloseToTray(m_checkCloseToTray->isChecked());
   taiga::settings.setAppMinimizeToTray(m_checkMinimizeToTray->isChecked());
   taiga::applyAutoStart();

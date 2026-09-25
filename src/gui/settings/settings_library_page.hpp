@@ -46,7 +46,6 @@ private:
 
   QListWidget* m_listFolders = nullptr;
   QCheckBox* m_checkWatch = nullptr;
-  QCheckBox* m_checkScanOnStartup = nullptr;
   QPushButton* m_buttonRemove = nullptr;
 };
 
