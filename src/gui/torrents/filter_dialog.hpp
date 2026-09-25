@@ -27,6 +27,7 @@ class QComboBox;
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class QTreeWidget;
 class QPushButton;
 
 namespace gui {
@@ -52,6 +53,8 @@ private:
   void moveCondition(const int offset);
   void refreshConditions();
   void refreshState();
+  int currentConditionRow() const;
+  void setCurrentConditionRow(const int row);
 
   track::Filter m_filter;
 
@@ -60,7 +63,7 @@ private:
   QComboBox* m_comboMatch = nullptr;
   QComboBox* m_comboOption = nullptr;
   QLabel* m_labelOption = nullptr;
-  QListWidget* m_listConditions = nullptr;
+  QTreeWidget* m_listConditions = nullptr;
   QListWidget* m_listAnime = nullptr;
   QPushButton* m_buttonEdit = nullptr;
   QPushButton* m_buttonRemove = nullptr;

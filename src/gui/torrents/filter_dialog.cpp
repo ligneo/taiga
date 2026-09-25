@@ -21,7 +21,7 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDialogButtonBox>
-#include <QFormLayout>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -56,7 +56,7 @@ FilterDialog::FilterDialog(QWidget* parent, const track::Filter& filter)
       m_comboMatch(new QComboBox(this)),
       m_comboOption(new QComboBox(this)),
       m_labelOption(new QLabel(tr("Option:"), this)),
-      m_listConditions(new QListWidget(this)),
+      m_listConditions(new QTreeWidget(this)),
       m_listAnime(new QListWidget(this)),
       m_buttonEdit(new QPushButton(tr("Edit"), this)),
       m_buttonRemove(new QPushButton(tr("Remove"), this)),
@@ -66,10 +66,8 @@ FilterDialog::FilterDialog(QWidget* parent, const track::Filter& filter)
 
   const auto layout = new QVBoxLayout(this);
 
-  // Filter options
+  // v1's filter wizard: the name, the conditions, then the options
   {
-    const auto form = new QFormLayout();
-
     for (const auto action :
          {track::FilterAction::Discard, track::FilterAction::Select, track::FilterAction::Prefer}) {
       m_comboAction->addItem(formatFilterAction(action), static_cast<int>(action));
@@ -82,11 +80,10 @@ FilterDialog::FilterDialog(QWidget* parent, const track::Filter& filter)
       m_comboOption->addItem(formatFilterOption(option), static_cast<int>(option));
     }
 
-    form->addRow(tr("Name:"), m_editName);
-    form->addRow(tr("Action:"), m_comboAction);
-    form->addRow(tr("Match:"), m_comboMatch);
-    form->addRow(m_labelOption, m_comboOption);
-    layout->addLayout(form);
+    const auto group = new QGroupBox(tr("Filter name"), this);
+    const auto groupLayout = new QVBoxLayout(group);
+    groupLayout->addWidget(m_editName);
+    layout->addWidget(group);
   }
 
   // Conditions
@@ -94,6 +91,10 @@ FilterDialog::FilterDialog(QWidget* parent, const track::Filter& filter)
     const auto group = new QGroupBox(tr("Conditions"), this);
     const auto groupLayout = new QVBoxLayout(group);
 
+    m_listConditions->setColumnCount(3);
+    m_listConditions->setHeaderLabels({tr("Element"), tr("Operator"), tr("Value")});
+    m_listConditions->setRootIsDecorated(false);
+    m_listConditions->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     groupLayout->addWidget(m_listConditions);
 
     const auto buttonLayout = new QHBoxLayout();
@@ -111,10 +112,23 @@ FilterDialog::FilterDialog(QWidget* parent, const track::Filter& filter)
     connect(m_buttonRemove, &QPushButton::clicked, this, &FilterDialog::removeCondition);
     connect(m_buttonUp, &QPushButton::clicked, this, [this]() { moveCondition(-1); });
     connect(m_buttonDown, &QPushButton::clicked, this, [this]() { moveCondition(1); });
-    connect(m_listConditions, &QListWidget::itemSelectionChanged, this,
+    connect(m_listConditions, &QTreeWidget::itemSelectionChanged, this,
             &FilterDialog::refreshState);
-    connect(m_listConditions, &QListWidget::itemDoubleClicked, this, &FilterDialog::editCondition);
+    connect(m_listConditions, &QTreeWidget::itemDoubleClicked, this, &FilterDialog::editCondition);
 
+    layout->addWidget(group);
+  }
+
+  // Options
+  {
+    const auto group = new QGroupBox(tr("Options"), this);
+    const auto grid = new QGridLayout(group);
+    grid->addWidget(new QLabel(tr("Match:"), group), 0, 0);
+    grid->addWidget(m_comboMatch, 1, 0);
+    grid->addWidget(new QLabel(tr("Action:"), group), 0, 1);
+    grid->addWidget(m_comboAction, 1, 1);
+    grid->addWidget(m_labelOption, 0, 2);
+    grid->addWidget(m_comboOption, 1, 2);
     layout->addWidget(group);
   }
 
@@ -203,11 +217,11 @@ void FilterDialog::addCondition() {
 
   m_filter.conditions.push_back(*condition);
   refreshConditions();
-  m_listConditions->setCurrentRow(m_listConditions->count() - 1);
+  setCurrentConditionRow(m_listConditions->topLevelItemCount() - 1);
 }
 
 void FilterDialog::editCondition() {
-  const auto row = m_listConditions->currentRow();
+  const auto row = currentConditionRow();
 
   if (row < 0) return;
 
@@ -217,11 +231,11 @@ void FilterDialog::editCondition() {
 
   m_filter.conditions.at(row) = *condition;
   refreshConditions();
-  m_listConditions->setCurrentRow(row);
+  setCurrentConditionRow(row);
 }
 
 void FilterDialog::removeCondition() {
-  const auto row = m_listConditions->currentRow();
+  const auto row = currentConditionRow();
 
   if (row < 0) return;
 
@@ -230,32 +244,34 @@ void FilterDialog::removeCondition() {
 }
 
 void FilterDialog::moveCondition(const int offset) {
-  const auto row = m_listConditions->currentRow();
+  const auto row = currentConditionRow();
   const auto target = row + offset;
 
   if (row < 0 || target < 0 || target >= static_cast<int>(m_filter.conditions.size())) return;
 
   std::swap(m_filter.conditions.at(row), m_filter.conditions.at(target));
   refreshConditions();
-  m_listConditions->setCurrentRow(target);
+  setCurrentConditionRow(target);
 }
 
 void FilterDialog::refreshConditions() {
-  const auto row = m_listConditions->currentRow();
+  const auto row = currentConditionRow();
 
   m_listConditions->clear();
 
   for (const auto& condition : m_filter.conditions) {
-    m_listConditions->addItem(formatFilterCondition(condition));
+    new QTreeWidgetItem(m_listConditions,
+                        {formatFilterElement(condition.element), formatFilterOperator(condition.op),
+                         formatFilterValue(condition)});
   }
 
-  m_listConditions->setCurrentRow(std::min(row < 0 ? 0 : row, m_listConditions->count() - 1));
+  setCurrentConditionRow(std::min(row < 0 ? 0 : row, m_listConditions->topLevelItemCount() - 1));
   refreshState();
 }
 
 void FilterDialog::refreshState() {
-  const auto row = m_listConditions->currentRow();
-  const auto count = m_listConditions->count();
+  const auto row = currentConditionRow();
+  const auto count = m_listConditions->topLevelItemCount();
 
   m_buttonEdit->setEnabled(row > -1);
   m_buttonRemove->setEnabled(row > -1);
@@ -317,6 +333,14 @@ std::optional<track::Filter> chooseFilterPreset(QWidget* parent) {
   if (index < 0) return std::nullopt;
 
   return track::filterManager.presets().at(index).filter;
+}
+
+int FilterDialog::currentConditionRow() const {
+  return m_listConditions->indexOfTopLevelItem(m_listConditions->currentItem());
+}
+
+void FilterDialog::setCurrentConditionRow(const int row) {
+  m_listConditions->setCurrentItem(m_listConditions->topLevelItem(row));
 }
 
 }  // namespace gui
