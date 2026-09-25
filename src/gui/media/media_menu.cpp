@@ -20,6 +20,9 @@
 
 #include <QClipboard>
 #include <QDesktopServices>
+#include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QInputDialog>
 #include <QItemSelectionModel>
@@ -214,6 +217,30 @@ void MediaMenu::matchNowPlaying() const {
 void MediaMenu::openFolder() const {
   const auto& item = m_items.front();
 
+  // v1 goes to the folder set for the anime first, when it still exists
+  const auto settings = anime::db.settings(item.id);
+  if (settings && !settings->folder.empty()) {
+    const auto folder = QString::fromStdString(settings->folder);
+    if (QDir{folder}.exists()) {
+      QDesktopServices::openUrl(QUrl::fromLocalFile(folder));
+      return;
+    }
+  }
+
+  // Then the folder of an episode the library found, the next one to watch if it is there. This
+  // works even when the folder is named in a way that is not recognized.
+  const auto entry = getEntry(item.id);
+  const int next = entry ? entry->watched_episodes + 1 : 1;
+  auto episodePath = track::library()->episodePath(item.id, next);
+  for (int number = 1; episodePath.isEmpty() && number <= std::max(item.episode_count, next);
+       ++number) {
+    episodePath = track::library()->episodePath(item.id, number);
+  }
+  if (!episodePath.isEmpty()) {
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo{episodePath}.absolutePath()));
+    return;
+  }
+
   const auto libraryFolders = taiga::settings.libraryFolders();
 
   for (const auto& path : libraryFolders) {
@@ -225,8 +252,23 @@ void MediaMenu::openFolder() const {
     }
   }
 
-  QMessageBox::information(nullptr, tr("Open Folder"),
-                           tr("Could not find folder for %1.").arg(anime::preferredTitle(item)));
+  // Then, like v1, it offers to pick the folder and remembers it for the anime
+  const auto answer =
+      QMessageBox::question(nullptr, tr("Open Folder"),
+                            tr("Could not find folder for %1.\n\nWould you like to select it now?")
+                                .arg(anime::preferredTitle(item)));
+  if (answer != QMessageBox::Yes) return;
+
+  const auto folder = QFileDialog::getExistingDirectory(
+      nullptr, tr("Select Anime Folder"),
+      libraryFolders.empty() ? QString{} : QString::fromStdString(libraryFolders.front()));
+  if (folder.isEmpty()) return;
+
+  auto updated = settings ? *settings : anime::Settings{.id = item.id};
+  updated.folder = folder.toStdString();
+  anime::db.updateSettings(updated);
+
+  QDesktopServices::openUrl(QUrl::fromLocalFile(folder));
 }
 
 void MediaMenu::scanEpisodes() const {
