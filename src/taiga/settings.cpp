@@ -197,6 +197,11 @@ bool Settings::streamingMediaEnabled() const {
 // v1's `announce/discord/*`. The application id has no control in v1 either; it belongs in the
 // advanced table.
 // v1's `announce/http/*`, with its default format.
+// v1's `program/general/enablesharing`: one switch above every sharing channel.
+bool Settings::sharingEnabled() const {
+  return value("sharing.enabled", true).toBool();
+}
+
 bool Settings::httpShareEnabled() const {
   return value("sharing.http.enabled", false).toBool();
 }
@@ -653,6 +658,10 @@ void Settings::setListShowAvailableEpisodes(const bool show) const {
 
 void Settings::setStreamingMediaEnabled(const bool enabled) const {
   setValue("recognition.streaming.enabled", enabled);
+}
+
+void Settings::setSharingEnabled(const bool enabled) const {
+  setValue("sharing.enabled", enabled);
 }
 
 void Settings::setHttpShareEnabled(const bool enabled) const {

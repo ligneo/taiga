@@ -81,6 +81,7 @@ public slots:
 private slots:
   void about();
   void notifyEpisodeDetected(std::optional<track::Episode> episode);
+  void shareEpisode(const std::optional<track::Episode>& episode) const;
   void donate() const;
   void support() const;
   void synchronize();

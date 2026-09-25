@@ -89,6 +89,7 @@ public:
   bool listShowAiredEpisodes() const;
   bool listShowAvailableEpisodes() const;
   bool streamingMediaEnabled() const;
+  bool sharingEnabled() const;
   bool httpShareEnabled() const;
   std::string httpShareUrl() const;
   std::string httpShareFormat() const;
@@ -161,6 +162,7 @@ public:
   void setListShowAiredEpisodes(const bool show) const;
   void setListShowAvailableEpisodes(const bool show) const;
   void setStreamingMediaEnabled(const bool enabled) const;
+  void setSharingEnabled(const bool enabled) const;
   void setHttpShareEnabled(const bool enabled) const;
   void setHttpShareUrl(const std::string& url) const;
   void setHttpShareFormat(const std::string& format) const;

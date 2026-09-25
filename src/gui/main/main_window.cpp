@@ -206,9 +206,12 @@ void MainWindow::initActions() {
             ui_->actionToggleDetection->setChecked(enabled);
           });
 
-  // Neither of these has anything behind it yet, and a menu entry that does nothing is worse
-  // than one that is not there. Both come back with the features they belong to.
-  ui_->actionToggleSharing->setVisible(false);
+  ui_->actionToggleSharing->setChecked(taiga::settings.sharingEnabled());
+  connect(ui_->actionToggleSharing, &QAction::toggled, this, [](const bool checked) {
+    taiga::settings.setSharingEnabled(checked);
+    // Like v1, turning it back on does not repeat the current episode; the next one is shared.
+    if (!checked) link::discord()->clearPresence();
+  });
 
   connect(ui_->actionCheckForUpdates, &QAction::triggered, this, &MainWindow::checkForUpdates);
 
@@ -266,37 +269,39 @@ void MainWindow::initNowPlaying() {
   connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
           &MainWindow::notifyEpisodeDetected);
 
-  // v1 shares what is playing over Discord's rich presence.
   connect(track::media::detection(), &track::media::Detection::currentEpisodeChanged, this,
-          [](std::optional<track::Episode> episode) {
-            if (!episode) {
-              link::discord()->clearPresence();
-              return;
-            }
+          &MainWindow::shareEpisode);
+}
 
-            // v1 keeps entries marked private out of every sharing channel. Anything already
-            // shared is cleared first, so the previous episode is not left on display.
-            if (const auto entry = anime::db.entry(episode->animeId()); entry && entry->is_private) {
-              link::discord()->clearPresence();
-              return;
-            }
+void MainWindow::shareEpisode(const std::optional<track::Episode>& episode) const {
+  if (!episode) {
+    link::discord()->clearPresence();
+    return;
+  }
 
-            const auto item = anime::db.item(episode->animeId());
-            const auto title =
-                item ? QString::fromStdString(anime::preferredTitle(*item))
-                     : QString::fromStdString(episode->element(anitomy::ElementKind::Title));
-            const auto number =
-                QString::fromStdString(episode->element(anitomy::ElementKind::Episode));
+  // v1 keeps entries marked private out of every sharing channel. Anything already shared is
+  // cleared first, so the previous episode is not left on display. Turning sharing off does the
+  // same.
+  const auto entry = anime::db.entry(episode->animeId());
+  if ((entry && entry->is_private) || !taiga::settings.sharingEnabled()) {
+    link::discord()->clearPresence();
+    return;
+  }
 
-            link::http::announce(*episode);
+  const auto item = anime::db.item(episode->animeId());
+  const auto title = item ? QString::fromStdString(anime::preferredTitle(*item))
+                          : QString::fromStdString(episode->element(anitomy::ElementKind::Title));
+  const auto number = QString::fromStdString(episode->element(anitomy::ElementKind::Episode));
+
+  link::http::announce(*episode);
 #ifdef Q_OS_LINUX
-            link::irc::announce(*episode);
+  link::irc::announce(*episode);
 #endif
 
-            link::discord()->updatePresence(
-                title, number.isEmpty() ? QString{} : tr("Episode %1").arg(number),
-                item ? QString::fromStdString(item->image_url) : QString{}, std::time(nullptr));
-          });
+  // v1 shares what is playing over Discord's rich presence.
+  link::discord()->updatePresence(
+      title, number.isEmpty() ? QString{} : tr("Episode %1").arg(number),
+      item ? QString::fromStdString(item->image_url) : QString{}, std::time(nullptr));
 }
 
 void MainWindow::initPage(MainWindowPage page) {
