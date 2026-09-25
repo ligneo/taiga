@@ -712,6 +712,11 @@ void MainWindow::initTrayIcon() {
   menu->addAction(ui_->actionDisplayWindow);
   menu->setDefaultAction(ui_->actionDisplayWindow);
   menu->addSeparator();
+  // v1's tray menu reaches the same folders, service pages and links as the main one
+  menu->addMenu(ui_->menuLibraryFolders);
+  menu->addMenu(ui_->menuServices);
+  menu->addMenu(ui_->menuExternalLinks);
+  menu->addSeparator();
   menu->addAction(ui_->actionSettings);
   menu->addSeparator();
   menu->addAction(ui_->actionExit);
