@@ -272,6 +272,11 @@ bool Settings::syncEnabled() const {
   return value("sync.enabled", true).toBool();
 }
 
+// v1's `account/myanimelist/login`, which despite the name synchronizes whichever service is active
+bool Settings::syncOnStartup() const {
+  return value("sync.onStartup", false).toBool();
+}
+
 bool Settings::syncNotifyNotRecognized() const {
   return value("sync.notify.notRecognized", true).toBool();
 }
@@ -740,6 +745,10 @@ void Settings::setDiscordGroupEnabled(const bool enabled) const {
 
 void Settings::setSyncEnabled(const bool enabled) const {
   setValue("sync.enabled", enabled);
+}
+
+void Settings::setSyncOnStartup(const bool enabled) const {
+  setValue("sync.onStartup", enabled);
 }
 
 void Settings::setSyncNotifyNotRecognized(const bool enabled) const {

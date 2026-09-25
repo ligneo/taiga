@@ -18,6 +18,7 @@
 
 #include "settings_accounts_page.hpp"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDesktopServices>
 #include <QFormLayout>
@@ -108,6 +109,9 @@ AccountsPage::AccountsPage(QWidget* parent)
     }
     form->addRow(tr("Active service and metadata provider:"), m_comboService);
 
+    m_checkSyncOnStartup = new QCheckBox(tr("Synchronize the list when Taiga starts"), group);
+    form->addRow(m_checkSyncOnStartup);
+
     const auto note = new QLabel(
         tr("Note: Taiga is unable to synchronize multiple services at the same time."), group);
     note->setWordWrap(true);
@@ -169,6 +173,7 @@ AccountsPage::AccountsPage(QWidget* parent)
 void AccountsPage::load() {
   const auto service = QString::fromStdString(taiga::settings.service());
   m_comboService->setCurrentIndex(m_comboService->findData(service));
+  m_checkSyncOnStartup->setChecked(taiga::settings.syncOnStartup());
 
   m_kitsuEmail->setText(QString::fromStdString(taiga::accounts.kitsuEmail()));
   m_kitsuPassword->setText(QString::fromStdString(taiga::accounts.kitsuPassword()));
@@ -180,6 +185,7 @@ void AccountsPage::save() {
   const auto previousService = taiga::settings.service();
   const auto service = m_comboService->currentData().toString().toStdString();
   taiga::settings.setService(service);
+  taiga::settings.setSyncOnStartup(m_checkSyncOnStartup->isChecked());
 
   const auto email = m_kitsuEmail->text().trimmed().toStdString();
   const auto password = m_kitsuPassword->text().toStdString();

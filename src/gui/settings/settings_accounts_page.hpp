@@ -20,6 +20,7 @@
 
 #include "gui/settings/settings_page.hpp"
 
+class QCheckBox;
 class QComboBox;
 class QLabel;
 class QLineEdit;
@@ -44,6 +45,7 @@ private:
   void updateStatus();
 
   QComboBox* m_comboService = nullptr;
+  QCheckBox* m_checkSyncOnStartup = nullptr;
   QLabel* m_anilistStatus = nullptr;
   QPushButton* m_anilistButton = nullptr;
   QLabel* m_myanimelistStatus = nullptr;

@@ -105,6 +105,7 @@ public:
   bool discordUsernameEnabled() const;
   bool discordGroupEnabled() const;
   bool syncEnabled() const;
+  bool syncOnStartup() const;
   bool syncNotifyNotRecognized() const;
   bool syncNotifyRecognized() const;
   std::string syncNotifyFormat() const;
@@ -181,6 +182,7 @@ public:
   void setDiscordUsernameEnabled(const bool enabled) const;
   void setDiscordGroupEnabled(const bool enabled) const;
   void setSyncEnabled(const bool enabled) const;
+  void setSyncOnStartup(const bool enabled) const;
   void setSyncNotifyNotRecognized(const bool enabled) const;
   void setSyncNotifyRecognized(const bool enabled) const;
   void setSyncNotifyFormat(const std::string& format) const;

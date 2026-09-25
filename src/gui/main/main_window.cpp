@@ -138,6 +138,9 @@ void MainWindow::init() {
   initNavigation();
   initNowPlaying();
   updateTitle();
+
+  // v1 can synchronize the list as soon as it starts
+  if (taiga::settings.syncOnStartup()) synchronize();
 }
 
 void MainWindow::initShortcuts() {
