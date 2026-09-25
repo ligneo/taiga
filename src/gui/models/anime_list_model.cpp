@@ -24,7 +24,9 @@
 #include <QDateTime>
 #include <QFont>
 #include <QLocale>
+#include <QPainter>
 #include <QPalette>
+#include <QPixmap>
 #include <QSize>
 #include <algorithm>
 
@@ -43,6 +45,38 @@ namespace gui {
 namespace {
 
 using namespace Qt::StringLiterals;
+
+// v1's `StatusToIcon`: a small square in front of the title tells the airing status at a glance.
+QPixmap statusIcon(const anime::Status status) {
+  static const auto make = [](const QColor& color) {
+    constexpr int kSize = 12;
+    const auto ratio = qApp->devicePixelRatio();
+    QPixmap pixmap(QSize(kSize, kSize) * ratio);
+    pixmap.setDevicePixelRatio(ratio);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(color.darker(130));
+    painter.setBrush(color);
+    painter.drawRoundedRect(QRectF(1.5, 1.5, kSize - 3, kSize - 3), 2, 2);
+    return pixmap;
+  };
+  static const auto airing = make(QColor(0x4c, 0xaf, 0x50));
+  static const auto finished = make(QColor(0x21, 0x96, 0xf3));
+  static const auto notYetAired = make(QColor(0xf4, 0x43, 0x36));
+  static const auto unknown = make(QColor(0x9e, 0x9e, 0x9e));
+
+  switch (status) {
+    case anime::Status::Airing:
+      return airing;
+    case anime::Status::FinishedAiring:
+      return finished;
+    case anime::Status::NotYetAired:
+      return notYetAired;
+    default:
+      return unknown;
+  }
+}
 
 // Tooltips are rich text, so the poster travels inside the HTML. Anything bigger than this is a
 // waste: the image is only there to recognize the title at a glance.
@@ -252,6 +286,10 @@ QVariant AnimeListModel::data(const QModelIndex& index, int role) const {
           if (entry) return QString::fromStdString(entry->notes);
           break;
       }
+      break;
+
+    case Qt::DecorationRole:
+      if (index.column() == COLUMN_TITLE) return statusIcon(anime->status);
       break;
 
     case Qt::FontRole:
