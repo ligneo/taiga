@@ -122,7 +122,7 @@ ListView::ListView(QWidget* parent, AnimeListModel* model, AnimeListProxyModel* 
   header()->resizeSection(AnimeListModel::COLUMN_SCORE, 75);
   header()->resizeSection(AnimeListModel::COLUMN_AVERAGE, 75);
   header()->resizeSection(AnimeListModel::COLUMN_TYPE, 75);
-  header()->resizeSection(AnimeListModel::COLUMN_SEASON, 125);
+  header()->resizeSection(AnimeListModel::COLUMN_SEASON, 135);
   header()->resizeSection(AnimeListModel::COLUMN_LAST_UPDATED, 130);
   // Like v1, the title takes whatever width the other columns leave.
   header()->setSectionResizeMode(AnimeListModel::COLUMN_TITLE, QHeaderView::Stretch);
