@@ -74,7 +74,7 @@ TorrentsWidget::TorrentsWidget(QWidget* parent)
   // Default widths, as in v1. Stretching a column instead would let the description squeeze the
   // title out of view.
   static const std::map<int, int> widths{
-      {TorrentModel::COLUMN_TITLE, 260},       {TorrentModel::COLUMN_EPISODE, 60},
+      {TorrentModel::COLUMN_TITLE, 260},       {TorrentModel::COLUMN_EPISODE, 80},
       {TorrentModel::COLUMN_GROUP, 100},       {TorrentModel::COLUMN_SIZE, 95},
       {TorrentModel::COLUMN_VIDEO, 80},        {TorrentModel::COLUMN_SEEDERS, 40},
       {TorrentModel::COLUMN_LEECHERS, 40},     {TorrentModel::COLUMN_DOWNLOADS, 50},
