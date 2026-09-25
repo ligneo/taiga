@@ -105,6 +105,7 @@ public:
   bool syncEnabled() const;
   bool syncNotifyNotRecognized() const;
   bool syncNotifyRecognized() const;
+  std::string syncNotifyFormat() const;
   anime::TitleLanguage titleLanguage() const;
   bool updateAskToConfirm() const;
   std::chrono::seconds updateDelay() const;
@@ -178,6 +179,7 @@ public:
   void setSyncEnabled(const bool enabled) const;
   void setSyncNotifyNotRecognized(const bool enabled) const;
   void setSyncNotifyRecognized(const bool enabled) const;
+  void setSyncNotifyFormat(const std::string& format) const;
   void setTitleLanguage(const anime::TitleLanguage language) const;
   void setUpdateAskToConfirm(const bool enabled) const;
   void setUpdateDelay(const std::chrono::seconds delay) const;

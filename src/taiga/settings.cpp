@@ -271,6 +271,15 @@ bool Settings::syncNotifyRecognized() const {
   return value("sync.notify.recognized", true).toBool();
 }
 
+// v1's `program/notifications/balloon/format`, with its default.
+std::string Settings::syncNotifyFormat() const {
+  static const auto defaultFormat =
+      u"$if(%title%,%title%)\\n"
+      u"$if(%episode%,Episode %episode%$if(%total%,/%total%) )$if(%group%,by %group%)\\n"
+      u"$if(%name%,%name%)"_s;
+  return value("sync.notify.format", defaultFormat).toString().toStdString();
+}
+
 anime::TitleLanguage Settings::titleLanguage() const {
   if (!titleLanguageCache_) {
     const auto language = value("library.titleLanguage", u"romaji"_s).toString();
@@ -722,6 +731,10 @@ void Settings::setSyncNotifyNotRecognized(const bool enabled) const {
 
 void Settings::setSyncNotifyRecognized(const bool enabled) const {
   setValue("sync.notify.recognized", enabled);
+}
+
+void Settings::setSyncNotifyFormat(const std::string& format) const {
+  setValue("sync.notify.format", format);
 }
 
 void Settings::setTitleLanguage(const anime::TitleLanguage language) const {

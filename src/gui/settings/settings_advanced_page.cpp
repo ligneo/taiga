@@ -104,6 +104,8 @@ void AdvancedPage::initSettingsTable() {
     return item;
   };
 
+  addRow(tr("Application / Episode notification format"),
+         QString::fromStdString(taiga::settings.syncNotifyFormat()));
   addRow(tr("Torrents / Archive limit"), taiga::settings.torrentArchiveMaxCount());
   addRow(tr("Torrents / Download path for .torrent files"),
          QString::fromStdString(taiga::settings.torrentDownloadFileLocation()));
@@ -132,23 +134,26 @@ void AdvancedPage::load() {
 }
 
 void AdvancedPage::save() {
-  if (m_treeSettings->topLevelItemCount() == 6) {
+  if (m_treeSettings->topLevelItemCount() == 7) {
+    taiga::settings.setSyncNotifyFormat(
+        m_treeSettings->topLevelItem(0)->data(1, Qt::DisplayRole).toString().toStdString());
+
     taiga::settings.setTorrentArchiveMaxCount(
-        m_treeSettings->topLevelItem(0)->data(1, Qt::DisplayRole).toInt());
+        m_treeSettings->topLevelItem(1)->data(1, Qt::DisplayRole).toInt());
     taiga::settings.setTorrentDownloadFileLocation(
-        m_treeSettings->topLevelItem(1)->data(1, Qt::DisplayRole).toString().toStdString());
+        m_treeSettings->topLevelItem(2)->data(1, Qt::DisplayRole).toString().toStdString());
     taiga::settings.setTorrentDownloadUseMagnet(
-        m_treeSettings->topLevelItem(2)->data(1, Qt::DisplayRole).toBool());
+        m_treeSettings->topLevelItem(3)->data(1, Qt::DisplayRole).toBool());
 
     taiga::settings.setLibraryMinimumFileSize(
-        m_treeSettings->topLevelItem(3)->data(1, Qt::DisplayRole).toLongLong());
+        m_treeSettings->topLevelItem(4)->data(1, Qt::DisplayRole).toLongLong());
 
-    const auto ignored = m_treeSettings->topLevelItem(4)->data(1, Qt::DisplayRole).toString();
+    const auto ignored = m_treeSettings->topLevelItem(5)->data(1, Qt::DisplayRole).toString();
     taiga::settings.setRecognitionIgnoredStrings(
         toVector(ignored.split(u", "_s, Qt::SkipEmptyParts)));
 
     taiga::settings.setRecognitionLookupParentDirectories(
-        m_treeSettings->topLevelItem(5)->data(1, Qt::DisplayRole).toBool());
+        m_treeSettings->topLevelItem(6)->data(1, Qt::DisplayRole).toBool());
   }
 
   taiga::settings.setProxyType(

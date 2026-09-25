@@ -66,6 +66,7 @@
 #include "taiga/application.hpp"
 #include "taiga/config.h"
 #include "taiga/network.hpp"
+#include "taiga/script.hpp"
 #include "taiga/session.hpp"
 #include "taiga/settings.hpp"
 #include "taiga/version.hpp"
@@ -816,10 +817,10 @@ void MainWindow::notifyEpisodeDetected(std::optional<track::Episode> episode) {
   if (item) {
     if (!taiga::settings.syncNotifyRecognized()) return;
 
-    const auto number = episode->element(anitomy::ElementKind::Episode, "1");
-    m_trayIcon->showMessage(tr("Episode recognized"),
-                            u"%1\n%2"_s.arg(QString::fromStdString(anime::preferredTitle(*item)),
-                                            tr("Episode %1").arg(QString::fromStdString(number))));
+    m_trayIcon->showMessage(
+        tr("Episode recognized"),
+        taiga::replaceVariables(QString::fromStdString(taiga::settings.syncNotifyFormat()),
+                                *episode));
   } else {
     if (!taiga::settings.syncNotifyNotRecognized()) return;
 
