@@ -53,6 +53,9 @@ namespace gui {
 MediaDialog::MediaDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::MediaDialog) {
   ui_->setupUi(this);
 
+  // Tabs start at the left, as in v1; some styles center them.
+  ui_->tabWidget->setStyleSheet(u"QTabWidget::tab-bar { alignment: left; }"_s);
+
 #ifdef Q_OS_WINDOWS
   enableMicaBackground(this);
 #endif
