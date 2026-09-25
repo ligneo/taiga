@@ -182,6 +182,11 @@ bool Settings::listHighlightNewEpisodes() const {
   return value("animeList.highlightNewEpisodes", true).toBool();
 }
 
+// v1's `program/list/filter/episodes/highlightedontop`
+bool Settings::listHighlightedOnTop() const {
+  return value("animeList.highlightedOnTop", false).toBool();
+}
+
 bool Settings::listShowAiredEpisodes() const {
   return value("animeList.progress.showAired", true).toBool();
 }
@@ -659,6 +664,10 @@ void Settings::setListMiddleClickAction(const std::string& action) const {
 
 void Settings::setListHighlightNewEpisodes(const bool highlight) const {
   setValue("animeList.highlightNewEpisodes", highlight);
+}
+
+void Settings::setListHighlightedOnTop(const bool onTop) const {
+  setValue("animeList.highlightedOnTop", onTop);
 }
 
 void Settings::setListShowAiredEpisodes(const bool show) const {

@@ -255,14 +255,10 @@ QVariant AnimeListModel::data(const QModelIndex& index, int role) const {
       break;
 
     case Qt::FontRole:
-      // v1 highlights anime with an episode you have not watched yet.
-      if (taiga::settings.listHighlightNewEpisodes() && entry) {
-        const auto aired = anime::estimateLastAiredEpisodeNumber(*anime);
-        if (aired > entry->watched_episodes) {
-          auto font = QApplication::font();
-          font.setWeight(QFont::Weight::DemiBold);
-          return font;
-        }
+      if (taiga::settings.listHighlightNewEpisodes() && hasNewEpisode(*anime, entry)) {
+        auto font = QApplication::font();
+        font.setWeight(QFont::Weight::DemiBold);
+        return font;
       }
       break;
 
@@ -443,6 +439,11 @@ const Anime* AnimeListModel::getAnime(const QModelIndex& index) const {
 const ListEntry* AnimeListModel::getListEntry(const QModelIndex& index) const {
   if (!index.isValid()) return nullptr;
   return anime::db.entry(m_ids.at(index.row()));
+}
+
+bool hasNewEpisode(const Anime& anime, const ListEntry* entry) {
+  if (!anime::list::isInList(entry)) return false;
+  return track::library()->isEpisodeAvailable(anime.id, entry->watched_episodes + 1);
 }
 
 }  // namespace gui

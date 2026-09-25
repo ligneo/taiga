@@ -36,7 +36,9 @@ AnimeListPage::AnimeListPage(QWidget* parent)
       m_comboTitleLanguage(new QComboBox(this)),
       m_comboDoubleClick(new QComboBox(this)),
       m_comboMiddleClick(new QComboBox(this)),
-      m_checkHighlight(new QCheckBox(tr("Highlight anime with new episodes"), this)),
+      m_checkHighlight(
+          new QCheckBox(tr("Highlight anime if the next episode is in library folders"), this)),
+      m_checkHighlightedOnTop(new QCheckBox(tr("Show highlighted anime at the top"), this)),
       m_checkShowAired(new QCheckBox(tr("Show aired episodes on the progress bar"), this)),
       m_checkShowAvailable(new QCheckBox(tr("Show available episodes on the progress bar"), this)) {
   const auto layout = new QVBoxLayout(this);
@@ -54,6 +56,8 @@ AnimeListPage::AnimeListPage(QWidget* parent)
     form->addRow(tr("Progress bar:"), m_checkShowAired);
     form->addRow(QString{}, m_checkShowAvailable);
     form->addRow(QString{}, m_checkHighlight);
+    form->addRow(QString{}, m_checkHighlightedOnTop);
+    connect(m_checkHighlight, &QCheckBox::toggled, m_checkHighlightedOnTop, &QWidget::setEnabled);
 
     layout->addWidget(group);
   }
@@ -96,6 +100,8 @@ void AnimeListPage::load() {
       0));
 
   m_checkHighlight->setChecked(taiga::settings.listHighlightNewEpisodes());
+  m_checkHighlightedOnTop->setChecked(taiga::settings.listHighlightedOnTop());
+  m_checkHighlightedOnTop->setEnabled(m_checkHighlight->isChecked());
   m_checkShowAired->setChecked(taiga::settings.listShowAiredEpisodes());
   m_checkShowAvailable->setChecked(taiga::settings.listShowAvailableEpisodes());
 }
@@ -110,6 +116,7 @@ void AnimeListPage::save() {
   taiga::settings.setListMiddleClickAction(
       m_comboMiddleClick->currentData().toString().toStdString());
   taiga::settings.setListHighlightNewEpisodes(m_checkHighlight->isChecked());
+  taiga::settings.setListHighlightedOnTop(m_checkHighlightedOnTop->isChecked());
   taiga::settings.setListShowAiredEpisodes(m_checkShowAired->isChecked());
   taiga::settings.setListShowAvailableEpisodes(m_checkShowAvailable->isChecked());
 }

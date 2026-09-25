@@ -78,4 +78,8 @@ private slots:
   void deleteRow(int id);
 };
 
+// v1's `IsNextEpisodeAvailable`: the anime is on the list and its next episode is in the library.
+// This is what "new episodes" are highlighted by.
+bool hasNewEpisode(const Anime& anime, const ListEntry* entry);
+
 }  // namespace gui

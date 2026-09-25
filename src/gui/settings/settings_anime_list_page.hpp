@@ -41,6 +41,7 @@ private:
   QComboBox* m_comboDoubleClick = nullptr;
   QComboBox* m_comboMiddleClick = nullptr;
   QCheckBox* m_checkHighlight = nullptr;
+  QCheckBox* m_checkHighlightedOnTop = nullptr;
   QCheckBox* m_checkShowAired = nullptr;
   QCheckBox* m_checkShowAvailable = nullptr;
 };

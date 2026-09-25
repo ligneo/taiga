@@ -86,6 +86,7 @@ public:
   std::string listDoubleClickAction() const;
   std::string listMiddleClickAction() const;
   bool listHighlightNewEpisodes() const;
+  bool listHighlightedOnTop() const;
   bool listShowAiredEpisodes() const;
   bool listShowAvailableEpisodes() const;
   bool streamingMediaEnabled() const;
@@ -161,6 +162,7 @@ public:
   void setListDoubleClickAction(const std::string& action) const;
   void setListMiddleClickAction(const std::string& action) const;
   void setListHighlightNewEpisodes(const bool highlight) const;
+  void setListHighlightedOnTop(const bool onTop) const;
   void setListShowAiredEpisodes(const bool show) const;
   void setListShowAvailableEpisodes(const bool show) const;
   void setStreamingMediaEnabled(const bool enabled) const;

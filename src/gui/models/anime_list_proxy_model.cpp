@@ -29,6 +29,8 @@
 #include "media/anime_list_utils.hpp"
 #include "media/anime_season.hpp"
 #include "media/anime_utils.hpp"
+#include "taiga/settings.hpp"
+#include "track/library.hpp"
 
 namespace {
 
@@ -90,6 +92,11 @@ AnimeListProxyModel::AnimeListProxyModel(QObject* parent) : QSortFilterProxyMode
 
   setSortCaseSensitivity(Qt::CaseInsensitive);
   setSortRole(Qt::UserRole);
+
+  // A scan changes which anime have a new episode, and with it the highlight and its place
+  connect(track::library(), &track::Library::availabilityChanged, this, [this]() {
+    if (taiga::settings.listHighlightNewEpisodes()) invalidate();
+  });
 }
 
 const AnimeListProxyModelFilter& AnimeListProxyModel::filters() const {
@@ -267,6 +274,13 @@ bool AnimeListProxyModel::lessThan(const QModelIndex& lhs, const QModelIndex& rh
     if (lhs_group != rhs_group) {
       return sortOrder() == Qt::AscendingOrder ? lhs_group < rhs_group : lhs_group > rhs_group;
     }
+  }
+
+  // v1 can keep the highlighted anime above the rest, whichever way the list is sorted
+  if (taiga::settings.listHighlightNewEpisodes() && taiga::settings.listHighlightedOnTop()) {
+    const bool lhs_new = hasNewEpisode(*lhs_anime, lhs_entry);
+    const bool rhs_new = hasNewEpisode(*rhs_anime, rhs_entry);
+    if (lhs_new != rhs_new) return sortOrder() == Qt::AscendingOrder ? lhs_new : rhs_new;
   }
 
   switch (lhs.column()) {
