@@ -22,11 +22,12 @@
 #include <QDialogButtonBox>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QLabel>
-#include <QListWidget>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QTreeWidget>
 #include <QVBoxLayout>
 #include <algorithm>
 
@@ -97,7 +98,7 @@ std::optional<QString> textDialog(QWidget* parent, const QString& title, const Q
 TorrentFiltersPage::TorrentFiltersPage(QWidget* parent)
     : SettingsPage(parent),
       m_checkEnabled(new QCheckBox(tr("Enable torrent filters"), this)),
-      m_listFilters(new QListWidget(this)),
+      m_listFilters(new QTreeWidget(this)),
       m_buttonEdit(new QPushButton(tr("Edit"), this)),
       m_buttonRemove(new QPushButton(tr("Remove"), this)),
       m_buttonUp(new QPushButton(tr("Move up"), this)),
@@ -110,12 +111,16 @@ TorrentFiltersPage::TorrentFiltersPage(QWidget* parent)
   const auto groupLayout = new QVBoxLayout(group);
 
   const auto note = new QLabel(
-      tr("Filters are applied in order, and an item that has been discarded is left alone by the "
-         "ones that follow."),
-      group);
+      tr("Filters allow you to download the files you want and ignore the others."), group);
   note->setWordWrap(true);
   groupLayout->addWidget(note);
 
+  m_listFilters->setColumnCount(2);
+  m_listFilters->setHeaderLabels({tr("Name"), tr("Applies to")});
+  m_listFilters->setRootIsDecorated(false);
+  m_listFilters->header()->setStretchLastSection(false);
+  m_listFilters->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+  m_listFilters->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
   groupLayout->addWidget(m_listFilters);
 
   const auto buttonLayout = new QHBoxLayout();
@@ -146,9 +151,9 @@ TorrentFiltersPage::TorrentFiltersPage(QWidget* parent)
   connect(m_buttonRemove, &QPushButton::clicked, this, &TorrentFiltersPage::removeFilter);
   connect(m_buttonUp, &QPushButton::clicked, this, [this]() { moveFilter(-1); });
   connect(m_buttonDown, &QPushButton::clicked, this, [this]() { moveFilter(1); });
-  connect(m_listFilters, &QListWidget::itemSelectionChanged, this,
+  connect(m_listFilters, &QTreeWidget::itemSelectionChanged, this,
           &TorrentFiltersPage::refreshState);
-  connect(m_listFilters, &QListWidget::itemDoubleClicked, this, &TorrentFiltersPage::editFilter);
+  connect(m_listFilters, &QTreeWidget::itemDoubleClicked, this, &TorrentFiltersPage::editFilter);
   connect(buttonImport, &QPushButton::clicked, this, &TorrentFiltersPage::importFilters);
   connect(buttonExport, &QPushButton::clicked, this, &TorrentFiltersPage::exportFilters);
   connect(buttonReset, &QPushButton::clicked, this, &TorrentFiltersPage::resetFilters);
@@ -173,10 +178,10 @@ void TorrentFiltersPage::save() {
 // Only the list knows whether a filter is checked, and rebuilding it reads the flag back out of
 // `m_filters`. Every edit has to take the check states along first, or it would undo them.
 void TorrentFiltersPage::applyCheckStates() {
-  if (m_listFilters->count() != static_cast<int>(m_filters.size())) return;
+  if (m_listFilters->topLevelItemCount() != static_cast<int>(m_filters.size())) return;
 
-  for (int i = 0; i < m_listFilters->count(); ++i) {
-    m_filters.at(i).enabled = m_listFilters->item(i)->checkState() == Qt::Checked;
+  for (int i = 0; i < m_listFilters->topLevelItemCount(); ++i) {
+    m_filters.at(i).enabled = m_listFilters->topLevelItem(i)->checkState(0) == Qt::Checked;
   }
 }
 
@@ -193,13 +198,13 @@ void TorrentFiltersPage::addFilter() {
 
   m_filters.push_back(*filter);
   refreshList();
-  m_listFilters->setCurrentRow(m_listFilters->count() - 1);
+  setCurrentRow(m_listFilters->topLevelItemCount() - 1);
 }
 
 void TorrentFiltersPage::editFilter() {
   applyCheckStates();
 
-  const auto row = m_listFilters->currentRow();
+  const auto row = currentRow();
 
   if (row < 0) return;
 
@@ -209,13 +214,13 @@ void TorrentFiltersPage::editFilter() {
 
   m_filters.at(row) = *filter;
   refreshList();
-  m_listFilters->setCurrentRow(row);
+  setCurrentRow(row);
 }
 
 void TorrentFiltersPage::removeFilter() {
   applyCheckStates();
 
-  const auto row = m_listFilters->currentRow();
+  const auto row = currentRow();
 
   if (row < 0) return;
 
@@ -226,14 +231,14 @@ void TorrentFiltersPage::removeFilter() {
 void TorrentFiltersPage::moveFilter(const int offset) {
   applyCheckStates();
 
-  const auto row = m_listFilters->currentRow();
+  const auto row = currentRow();
   const auto target = row + offset;
 
   if (row < 0 || target < 0 || target >= static_cast<int>(m_filters.size())) return;
 
   std::swap(m_filters.at(row), m_filters.at(target));
   refreshList();
-  m_listFilters->setCurrentRow(target);
+  setCurrentRow(target);
 }
 
 void TorrentFiltersPage::importFilters() {
@@ -282,27 +287,40 @@ void TorrentFiltersPage::resetFilters() {
 }
 
 void TorrentFiltersPage::refreshList() {
-  const auto row = m_listFilters->currentRow();
+  const auto row = currentRow();
 
   m_listFilters->clear();
 
   for (const auto& filter : m_filters) {
-    const auto item = new QListWidgetItem(QString::fromStdString(filter.name), m_listFilters);
-    item->setCheckState(filter.enabled ? Qt::Checked : Qt::Unchecked);
-    item->setToolTip(describeFilter(filter));
+    // v1 names the anime only by count, the dialog lists them.
+    const auto limits =
+        filter.anime_ids.empty() ? tr("All") : tr("%1 anime").arg(filter.anime_ids.size());
+    const auto item =
+        new QTreeWidgetItem(m_listFilters, {QString::fromStdString(filter.name), limits});
+    item->setCheckState(0, filter.enabled ? Qt::Checked : Qt::Unchecked);
+    item->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+    item->setToolTip(0, describeFilter(filter));
   }
 
-  m_listFilters->setCurrentRow(std::min(row < 0 ? 0 : row, m_listFilters->count() - 1));
+  setCurrentRow(std::min(row < 0 ? 0 : row, m_listFilters->topLevelItemCount() - 1));
   refreshState();
 }
 
 void TorrentFiltersPage::refreshState() {
-  const auto row = m_listFilters->currentRow();
+  const auto row = currentRow();
 
   m_buttonEdit->setEnabled(row > -1);
   m_buttonRemove->setEnabled(row > -1);
   m_buttonUp->setEnabled(row > 0);
-  m_buttonDown->setEnabled(row > -1 && row < m_listFilters->count() - 1);
+  m_buttonDown->setEnabled(row > -1 && row < m_listFilters->topLevelItemCount() - 1);
+}
+
+int TorrentFiltersPage::currentRow() const {
+  return m_listFilters->indexOfTopLevelItem(m_listFilters->currentItem());
+}
+
+void TorrentFiltersPage::setCurrentRow(const int row) {
+  m_listFilters->setCurrentItem(m_listFilters->topLevelItem(row));
 }
 
 }  // namespace gui

@@ -24,7 +24,7 @@
 #include "track/feed_filter.hpp"
 
 class QCheckBox;
-class QListWidget;
+class QTreeWidget;
 class QPushButton;
 
 namespace gui {
@@ -51,11 +51,13 @@ private:
   void resetFilters();
   void refreshList();
   void refreshState();
+  int currentRow() const;
+  void setCurrentRow(const int row);
 
   std::vector<track::Filter> m_filters;
 
   QCheckBox* m_checkEnabled = nullptr;
-  QListWidget* m_listFilters = nullptr;
+  QTreeWidget* m_listFilters = nullptr;
   QPushButton* m_buttonEdit = nullptr;
   QPushButton* m_buttonRemove = nullptr;
   QPushButton* m_buttonUp = nullptr;
