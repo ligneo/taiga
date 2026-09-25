@@ -45,9 +45,11 @@ AdvancedPage::AdvancedPage(QWidget* parent)
       m_treeSettings(new QTreeWidget(this)) {
   const auto layout = new QVBoxLayout(this);
 
-  // Proxy
+  // Proxy, shown on a tab of its own; this page still loads and saves it
   {
-    const auto group = new QGroupBox(tr("Proxy"), this);
+    m_proxyPage = new QWidget(this);
+    const auto proxyLayout = new QVBoxLayout(m_proxyPage);
+    const auto group = new QGroupBox(tr("Proxy"), m_proxyPage);
     const auto form = new QFormLayout(group);
 
     m_comboProxyType->addItem(tr("HTTP"), static_cast<int>(QNetworkProxy::HttpProxy));
@@ -65,19 +67,18 @@ AdvancedPage::AdvancedPage(QWidget* parent)
     m_editProxyPassword->setEchoMode(QLineEdit::Password);
     form->addRow(tr("Password:"), m_editProxyPassword);
 
-    layout->addWidget(group);
+    proxyLayout->addWidget(group);
+    proxyLayout->addStretch();
   }
 
-  // Settings
+  // Settings: v1's faint warning over a plain table
   {
-    const auto group = new QGroupBox(tr("Settings"), this);
-    const auto groupLayout = new QVBoxLayout(group);
-
     const auto warning = new QLabel(
         tr("Warning: Do not change these settings unless you are sure of what you are doing."),
-        group);
+        this);
     warning->setWordWrap(true);
-    groupLayout->addWidget(warning);
+    warning->setForegroundRole(QPalette::PlaceholderText);
+    layout->addWidget(warning);
 
     m_treeSettings->setRootIsDecorated(false);
     m_treeSettings->setAllColumnsShowFocus(true);
@@ -85,10 +86,12 @@ AdvancedPage::AdvancedPage(QWidget* parent)
     m_treeSettings->setColumnCount(2);
     m_treeSettings->setHeaderLabels({tr("Name"), tr("Value")});
     m_treeSettings->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    groupLayout->addWidget(m_treeSettings);
-
-    layout->addWidget(group);
+    layout->addWidget(m_treeSettings);
   }
+}
+
+QWidget* AdvancedPage::proxyPage() const {
+  return m_proxyPage;
 }
 
 // v1's Advanced tab is a raw Name/Value table rather than a themed page: it is where settings

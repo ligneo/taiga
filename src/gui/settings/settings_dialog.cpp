@@ -97,7 +97,9 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   addPage(torrents, "Discovery", new TorrentsPage(this));
   addPage(torrents, "Downloads", new TorrentDownloadsPage(this));
   const auto filtersIndex = addPage(torrents, "Filters", new TorrentFiltersPage(this));
-  addPage(advanced, "Settings", new AdvancedPage(this));
+  const auto advancedPage = new AdvancedPage(this);
+  addPage(advanced, "Settings", advancedPage);
+  advanced->addTab(advancedPage->proxyPage(), "Proxy");
   addPage(advanced, "Cache", new CachePage(this));
 
   connect(ui_->treeWidget, &QTreeWidget::currentItemChanged, this,

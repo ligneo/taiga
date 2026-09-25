@@ -38,6 +38,8 @@ public:
   void load() override;
   void save() override;
 
+  QWidget* proxyPage() const;
+
 private:
   void initSettingsTable();
 
@@ -47,6 +49,7 @@ private:
   QSpinBox* m_spinProxyPort = nullptr;
   QLineEdit* m_editProxyUsername = nullptr;
   QLineEdit* m_editProxyPassword = nullptr;
+  QWidget* m_proxyPage = nullptr;
 };
 
 }  // namespace gui
