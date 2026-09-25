@@ -20,8 +20,10 @@
 
 #include <QDialog>
 #include <map>
+#include <utility>
 #include <vector>
 
+class QTabWidget;
 class QTreeWidgetItem;
 
 namespace Ui {
@@ -53,12 +55,12 @@ public slots:
   void accept() override;
 
 private:
-  void addPage(QTreeWidgetItem* item, SettingsPage* page);
+  int addPage(QTabWidget* tabs, const QString& title, SettingsPage* page);
   void setCurrentPage(const SettingsPageId page);
 
   Ui::SettingsDialog* ui_ = nullptr;
   std::vector<SettingsPage*> pages_;
-  std::map<SettingsPageId, QTreeWidgetItem*> items_;
+  std::map<SettingsPageId, std::pair<QTreeWidgetItem*, int>> items_;
 };
 
 }  // namespace gui

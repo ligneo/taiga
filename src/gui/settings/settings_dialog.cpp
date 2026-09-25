@@ -18,6 +18,8 @@
 
 #include "settings_dialog.hpp"
 
+#include <QTabWidget>
+
 #include "base/string.hpp"
 #include "gui/settings/settings_accounts_page.hpp"
 #include "gui/settings/settings_advanced_page.hpp"
@@ -50,117 +52,58 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
   enableMicaBackground(this);
 #endif
 
-  ui_->treeWidget->setIndentation(22);
+  ui_->treeWidget->setIndentation(0);
 
-  const auto add_item = [this](QString icon, QString text) {
+  // As in v1: a short list of sections, and the pages of a section as tabs.
+  const auto add_section = [this](QString icon, QString text) {
     auto item = new QTreeWidgetItem(ui_->treeWidget, QStringList(text));
     item->setIcon(0, theme.getIcon(icon));
-    item->setSizeHint(0, QSize{0, 24});
-    return item;
+    item->setSizeHint(0, QSize{0, 32});
+    auto tabs = new QTabWidget(this);
+    tabs->setStyleSheet(u"QTabWidget::tab-bar { alignment: left; }"_s);  // some styles center them
+    item->setData(0, Qt::UserRole, ui_->stackedWidget->addWidget(tabs));
+    return tabs;
   };
 
-  const auto add_child = [this](QTreeWidgetItem* parent, QString text) {
-    return new QTreeWidgetItem(parent, QStringList(text));
-  };
+  const auto services = add_section("account_circle", "Services");
+  const auto library = add_section("folder", "Library");
+  const auto application = add_section("web_asset", "Application");
+  const auto recognition = add_section("check_circle", "Recognition");
+  const auto sharing = add_section("share", "Sharing");
+  const auto torrents = add_section("rss_feed", "Torrents");
+  const auto advanced = add_section("warning", "Advanced");
 
-  const auto accountsItem = add_item("account_circle", "Accounts");
-  const auto applicationItem = add_item("web_asset", "Application");
-  const auto animeListItem = add_item("list_alt", "Anime List");
-  const auto libraryItem = add_item("folder", "Library");
-  QTreeWidgetItem* recognitionItem = nullptr;
-  QTreeWidgetItem* mediaPlayersItem = nullptr;
-  QTreeWidgetItem* streamingItem = nullptr;
-  QTreeWidgetItem* discordItem = nullptr;
-  QTreeWidgetItem* httpItem = nullptr;
-  QTreeWidgetItem* ircItem = nullptr;
-  {
-    recognitionItem = add_item("check_circle", "Recognition");
-    mediaPlayersItem = add_child(recognitionItem, "Media players");
-    streamingItem = add_child(recognitionItem, "Streaming");
-  }
-  {
-    auto item = add_item("share", "Sharing");
-    discordItem = add_child(item, "Discord");
-    httpItem = add_child(item, "HTTP");
+  addPage(services, "Accounts", new AccountsPage(this));
+  addPage(library, "Folders", new LibraryPage(this));
+  addPage(application, "Anime list", new AnimeListPage(this));
+  addPage(application, "General", new ApplicationPage(this));
+  addPage(recognition, "General", new RecognitionPage(this));
+  addPage(recognition, "Media players", new MediaPlayersPage(this));
+  addPage(recognition, "Streaming media", new StreamingPage(this));
+  addPage(sharing, "Discord", new DiscordPage(this));
+  addPage(sharing, "HTTP", new HttpPage(this));
 #ifdef Q_OS_LINUX
-    // v1 drives mIRC over DDE. Konversation takes its place here, so the entry is named after the
-    // protocol rather than after the client.
-    ircItem = add_child(item, "IRC");
-#else
-    add_child(item, "mIRC")->setDisabled(true);  // placeholder
+  // v1 drives mIRC over DDE. Konversation takes its place here, so the tab is named after the
+  // protocol rather than after the client.
+  addPage(sharing, "IRC", new IrcPage(this));
 #endif
-  }
-  QTreeWidgetItem* torrentsItem = nullptr;
-  QTreeWidgetItem* torrentDownloadsItem = nullptr;
-  QTreeWidgetItem* torrentFiltersItem = nullptr;
-  {
-    torrentsItem = add_item("rss_feed", "Torrents");
-    torrentDownloadsItem = add_child(torrentsItem, "Downloads");
-    torrentFiltersItem = add_child(torrentsItem, "Filters");
-  }
-  QTreeWidgetItem* advancedItem = nullptr;
-  QTreeWidgetItem* cacheItem = nullptr;
-  {
-    advancedItem = add_item("warning", "Advanced");
-    cacheItem = add_child(advancedItem, "Cache");
-  }
-
-  ui_->treeWidget->expandAll();
-
-  addPage(accountsItem, new AccountsPage(this));
-  addPage(applicationItem, new ApplicationPage(this));
-  addPage(animeListItem, new AnimeListPage(this));
-  addPage(libraryItem, new LibraryPage(this));
-  addPage(recognitionItem, new RecognitionPage(this));
-  addPage(mediaPlayersItem, new MediaPlayersPage(this));
-  addPage(streamingItem, new StreamingPage(this));
-  addPage(discordItem, new DiscordPage(this));
-  addPage(httpItem, new HttpPage(this));
-#ifdef Q_OS_LINUX
-  addPage(ircItem, new IrcPage(this));
-#endif
-  addPage(torrentsItem, new TorrentsPage(this));
-  addPage(torrentDownloadsItem, new TorrentDownloadsPage(this));
-  addPage(torrentFiltersItem, new TorrentFiltersPage(this));
-  addPage(advancedItem, new AdvancedPage(this));
-  addPage(cacheItem, new CachePage(this));
+  addPage(torrents, "Discovery", new TorrentsPage(this));
+  addPage(torrents, "Downloads", new TorrentDownloadsPage(this));
+  const auto filtersIndex = addPage(torrents, "Filters", new TorrentFiltersPage(this));
+  addPage(advanced, "Settings", new AdvancedPage(this));
+  addPage(advanced, "Cache", new CachePage(this));
 
   connect(ui_->treeWidget, &QTreeWidget::currentItemChanged, this,
-          [this](QTreeWidgetItem* current, QTreeWidgetItem* previous) {
-            // As in v1, a section without a page of its own opens its first page.
-            if (current && !current->data(0, Qt::UserRole).isValid()) {
-              // Moving up from its first page must not bounce back to it.
-              if (previous && previous->parent() == current) {
-                if (const auto above = ui_->treeWidget->itemAbove(current)) {
-                  ui_->treeWidget->setCurrentItem(above);
-                  return;
-                }
-              }
-              for (int i = 0; i < current->childCount(); ++i) {
-                const auto child = current->child(i);
-                if (!child->isDisabled() && child->data(0, Qt::UserRole).isValid()) {
-                  ui_->treeWidget->setCurrentItem(child);
-                  return;
-                }
-              }
-            }
-
-            if (current) {
-              auto text = current->text(0);
-              if (current->parent()) {
-                text = u"%1 / %2"_s.arg(current->parent()->text(0), text);
-              }
-              ui_->titleLabel->setText(text);
-
-              // Pages that are not implemented yet share the placeholder at index 0
-              ui_->stackedWidget->setCurrentIndex(current->data(0, Qt::UserRole).toInt());
-            }
+          [this](QTreeWidgetItem* current) {
+            if (!current) return;
+            ui_->titleLabel->setText(current->text(0));
+            ui_->stackedWidget->setCurrentIndex(current->data(0, Qt::UserRole).toInt());
           });
 
   items_ = {
-      {SettingsPageId::Accounts, accountsItem},
-      {SettingsPageId::Library, libraryItem},
-      {SettingsPageId::TorrentFilters, torrentFiltersItem},
+      {SettingsPageId::Accounts, {ui_->treeWidget->topLevelItem(0), 0}},
+      {SettingsPageId::Library, {ui_->treeWidget->topLevelItem(1), 0}},
+      {SettingsPageId::TorrentFilters, {ui_->treeWidget->topLevelItem(5), filtersIndex}},
   };
 
   setCurrentPage(SettingsPageId::Accounts);
@@ -168,7 +111,14 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent), ui_(new Ui::S
 
 void SettingsDialog::setCurrentPage(const SettingsPageId page) {
   const auto it = items_.find(page);
-  if (it != items_.end()) ui_->treeWidget->setCurrentItem(it->second);
+  if (it == items_.end()) return;
+
+  const auto [item, tab] = it->second;
+  ui_->treeWidget->setCurrentItem(item);
+  const auto index = item->data(0, Qt::UserRole).toInt();
+  if (const auto tabs = qobject_cast<QTabWidget*>(ui_->stackedWidget->widget(index))) {
+    tabs->setCurrentIndex(tab);
+  }
 }
 
 void SettingsDialog::accept() {
@@ -179,11 +129,11 @@ void SettingsDialog::accept() {
   QDialog::accept();
 }
 
-void SettingsDialog::addPage(QTreeWidgetItem* item, SettingsPage* page) {
-  const auto index = ui_->stackedWidget->addWidget(page);
-  item->setData(0, Qt::UserRole, index);
+int SettingsDialog::addPage(QTabWidget* tabs, const QString& title, SettingsPage* page) {
+  const auto index = tabs->addTab(page, title);
   page->load();
   pages_.push_back(page);
+  return index;
 }
 
 void SettingsDialog::show(QWidget* parent, const SettingsPageId page) {
