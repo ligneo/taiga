@@ -76,9 +76,9 @@ void NavigationWidget::refresh() {
   setUpdatesEnabled(false);
   clear();
 
-  addItem("Home", "home", MainWindowPage::Home)->setDisabled(true);  // placeholder
-  addItem("Search", "search", MainWindowPage::Search);
-  addSeparator();
+  // v1's order: the list and what is made of it, then everything that looks further afield.
+  // Home stays out of sight until it has something to show.
+  addItem("Home", "home", MainWindowPage::Home)->setHidden(true);
 
   auto listItem = addItem("Anime List", "list_alt", MainWindowPage::List);
   listItem->setExpanded(true);
@@ -103,11 +103,13 @@ void NavigationWidget::refresh() {
 
   auto historyItem = addItem("History", "history", MainWindowPage::History);
   setItemData(historyItem, NavigationItemDataRole::Counter, sync::queue.count());
+  addItem("Statistics", "bar_chart", MainWindowPage::Profile);
 
   addSeparator();
-  addItem("Library", "folder", MainWindowPage::Library);
+  addItem("Search", "search", MainWindowPage::Search);
   addItem("Seasons", "calendar_month", MainWindowPage::Seasons);
   addItem("Torrents", "rss_feed", MainWindowPage::Torrents);
+  addItem("Library", "folder", MainWindowPage::Library);
 
   setUpdatesEnabled(true);
 
