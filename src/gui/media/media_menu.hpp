@@ -58,6 +58,7 @@ private slots:
   void playEpisode(int number) const;
   void playRandomEpisode() const;
   void refresh() const;
+  void scanEpisodes() const;
   void removeFromList() const;
   void search() const;
   void searchAniDB() const;

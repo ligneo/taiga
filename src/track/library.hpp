@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <functional>
 #include <map>
 #include <unordered_map>
 
@@ -39,6 +40,7 @@ public:
   ~Library() override = default;
 
   void scan();
+  void scan(const int animeId);
   void applyWatchSettings();
 
   int availableEpisodeCount(const int animeId) const;
@@ -51,6 +53,8 @@ signals:
 
 private:
   void onDirectoryChanged(const QString& path);
+  static void walk(const QString& folder,
+                   const std::function<void(int animeId, int number, const QString& path)>& found);
 
   // Anime ID to episode number to file path
   std::unordered_map<int, std::map<int, QString>> episodes_;

@@ -48,6 +48,7 @@
 #include "sync/service.hpp"
 #include "taiga/settings.hpp"
 #include "track/feed_aggregator.hpp"
+#include "track/library.hpp"
 #include "track/media.hpp"
 #include "track/play.hpp"
 #include "track/scanner.hpp"
@@ -226,6 +227,12 @@ void MediaMenu::openFolder() const {
 
   QMessageBox::information(nullptr, tr("Open Folder"),
                            tr("Could not find folder for %1.").arg(anime::preferredTitle(item)));
+}
+
+void MediaMenu::scanEpisodes() const {
+  for (const auto& item : m_items) {
+    track::library()->scan(item.id);
+  }
 }
 
 void MediaMenu::playEpisode(int number) const {
@@ -586,6 +593,9 @@ void MediaMenu::addListItems() {
 void MediaMenu::addLibraryItems() {
   // Open folder
   addAction(theme.getIcon("folder"), tr("Open folder"), this, &MediaMenu::openFolder);
+
+  // v1's `ScanEpisodes()`
+  addAction(theme.getIcon("search"), tr("Scan available episodes"), this, &MediaMenu::scanEpisodes);
 
   if (isBatch()) return;
 
