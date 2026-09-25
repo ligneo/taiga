@@ -97,6 +97,9 @@ TorrentsPage::TorrentsPage(QWidget* parent)
     groupLayout->addWidget(new QLabel(tr("When there are new torrents:"), group));
     groupLayout->addWidget(m_radioNotify);
     groupLayout->addWidget(m_radioDownload);
+    m_radioDownload->setToolTip(
+        tr("Downloads the torrents your filters marked, so it does nothing while filters are "
+           "turned off."));
 
     layout->addWidget(group);
   }

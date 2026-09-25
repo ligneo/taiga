@@ -113,6 +113,9 @@ TorrentFiltersPage::TorrentFiltersPage(QWidget* parent)
   const auto note = new QLabel(
       tr("Filters allow you to download the files you want and ignore the others."), group);
   note->setWordWrap(true);
+  note->setToolTip(
+      tr("Filters are applied in order, and an item that has been discarded is left "
+         "alone by the ones that follow."));
   groupLayout->addWidget(note);
 
   m_listFilters->setColumnCount(2);
